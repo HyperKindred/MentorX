@@ -6,7 +6,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document as LCDocument
 
 # ===== 路径配置 =====
-docx_dir = './end/model/knowledge'
+docx_dir = './end/knowledge'
 image_output_dir = './end/model/images'
 os.makedirs(image_output_dir, exist_ok=True)
 
