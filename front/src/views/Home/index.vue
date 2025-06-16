@@ -8,6 +8,7 @@ import { mainStore } from '../../store/index.ts';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
+
 const store = mainStore();
 const router = useRouter();
 const message = ref('');

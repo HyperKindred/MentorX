@@ -9,8 +9,13 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 const routes = [
   {
     path: '/',
-    name: 'Home',
-    redirect: '/SignIn'
+    name: 'main',
+    component: () => import('../views/index.vue')
+  },
+  {
+    path: '/Home',
+    name: 'home',
+    component: () => import('../views/Home/index.vue')
   },
   {
     path: '/SignIn',
