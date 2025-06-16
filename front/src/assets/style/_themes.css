@@ -1,0 +1,14 @@
+:root[theme='light']{
+    --backgroundColor:rgba(243, 243, 240, 0.6);
+    --textColor:rgb(17, 16, 17);
+    --titleColor:rgb(25, 24, 28);
+
+
+}
+
+:root[theme='dark']{
+    --backgroundColor:rgba(44, 43, 43, 0.6);
+    --textColor: rgb(237, 237, 232);
+    --titleColor:beige;
+
+}
