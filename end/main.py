@@ -273,29 +273,22 @@ def getExercisesHistory():
 def addCourse():
     conn, cursor = connectSQL()
     name = request.form.get("name")
-    
-    student_id = get_jwt_identity()
-    keys = ["chapterId", "exerciseId", "content", "difficulty", "type", 
-        "correct_answer", "answer", "check", "analyse"]
-    sql = f'''select exercise.chapter_id, 
-                     exercise_id, 
-                     exercise_content, 
-                     difficulty, 
-                     type, 
-                     answer, 
-                     student_answer, 
-                     check, 
-                     analyse
-              from exercise, practice_history
-              where practice_history.srudent_id = {student_id}
-              and practice_history.exercise_id = exercise.id;
-        '''
-    cursor.execute(sql) 
-    rows = cursor.fetchall()
-    exercises = [{k: row[i] for i, k in enumerate(keys)} for row in rows]
-    data = {"ret": 0, "exercises":exercises}
+    teacher_id = get_jwt_identity()
+    sql = f"insert into course(name, teacher) values('{name}', {teacher_id});"
+    cursor.execute(sql)
     closeSQL(conn, cursor)
-    return jsonify(data)
+    return jsonify({"ret":0})
+
+@app.route('/api/teacher/addCourse', methods=["POST"])
+@jwt_required()
+def addCourse():
+    conn, cursor = connectSQL()
+    name = request.form.get("name")
+    teacher_id = get_jwt_identity()
+    sql = f"insert into course(name, teacher) values('{name}', {teacher_id});"
+    cursor.execute(sql)
+    closeSQL(conn, cursor)
+    return jsonify({"ret":0})
 
 @app.route('/api/student/AIchat', methods=['POST'])
 def AIchat():
