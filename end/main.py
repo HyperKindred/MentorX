@@ -36,7 +36,8 @@ def signIn():
         data = {"ret": 1, "msg": "密码错误！"}
     else:
         sql = f"select user_id, type, name, gender from user where phone_number = '{phone_number}';"
-        result = cursor.execute(sql)
+        cursor.execute(sql)
+        result = cursor.fetchone()
         access_token = create_access_token(identity=result[0])
         data = {"ret": 0, 
                 "msg":"登录成功", 
@@ -189,10 +190,10 @@ def getCourseList():
         course["teacher_id"] = result[1]
         sql = f"select name from user where user_id = {result[1]};"
         cursor.execute(sql)
-        course["teacher_name"] = cursor.fetchone()
+        course["teacher_name"] = cursor.fetchone()[0]
         sql = f"select COUNT(*) from course where id = {row[0]} and student is not null;"
         cursor.execute(sql)
-        course["student_num"] = cursor.fetchone()
+        course["student_num"] = cursor.fetchone()[0]
         courseList.append(course)
     data = {"ret": 0, "msg":"获取课程列表成功！", "courseList":courseList}
     closeSQL()
@@ -226,7 +227,7 @@ def joinCourse():
     student_id = get_jwt_identity()
     sql = f"select * from course where id = {course_id} and student is null;"
     cursor.execute(sql)
-    result = cursor.fetchone
+    result = cursor.fetchone()
     if result == None:
         sql = f"update course set student = {student_id} where id = {course_id} and student is null;"
         cursor.execute(sql)
@@ -279,17 +280,108 @@ def addCourse():
     closeSQL(conn, cursor)
     return jsonify({"ret":0})
 
-@app.route('/api/teacher/addCourse', methods=["POST"])
-@jwt_required()
-def addCourse():
+@app.route('/api/updateExercise', methods=["POST"])
+def updateExercise():
     conn, cursor = connectSQL()
-    name = request.form.get("name")
-    teacher_id = get_jwt_identity()
-    sql = f"insert into course(name, teacher) values('{name}', {teacher_id});"
-    cursor.execute(sql)
+    id = request.form.get("id")
+    content = request.form.get("content")
+    answer = request.form.get("answer")
+    if content != None:
+        sql = f"update exercise set exercise_content = '{content}' where id = {id};"
+        cursor.execute(sql)
+    elif answer != None:
+        sql = f"update exercise set answer = '{answer}' where id = {id};"
+        cursor.execute(sql)
+    else:
+        data = {"ret": 1, "msg":"无修改内容！"}
+    data = {"ret": 0}
     closeSQL(conn, cursor)
-    return jsonify({"ret":0})
+    return jsonify(data)
 
+@app.route('/api/updateChapter', methods=["POST"])
+def updateChapter():
+    conn, cursor = connectSQL()
+    id = request.form.get("id")
+    content = request.form.get("content")
+    name = request.form.get("name")
+    if content != None:      
+        sql = f"update chapter set content = '{content}' where id = {id};"
+        cursor.execute(sql)
+    elif name != None:
+        sql = f"update chapter set name = '{name}' where id = {id};"
+        cursor.execute(sql)
+    else:
+        data = {"ret": 1, "msg":"无修改内容！"}
+    data = {"ret": 0}
+    closeSQL(conn, cursor)
+    return jsonify(data)
+
+@app.route('/api/admin/getUserList', methods=["POST"])
+def getUserList():
+    conn, cursor = connectSQL()
+    type = request.form.get("type")
+    keys = ["id", "phone_number", "name", "gender", "frequence", "sum_time"]
+    sql = f"select user_id, phone_number, name, gender, frequence, sum_time from user where type = '{type}';"
+    cursor.execute(sql)
+    rows = cursor.fetchall()
+    userList = [{k:row[i] for i, k in enumerate(keys)} for row in rows]
+    data = {"ret":0, "userList":userList}
+    closeSQL(conn, cursor)
+    return jsonify(data)
+
+@app.route('/api/admin/deleteUser', methods=["POST"])
+def deleteUser():
+    conn, cursor = connectSQL()
+    id = request.form.get("id")
+    sql = f"delete from user where user_id = {id};"
+    cursor.execute(sql)
+    data = {"ret":0}
+    closeSQL(conn, cursor)
+    return jsonify(data)
+
+@app.route('/api/admin/getSystemStats', methods=["GET"])
+def getSystemStats():
+    conn, cursor = connectSQL()
+    keys = ["S_AiChat", "S_exercises", "S_check", "T_courseware", "T_exercises", "T_check"]
+    sql = f"select * from system_stats;"
+    cursor.execute(sql)
+    result = cursor.fetchone()
+    systemStats = {k:result[i] for i, k in enumerate(keys)}
+    data = {"ret":0, "systemStats":systemStats}
+    closeSQL(conn, cursor)
+    return jsonify(data)
+
+@app.route('/api/deleteCourse', methods=["POST"])
+def deleteCourse():
+    conn, cursor = connectSQL()
+    id = request.form.get("id")
+    sql = f"delete from course where id = {id};"
+    cursor.execute(sql)
+    data = {"ret":0}
+    closeSQL(conn, cursor)
+    return jsonify(data)
+
+@app.route('/api/deleteChapter', methods=["POST"])
+def deleteChapter():
+    conn, cursor = connectSQL()
+    id = request.form.get("id")
+    sql = f"delete from chapter where id = {id};"
+    cursor.execute(sql)
+    data = {"ret":0}
+    closeSQL(conn, cursor)
+    return jsonify(data)
+
+@app.route('/api/deleteExercise', methods=["POST"])
+def deleteExercise():
+    conn, cursor = connectSQL()
+    id = request.form.get("id")
+    sql = f"delete from exercise where id = {id};"
+    cursor.execute(sql)
+    data = {"ret":0}
+    closeSQL(conn, cursor)
+    return jsonify(data)
+    
+# 与大模型交互相关联
 @app.route('/api/student/AIchat', methods=['POST'])
 def AIchat():
     ChapterNo = request.form.get("ChapterNo")  
