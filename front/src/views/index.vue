@@ -2,9 +2,16 @@
   <div class="tab-container">
     <div class="tab-header-bar">
     <el-avatar @click="showSignIn = true" shape="square" :size="40" :src="logIn" alt="logIn" fit="cover" />
-    <el-tabs v-model="activeTab" class="tab-header">
-      <el-tab-pane label="首页" name="home" />
+    <el-tabs v-model="activeTab" type='card' @tab-remove="removeTab" @tab-click="onTabClick" class="tab-header">
+        <el-tab-pane
+          v-for="tab in tabs"
+          :key="tab.name"
+          :label="tab.title"
+          :name="tab.name"
+          :closable="tab.closable !== false"
+        />  
     </el-tabs>
+    <el-button size="small" @click="addTab('新页面', Home)">+ 添加页面</el-button>
     </div>
     <!-- 内容区域 -->
     <div class="tab-content">
@@ -32,15 +39,46 @@ const message = ref('');
 const activeTab = ref('home');
 const showSignIn = ref(false);
 const showSignUp = ref(false);
+const tabIndex = ref(1);
+
+
+const tabs = ref([
+  { name: 'home', title: '首页', component: Home, closable: false }
+]);
+
 
 
 function getCurrentComponent() {
-  switch (activeTab.value) {
-    case 'home':
-      return Home;
-    default:
-      return Home;
+  const tab = tabs.value.find(t => t.name === activeTab.value);
+  return tab ? tab.component : null;
+}
+
+function addTab(title: string, component: any) {
+  const newName = `tab${tabIndex.value++}`;
+  tabs.value.push({
+    name: newName,
+    title,
+    component
+  });
+  activeTab.value = newName;
+}
+
+
+function removeTab(name: string) {
+  const index = tabs.value.findIndex(tab => tab.name === name);
+  if (index !== -1) {
+    tabs.value.splice(index, 1);
+
+    // 自动切换到前一个 tab
+    if (activeTab.value === name) {
+      const next = tabs.value[index - 1] || tabs.value[0];
+      activeTab.value = next?.name || '';
+    }
   }
+}
+
+function onTabClick(tab: any) {
+  activeTab.value = tab.name;
 }
 
 const handleSwitchToSignUp = () => {
