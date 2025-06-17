@@ -1,7 +1,5 @@
 <template>
-    <div class="container">
-        <Cloud />
-        <div class="signin-wrapper">
+    <el-dialog v-model="dialogVisible" class="signin-wrapper" width="400px" center>
             <h1 class="header">
                 注册
             </h1>
@@ -30,19 +28,17 @@
             </div>
             <div class="msg">
                 已有账户？
-                <router-link to="/SignIn" class="link">立即登录</router-link>
+                <span class="link-button" @click="$emit('switch-to-signin')">立即登录</span>
             </div>
-        </div>
-    </div>
+    </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { ElMessage } from 'element-plus';
 import axios from 'axios';
 import { mainStore } from '../../store/index.ts';
 import router from "../../router";
-import Cloud from '../Cloud.vue';
 
 const store = mainStore();
 const account = ref('');
@@ -50,7 +46,18 @@ const password = ref('');
 const name = ref('');
 const type = ref('');
 const gender = ref('');
-
+const props = defineProps<{ visible: boolean }>()
+const emit = defineEmits<{
+  (e: 'update:visible', value: boolean): void
+  (e: 'switch-to-signin'): void
+}>()
+const dialogVisible = ref(props.visible)
+watch(() => props.visible, (val) => {
+  dialogVisible.value = val
+})
+watch(dialogVisible, (val) => {
+  emit('update:visible', val)
+})
 
 
 const signUp = () => {
@@ -119,12 +126,12 @@ const signUp = () => {
         text-align: center;
         margin-top: 60px;
         margin-bottom: 40px;
-        color: #ffffff;
+        color: #000000;
     }
     .input-title {
         opacity: 0.7;
         font-size: 18px;
-        color: #ffffff;
+        color: #000000;
     }
     .input-item {
         opacity: 0.7;
@@ -169,5 +176,22 @@ const signUp = () => {
         text-align: center;
         line-height: 88px;
         color: #eeeeee;
+    }
+    .link-button {
+    display: inline-block;
+    padding: 6px 12px;
+    margin-left: 5px;
+    background-color: #334e68;
+    color: #ffffff;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    font-weight: bold;
+    font-size: 14px;
+    }
+
+    .link-button:hover {
+    background-color: #577594;
+    color: #e0f0ff;
     }
 </style>

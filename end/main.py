@@ -1,5 +1,4 @@
 import requests
-import pymysql
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from data_utils import *
@@ -124,6 +123,148 @@ def getLearningStatsByPerson():
             student = f_getLearningStatsByPerson(user_id)
             students.append(student)
         data = {"ret": 0, "msg":"获取信息成功！", "students":students}
+    closeSQL(conn, cursor)
+    return jsonify(data)
+
+@app.route('/api/getLearningStatsByChapter', methods=["POST"])
+def getLearningStatsByChapter():
+    conn, cursor = connectSQL()
+    chapters = []
+    chapter_id = request.form.get("id")
+
+    if chapter_id != None:
+        sql = f"select name from chapter where id = {chapter_id};"
+        cursor.execute(sql)
+        result = cursor.fetchone()
+        if result == None:
+            data = {"ret": 1, "msg": "该章节不存在！"}
+        else:
+            chapter = f_getLearningStatsByChapter(chapter_id)
+            chapters.append(chapter)
+            data = {"ret": 0, "msg":"获取信息成功！", "chapters":chapters}
+    else:
+        sql = f"select id from chapter;"
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+        id_list = [row[0] for row in rows]
+        for _ in id_list:
+            chapter = f_getLearningStatsByChapter(_)
+            chapters.append(chapter)
+        data = {"ret": 0, "msg":"获取信息成功！", "chapters":chapters}
+    closeSQL(conn, cursor)
+    return jsonify(data)
+
+@app.route('/api/getChapterList', methods=["POST"])
+def getChapterList():
+    conn, cursor = connectSQL()
+    course_id = request.form.get("id")
+    chapterList = []
+    sql = f"select id, name, content from chapter where course_id = {course_id};"
+    cursor.execute(sql)
+    rows = cursor.fetchall()
+    for row in rows:
+        chapter = {}
+        chapter["id"] = row[0]
+        chapter["name"] = row[1]
+        chapter["content"] = row[2]
+        chapterList.append(chapter)
+    data = {"ret": 0, "msg":"章节课件列表成功！", "chapterList":chapterList}
+    closeSQL()
+    return jsonify(data)
+
+@app.route('/api/getCourseList', methods=["GET"])
+def getCourseList():
+    conn, cursor = connectSQL()
+    courseList = [] 
+    sql = f"select distinct id from course;"
+    cursor.execute(sql)
+    rows = cursor.fetchall()
+    for row in rows:
+        course = {}
+        course["id"] = row[0]
+        sql = f"select name, teacher from course where id = {row[0]};"
+        cursor.execute(sql)
+        result = cursor.fetchone()
+        course["name"] = result[0]
+        course["teacher_id"] = result[1]
+        sql = f"select name from user where user_id = {result[1]};"
+        cursor.execute(sql)
+        course["teacher_name"] = cursor.fetchone()
+        sql = f"select COUNT(*) from course where id = {row[0]} and student is not null;"
+        cursor.execute(sql)
+        course["student_num"] = cursor.fetchone()
+        courseList.append(course)
+    data = {"ret": 0, "msg":"获取课程列表成功！", "courseList":courseList}
+    closeSQL()
+    return jsonify(data)
+
+@app.route('/api/getExercisesList', methods=["POST"])
+def getExercisesList():
+    conn, cursor = connectSQL()
+    chapter_id = request.form.get("id")
+    exercisesList = []
+    sql = f"select * from exercise where chapter_id = {chapter_id};"
+    cursor.execute(sql)
+    rows = cursor.fetchall()
+    for row in rows:
+        exercise = {}
+        exercise["id"] = row[0]
+        exercise["content"] = row[2]
+        exercise["answer"] = row[3]
+        exercise["difficulty"] = row[4]
+        exercise["type"] = row[5]
+        exercisesList.append(exercise)
+    data = {"ret": 0, "msg":"获取习题列表成功！", "exercisesList":exercise}
+    closeSQL()
+    return jsonify(data)
+
+@app.route('/api/student/joinCourse', methods=["POST"])
+@jwt_required()
+def joinCourse():
+    conn, cursor = connectSQL()
+    course_id = request.form.get("course_id")
+    student_id = get_jwt_identity()
+    sql = f"select * from course where id = {course_id} and student is null;"
+    cursor.execute(sql)
+    result = cursor.fetchone
+    if result == None:
+        sql = f"update course set student = {student_id} where id = {course_id} and student is null;"
+        cursor.execute(sql)
+    else:
+        sql = f"select name, teacher from course where id = {course_id};"
+        cursor.execute(sql)
+        info = cursor.fetchall()[0]
+        sql = f"insert into course values({course_id}, '{info[0]}', {info[1]}, {student_id});"
+        cursor.execute(sql)
+    
+    data = {"ret": 0, "msg":"加入课程成功！"}
+    closeSQL()
+    return jsonify(data)
+
+@app.route('/api/student/getExerciseHistory', methods=["POST"])
+@jwt_required()
+def getExercisesHistory():
+    conn, cursor = connectSQL()
+    student_id = get_jwt_identity()
+    keys = ["chapterId", "exerciseId", "content", "difficulty", "type", 
+        "correct_answer", "answer", "check", "analyse"]
+    sql = f'''select exercise.chapter_id, 
+                     exercise_id, 
+                     exercise_content, 
+                     difficulty, 
+                     type, 
+                     answer, 
+                     student_answer, 
+                     check, 
+                     analyse
+              from exercise, practice_history
+              where practice_history.srudent_id = {student_id}
+              and practice_history.exercise_id = exercise.id;
+        '''
+    cursor.execute(sql) 
+    rows = cursor.fetchall()
+    exercises = [{k: row[i] for i, k in enumerate(keys)} for row in rows]
+    data = {"ret": 0, "exercises":exercises}
     closeSQL(conn, cursor)
     return jsonify(data)
 

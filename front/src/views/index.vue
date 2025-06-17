@@ -1,7 +1,7 @@
 <template>
   <div class="tab-container">
     <div class="tab-header-bar">
-    <el-avatar shape="square" :size="40" :src="logIn" alt="logIn" fit="cover" />
+    <el-avatar @click="showSignIn = true" shape="square" :size="40" :src="logIn" alt="logIn" fit="cover" />
     <el-tabs v-model="activeTab" class="tab-header">
       <el-tab-pane label="首页" name="home" />
     </el-tabs>
@@ -10,6 +10,8 @@
     <div class="tab-content">
       <component :is="getCurrentComponent()" />
     </div>
+    <SignIn v-model:visible="showSignIn" @switch-to-signup="handleSwitchToSignUp" />
+    <SignUp v-model:visible="showSignUp" @switch-to-signin="handleSwitchToSignIn" />
   </div>
 </template>
 
@@ -22,13 +24,16 @@ import { ElMessage } from 'element-plus';
 import misakaImg from '../assets/images/Misaka Mikoto.jpg';
 import logIn from '../assets/images/logIn.png';
 import Home from './Home/index.vue';
+import SignIn from './SignIn/index.vue'
+import SignUp from './SignUp/index.vue'
 const store = mainStore();
 const router = useRouter();
 const message = ref('');
 const activeTab = ref('home');
-function navigateTo(componentName) {
-  router.push({ name: componentName });
-}
+const showSignIn = ref(false);
+const showSignUp = ref(false);
+
+
 function getCurrentComponent() {
   switch (activeTab.value) {
     case 'home':
@@ -37,6 +42,16 @@ function getCurrentComponent() {
       return Home;
   }
 }
+
+const handleSwitchToSignUp = () => {
+  showSignIn.value = false;
+  showSignUp.value = true;
+};
+
+const handleSwitchToSignIn = () => {
+  showSignUp.value = false;
+  showSignIn.value = true;
+};
 
 onMounted(() => {
 
@@ -76,4 +91,5 @@ onMounted(() => {
   background-color: #fff;
   border-bottom: 1px solid #eee;
 }
+
 </style>

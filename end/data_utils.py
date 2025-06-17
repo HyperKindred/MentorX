@@ -21,22 +21,21 @@ def closeSQL(p_conn, p_cursor):
 def f_getLearningStatsByPerson(user_id):
     student = {}
     chapters = []
-    chapter = {}
     conn, cursor = connectSQL()
     chapter_map_correctness = {}
     chapter_map_aiFrequence = {}
     sql = f"select name from user where user_id = {user_id};"
     cursor.execute(sql)
-    name = cursor.fetchone()[0]
+    name = cursor.fetchone()
     student["id"] = user_id
     student["name"] = name
 
-    sql = f"select chapter_id, COUNT(*) from practice_history group by chapter_id where check = 'T';"
+    sql = f"select chapter_id, COUNT(*) from practice_history group by chapter_id where check = 'T' and student_id = {user_id};"
     cursor.execute(sql)
     right = cursor.fetchall()
     for row in right:         
         chapter_map_correctness[row[0]] = row[1]
-    sql = f"select chapter_id, COUNT(*) from practice_history group by chapter_id;"
+    sql = f"select chapter_id, COUNT(*) from practice_history group by chapter_id where student_id = {user_id};"
     cursor.execute(sql)
     total = cursor.fetchall()
     for row in total:
@@ -52,9 +51,10 @@ def f_getLearningStatsByPerson(user_id):
 
     chapter_list = list(chapter_map_aiFrequence.keys() | chapter_map_aiFrequence.keys())
     for cahpter_id in chapter_list:
+        chapter = {}
         sql = f"select name from chapter where id = {cahpter_id};"
         cursor.execute(sql)
-        chapter_name = cursor.fetchone()[0]
+        chapter_name = cursor.fetchone()
         chapter["name"] = chapter_name
         if cahpter_id in chapter_map_aiFrequence.keys():
             chapter["AiFrequence"] = chapter_map_aiFrequence[cahpter_id]
@@ -70,3 +70,22 @@ def f_getLearningStatsByPerson(user_id):
     student["chapters"] = chapters
     closeSQL(conn, cursor)
     return student
+
+def f_getLearningStatsByChapter(chapter_id):
+    conn, cursor = connectSQL()
+    chapter = {}
+    sql = f"select name from chapter where id = {chapter_id};"
+    cursor.execute(sql)
+    chapter["name"] = cursor.fetchone()
+    sql = f"select COUNT(*) from communicate_history where chapter_id = {chapter_id};"
+    cursor.execute(sql)
+    chapter["AiFrequence"] = cursor.fetchone() / 2
+    sql = f"select COUNT(*) from practice_history where chapter_id = {chapter_id};"
+    cursor.execute(sql)
+    total = cursor.fetchone()
+    sql = f"select COUNT(*) from practice_history where chapter_id = {chapter_id} and check = 'T';"
+    cursor.execute(sql)
+    right = cursor.fetchone()
+    chapter["correctness"] = right / total
+    closeSQL(conn, cursor)
+    return chapter
