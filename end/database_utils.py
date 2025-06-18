@@ -1,12 +1,12 @@
 import pymysql
 
 
-def connectSQL(p_user = 'Hypercube', p_db = 'mentorx'):
+def connectSQL(p_user = 'root', p_db = 'mentorx'):
     f_conn = pymysql.connect(
         host='127.0.0.1', 
         port=3306, 
         user=p_user, 
-        password='990923', 
+        password='123456', 
         charset='utf8mb4', 
         autocommit=True
     )
@@ -195,7 +195,7 @@ def get_course_list_db():
             cursor.execute(sql, (course_info[1],))
             teacher_name = cursor.fetchone()[0]
             
-            sql = "SELECT COUNT(*) FROM course WHERE id = %s AND student IS NOT NULL;"
+            sql = "SELECT COUNT(*) FROM course_student WHERE course_id = %s;"
             cursor.execute(sql, (course_id,))
             student_count = cursor.fetchone()[0]
             
@@ -223,21 +223,15 @@ def get_exercises_list_db(chapter_id):
 def join_course_db(course_id, student_id):
     conn, cursor = connectSQL()
     try:
-        sql = "SELECT * FROM course WHERE id = %s AND student IS NULL;"
+        sql = "SELECT * FROM course WHERE id = %s;"
         cursor.execute(sql, (course_id,))
         result = cursor.fetchone()
         
         if result is None:
-            sql = "UPDATE course SET student = %s WHERE id = %s AND student IS NULL;"
-            cursor.execute(sql, (student_id, course_id))
-        else:
-            sql = "SELECT name, teacher FROM course WHERE id = %s;"
-            cursor.execute(sql, (course_id,))
-            info = cursor.fetchone()
-            
-            sql = "INSERT INTO course(id, name, teacher, student) VALUES(%s, %s, %s, %s);"
-            cursor.execute(sql, (course_id, info[0], info[1], student_id))
+            return False
         
+        sql = "INSERT INTO course_student values(%s, %s);"
+        cursor.execute(sql, (course_id, student_id))   
         return True
     finally:
         closeSQL(conn, cursor)
@@ -271,15 +265,21 @@ def add_course_db(name, teacher_id):
     finally:
         closeSQL(conn, cursor)
 
-def update_exercise_db(id, content, answer):
+def update_exercise_db(id, content, answer, difficulty, type):
     conn, cursor = connectSQL()
     try:
         if content:
             sql = "UPDATE exercise SET exercise_content = %s WHERE id = %s;"
             cursor.execute(sql, (content, id))
-        elif answer:
+        if answer:
             sql = "UPDATE exercise SET answer = %s WHERE id = %s;"
             cursor.execute(sql, (answer, id))
+        if difficulty:
+            sql = "UPDATE exercise SET difficulty = %s WHERE id = %s;"
+            cursor.execute(sql, (difficulty, id))
+        if type:
+            sql = "UPDATE exercise SET type = %s WHERE id = %s;"
+            cursor.execute(sql, (type, id))
         
         return True
     finally:
@@ -291,7 +291,7 @@ def update_chapter_db(id, content, name):
         if content:
             sql = "UPDATE chapter SET content = %s WHERE id = %s;"
             cursor.execute(sql, (content, id))
-        elif name:
+        if name:
             sql = "UPDATE chapter SET name = %s WHERE id = %s;"
             cursor.execute(sql, (name, id))
         
