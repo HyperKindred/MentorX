@@ -11,7 +11,7 @@
  Target Server Version : 80031 (8.0.31)
  File Encoding         : 65001
 
- Date: 16/06/2025 16:58:08
+ Date: 18/06/2025 15:35:06
 */
 
 SET NAMES utf8mb4;
@@ -71,14 +71,16 @@ CREATE TABLE `course`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `exercise`;
 CREATE TABLE `exercise`  (
-  `id` int NOT NULL,
+  `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `exercise_content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL,
   `anwser` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL,
   `difficulty` int NULL DEFAULT NULL,
   `type` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `chapter_id` int NULL DEFAULT NULL,
+  `is_official` tinyint(1) NULL DEFAULT NULL COMMENT '1代表老师习题，0代表学生生成习题',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of exercise

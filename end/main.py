@@ -1,7 +1,7 @@
 import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from data_utils import *
+from database_utils import *
 from langchain.vectorstores import FAISS
 from langchain.embeddings import HuggingFaceEmbeddings
 from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, jwt_required
@@ -24,362 +24,236 @@ model_name = 'deepseek-r1:1.5b'
 # flask API 的开始
 @app.route('/api/signIn', methods=["POST"])
 def signIn():
-    conn, cursor = connectSQL()
     phone_number = request.form.get("phone_number")
     password = request.form.get("password")
-    sql = f"select password from user where phone_number = '{phone_number}';"
-    cursor.execute(sql)
-    result = cursor.fetchone()
-    if result == None:
+    
+    result = sign_in_db(phone_number)
+    
+    if result is None:
         data = {"ret": 1, "msg": "手机号不存在！"}
     elif password != result[0]:
         data = {"ret": 1, "msg": "密码错误！"}
     else:
-        sql = f"select user_id, type, name, gender from user where phone_number = '{phone_number}';"
-        cursor.execute(sql)
-        result = cursor.fetchone()
-        access_token = create_access_token(identity=result[0])
+        access_token = create_access_token(identity=result[1])
         data = {"ret": 0, 
-                "msg":"登录成功", 
-                "jwt":access_token,
-                "gender":result[3],
-                "type":result[1],
-                "name":result[2]
+                "msg": "登录成功", 
+                "jwt": access_token,
+                "gender": result[4],
+                "type": result[2],
+                "name": result[3]
                 }
-    closeSQL(conn, cursor)
     return jsonify(data)
 
 @app.route('/api/register', methods=["POST"])
 def register():
-    conn, cursor = connectSQL()
     phone_number = request.form.get("phone_number")
     password = request.form.get("password")
     user_type = request.form.get("type")
     name = request.form.get("name")
     gender = request.form.get("gender")
-    sql = f"select phone_number from user where phone_number = '{phone_number}';"
-    cursor.execute(sql)
-    result = cursor.fetchone()
-    if result != None:
+    
+    success = register_db(phone_number, password, user_type, name, gender)
+    
+    if not success:
         data = {"ret": 1, "msg": "用户名已存在！"}
     else:
-        sql = f"insert into user(phone_number, password, type, name, gender) values('{phone_number}', '{password}', '{user_type}', '{name}', '{gender}');"
-        cursor.execute(sql)
-        data = {"ret": 0, "msg":f"用户{phone_number}注册成功！"}
-    closeSQL(conn, cursor)
+        data = {"ret": 0, "msg": f"用户{phone_number}注册成功！"}
     return jsonify(data)
 
 @app.route('/api/updateInfo', methods=["POST"])
 @jwt_required()
 def updateInfo():
-    conn, cursor = connectSQL()
-    user_id = request.form.get("id")
-    if user_id == None:
-        user_id = get_jwt_identity()
-
-    sql = f"select type from user where user_id = {user_id};"
-    cursor.execute(sql)
-    result = cursor.fetchone()
-    if result == None:
+    user_id = request.form.get("id") or get_jwt_identity()
+    password = request.form.get("password")
+    name = request.form.get("name")
+    gender = request.form.get("gender")
+    
+    success = update_info_db(user_id, password, name, gender)
+    
+    if not success:
         data = {"ret": 1, "msg": "该用户不存在！"}
     else:
-        password = request.form.get("password")
-        if password != None:
-            sql = f"update user set password = '{password}' where user_id = {user_id};"
-            cursor.execute(sql)
-        name = request.form.get("name")
-        if name != None:
-            sql = f"update user set name = '{name}' where user_id = {user_id};"
-            cursor.execute(sql)
-        gender = request.form.get("gender")
-        if gender != None:
-            sql = f"update user set gender = '{gender}' where user_id = {user_id};"
-            cursor.execute(sql)
-        data = {"ret": 0, "msg":f"用户{user_id}信息修改成功！"}
-    closeSQL(conn, cursor)
+        data = {"ret": 0, "msg": f"用户{user_id}信息修改成功！"}
     return jsonify(data)
 
 @app.route('/api/getLearningStatsByPerson', methods=["POST"])
 def getLearningStatsByPerson():
-    conn, cursor = connectSQL()
-    students = []
     user_id = request.form.get("user_id")
-
-    if user_id != None:
-        sql = f"select type from user where user_id = {user_id};"
-        cursor.execute(sql)
-        result = cursor.fetchone()
-        if result == None:
-            data = {"ret": 1, "msg": "该用户不存在！"}
-        else:
-            student = f_getLearningStatsByPerson(user_id)
-            students.append(student)
-            data = {"ret": 0, "msg":"获取信息成功！", "students":students}
+    user_ids = get_learning_stats_by_person_db(user_id)
+    
+    students = []
+    if user_ids is None:
+        data = {"ret": 1, "msg": "该用户不存在！"}
     else:
-        sql = f"select user_id from user where type = 'S';"
-        cursor.execute(sql)
-        rows = cursor.fetchall()
-        id_list = [row[0] for row in rows]
-        for user_id in id_list:
-            student = f_getLearningStatsByPerson(user_id)
+        for uid in user_ids:
+            student = f_getLearningStatsByPerson(uid)
             students.append(student)
-        data = {"ret": 0, "msg":"获取信息成功！", "students":students}
-    closeSQL(conn, cursor)
+        data = {"ret": 0, "msg": "获取信息成功！", "students": students}
     return jsonify(data)
 
 @app.route('/api/getLearningStatsByChapter', methods=["POST"])
 def getLearningStatsByChapter():
-    conn, cursor = connectSQL()
-    chapters = []
     chapter_id = request.form.get("id")
-
-    if chapter_id != None:
-        sql = f"select name from chapter where id = {chapter_id};"
-        cursor.execute(sql)
-        result = cursor.fetchone()
-        if result == None:
-            data = {"ret": 1, "msg": "该章节不存在！"}
-        else:
-            chapter = f_getLearningStatsByChapter(chapter_id)
-            chapters.append(chapter)
-            data = {"ret": 0, "msg":"获取信息成功！", "chapters":chapters}
+    chapter_ids = get_learning_stats_by_chapter_db(chapter_id)
+    
+    chapters = []
+    if chapter_ids is None:
+        data = {"ret": 1, "msg": "该章节不存在！"}
     else:
-        sql = f"select id from chapter;"
-        cursor.execute(sql)
-        rows = cursor.fetchall()
-        id_list = [row[0] for row in rows]
-        for _ in id_list:
-            chapter = f_getLearningStatsByChapter(_)
+        for cid in chapter_ids:
+            chapter = f_getLearningStatsByChapter(cid)
             chapters.append(chapter)
-        data = {"ret": 0, "msg":"获取信息成功！", "chapters":chapters}
-    closeSQL(conn, cursor)
+        data = {"ret": 0, "msg": "获取信息成功！", "chapters": chapters}
     return jsonify(data)
 
 @app.route('/api/getChapterList', methods=["POST"])
 def getChapterList():
-    conn, cursor = connectSQL()
     course_id = request.form.get("id")
+    rows = get_chapter_list_db(course_id)
+    
     chapterList = []
-    sql = f"select id, name, content from chapter where course_id = {course_id};"
-    cursor.execute(sql)
-    rows = cursor.fetchall()
     for row in rows:
-        chapter = {}
-        chapter["id"] = row[0]
-        chapter["name"] = row[1]
-        chapter["content"] = row[2]
+        chapter = {"id": row[0], "name": row[1], "content": row[2]}
         chapterList.append(chapter)
-    data = {"ret": 0, "msg":"章节课件列表成功！", "chapterList":chapterList}
-    closeSQL()
+    
+    data = {"ret": 0, "msg": "章节课件列表成功！", "chapterList": chapterList}
     return jsonify(data)
 
 @app.route('/api/getCourseList', methods=["GET"])
 def getCourseList():
-    conn, cursor = connectSQL()
-    courseList = [] 
-    sql = f"select distinct id from course;"
-    cursor.execute(sql)
-    rows = cursor.fetchall()
-    for row in rows:
-        course = {}
-        course["id"] = row[0]
-        sql = f"select name, teacher from course where id = {row[0]};"
-        cursor.execute(sql)
-        result = cursor.fetchone()
-        course["name"] = result[0]
-        course["teacher_id"] = result[1]
-        sql = f"select name from user where user_id = {result[1]};"
-        cursor.execute(sql)
-        course["teacher_name"] = cursor.fetchone()[0]
-        sql = f"select COUNT(*) from course where id = {row[0]} and student is not null;"
-        cursor.execute(sql)
-        course["student_num"] = cursor.fetchone()[0]
-        courseList.append(course)
-    data = {"ret": 0, "msg":"获取课程列表成功！", "courseList":courseList}
-    closeSQL()
+    courses = get_course_list_db()
+    data = {"ret": 0, "msg": "获取课程列表成功！", "courseList": courses}
     return jsonify(data)
 
 @app.route('/api/getExercisesList', methods=["POST"])
 def getExercisesList():
-    conn, cursor = connectSQL()
     chapter_id = request.form.get("id")
+    rows = get_exercises_list_db(chapter_id)
+    
     exercisesList = []
-    sql = f"select * from exercise where chapter_id = {chapter_id};"
-    cursor.execute(sql)
-    rows = cursor.fetchall()
     for row in rows:
-        exercise = {}
-        exercise["id"] = row[0]
-        exercise["content"] = row[2]
-        exercise["answer"] = row[3]
-        exercise["difficulty"] = row[4]
-        exercise["type"] = row[5]
+        exercise = {
+            "id": row[0],
+            "content": row[2],
+            "answer": row[3],
+            "difficulty": row[4],
+            "type": row[5]
+        }
         exercisesList.append(exercise)
-    data = {"ret": 0, "msg":"获取习题列表成功！", "exercisesList":exercise}
-    closeSQL()
+    
+    data = {"ret": 0, "msg": "获取习题列表成功！", "exercisesList": exercisesList}
     return jsonify(data)
 
 @app.route('/api/student/joinCourse', methods=["POST"])
 @jwt_required()
 def joinCourse():
-    conn, cursor = connectSQL()
     course_id = request.form.get("course_id")
     student_id = get_jwt_identity()
-    sql = f"select * from course where id = {course_id} and student is null;"
-    cursor.execute(sql)
-    result = cursor.fetchone()
-    if result == None:
-        sql = f"update course set student = {student_id} where id = {course_id} and student is null;"
-        cursor.execute(sql)
-    else:
-        sql = f"select name, teacher from course where id = {course_id};"
-        cursor.execute(sql)
-        info = cursor.fetchall()[0]
-        sql = f"insert into course values({course_id}, '{info[0]}', {info[1]}, {student_id});"
-        cursor.execute(sql)
     
-    data = {"ret": 0, "msg":"加入课程成功！"}
-    closeSQL()
+    success = join_course_db(course_id, student_id)
+    
+    if not success:
+        data = {"ret": 1, "msg": "加入课程失败！"}
+    else:
+        data = {"ret": 0, "msg": "加入课程成功！"}
     return jsonify(data)
 
 @app.route('/api/student/getExerciseHistory', methods=["POST"])
 @jwt_required()
 def getExercisesHistory():
-    conn, cursor = connectSQL()
     student_id = get_jwt_identity()
+    rows = get_exercise_history_db(student_id)
+    
     keys = ["chapterId", "exerciseId", "content", "difficulty", "type", 
-        "correct_answer", "answer", "check", "analyse"]
-    sql = f'''select exercise.chapter_id, 
-                     exercise_id, 
-                     exercise_content, 
-                     difficulty, 
-                     type, 
-                     answer, 
-                     student_answer, 
-                     check, 
-                     analyse
-              from exercise, practice_history
-              where practice_history.srudent_id = {student_id}
-              and practice_history.exercise_id = exercise.id;
-        '''
-    cursor.execute(sql) 
-    rows = cursor.fetchall()
+            "correct_answer", "answer", "check", "analyse"]
+    
     exercises = [{k: row[i] for i, k in enumerate(keys)} for row in rows]
-    data = {"ret": 0, "exercises":exercises}
-    closeSQL(conn, cursor)
+    data = {"ret": 0, "exercises": exercises}
     return jsonify(data)
 
 @app.route('/api/teacher/addCourse', methods=["POST"])
 @jwt_required()
 def addCourse():
-    conn, cursor = connectSQL()
     name = request.form.get("name")
     teacher_id = get_jwt_identity()
-    sql = f"insert into course(name, teacher) values('{name}', {teacher_id});"
-    cursor.execute(sql)
-    closeSQL(conn, cursor)
-    return jsonify({"ret":0})
+    
+    success = add_course_db(name, teacher_id)
+    
+    if not success:
+        return jsonify({"ret": 1, "msg": "添加课程失败"})
+    return jsonify({"ret": 0})
 
 @app.route('/api/updateExercise', methods=["POST"])
 def updateExercise():
-    conn, cursor = connectSQL()
     id = request.form.get("id")
     content = request.form.get("content")
     answer = request.form.get("answer")
-    if content != None:
-        sql = f"update exercise set exercise_content = '{content}' where id = {id};"
-        cursor.execute(sql)
-    elif answer != None:
-        sql = f"update exercise set answer = '{answer}' where id = {id};"
-        cursor.execute(sql)
-    else:
-        data = {"ret": 1, "msg":"无修改内容！"}
-    data = {"ret": 0}
-    closeSQL(conn, cursor)
-    return jsonify(data)
+    
+    if not content and not answer:
+        return jsonify({"ret": 1, "msg": "无修改内容！"})
+    
+    success = update_exercise_db(id, content, answer)
+    return jsonify({"ret": 0} if success else {"ret": 1, "msg": "更新失败"})
 
 @app.route('/api/updateChapter', methods=["POST"])
 def updateChapter():
-    conn, cursor = connectSQL()
     id = request.form.get("id")
     content = request.form.get("content")
     name = request.form.get("name")
-    if content != None:      
-        sql = f"update chapter set content = '{content}' where id = {id};"
-        cursor.execute(sql)
-    elif name != None:
-        sql = f"update chapter set name = '{name}' where id = {id};"
-        cursor.execute(sql)
-    else:
-        data = {"ret": 1, "msg":"无修改内容！"}
-    data = {"ret": 0}
-    closeSQL(conn, cursor)
-    return jsonify(data)
+    
+    if not content and not name:
+        return jsonify({"ret": 1, "msg": "无修改内容！"})
+    
+    success = update_chapter_db(id, content, name)
+    return jsonify({"ret": 0} if success else {"ret": 1, "msg": "更新失败"})
 
 @app.route('/api/admin/getUserList', methods=["POST"])
 def getUserList():
-    conn, cursor = connectSQL()
-    type = request.form.get("type")
+    user_type = request.form.get("type")
+    rows = get_user_list_db(user_type)
+    
     keys = ["id", "phone_number", "name", "gender", "frequence", "sum_time"]
-    sql = f"select user_id, phone_number, name, gender, frequence, sum_time from user where type = '{type}';"
-    cursor.execute(sql)
-    rows = cursor.fetchall()
-    userList = [{k:row[i] for i, k in enumerate(keys)} for row in rows]
-    data = {"ret":0, "userList":userList}
-    closeSQL(conn, cursor)
+    userList = [{k: row[i] for i, k in enumerate(keys)} for row in rows]
+    
+    data = {"ret": 0, "userList": userList}
     return jsonify(data)
 
 @app.route('/api/admin/deleteUser', methods=["POST"])
 def deleteUser():
-    conn, cursor = connectSQL()
     id = request.form.get("id")
-    sql = f"delete from user where user_id = {id};"
-    cursor.execute(sql)
-    data = {"ret":0}
-    closeSQL(conn, cursor)
-    return jsonify(data)
+    success = delete_user_db(id)
+    return jsonify({"ret": 0} if success else {"ret": 1, "msg": "删除失败"})
 
 @app.route('/api/admin/getSystemStats', methods=["GET"])
 def getSystemStats():
-    conn, cursor = connectSQL()
+    result = get_system_stats_db()
+    
+    if not result:
+        return jsonify({"ret": 1, "msg": "未找到系统统计信息"})
+    
     keys = ["S_AiChat", "S_exercises", "S_check", "T_courseware", "T_exercises", "T_check"]
-    sql = f"select * from system_stats;"
-    cursor.execute(sql)
-    result = cursor.fetchone()
-    systemStats = {k:result[i] for i, k in enumerate(keys)}
-    data = {"ret":0, "systemStats":systemStats}
-    closeSQL(conn, cursor)
+    systemStats = {k: result[i] for i, k in enumerate(keys)}
+    
+    data = {"ret": 0, "systemStats": systemStats}
     return jsonify(data)
 
 @app.route('/api/deleteCourse', methods=["POST"])
 def deleteCourse():
-    conn, cursor = connectSQL()
     id = request.form.get("id")
-    sql = f"delete from course where id = {id};"
-    cursor.execute(sql)
-    data = {"ret":0}
-    closeSQL(conn, cursor)
-    return jsonify(data)
+    success = delete_course_db(id)
+    return jsonify({"ret": 0} if success else {"ret": 1, "msg": "删除失败"})
 
 @app.route('/api/deleteChapter', methods=["POST"])
 def deleteChapter():
-    conn, cursor = connectSQL()
     id = request.form.get("id")
-    sql = f"delete from chapter where id = {id};"
-    cursor.execute(sql)
-    data = {"ret":0}
-    closeSQL(conn, cursor)
-    return jsonify(data)
+    success = delete_chapter_db(id)
+    return jsonify({"ret": 0} if success else {"ret": 1, "msg": "删除失败"})
 
 @app.route('/api/deleteExercise', methods=["POST"])
 def deleteExercise():
-    conn, cursor = connectSQL()
     id = request.form.get("id")
-    sql = f"delete from exercise where id = {id};"
-    cursor.execute(sql)
-    data = {"ret":0}
-    closeSQL(conn, cursor)
-    return jsonify(data)
+    success = delete_exercise_db(id)
+    return jsonify({"ret": 0} if success else {"ret": 1, "msg": "删除失败"})
     
 # 与大模型交互相关联
 @app.route('/api/student/AIchat', methods=['POST'])

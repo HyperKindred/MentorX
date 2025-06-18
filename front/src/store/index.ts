@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia';
 import { ref, onMounted } from 'vue';
 import Home from '../views/Home/index.vue';
+import T_chapter from '../views/Teacher/Chapter/index.vue'
+import T_exercises from '../views/Teacher/Exercises/index.vue'
 // 定义 Store
 export const mainStore = defineStore('main', {
   state: () => ({

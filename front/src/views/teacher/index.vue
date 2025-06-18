@@ -1,5 +1,19 @@
 <template>
   <div class="Main">
+    <el-button type="primary" @click="dialogVisible = true">新建课程</el-button>
+    <el-dialog v-model="dialogVisible" title="新建课程" width="30%">
+      <el-input
+        v-model="Cname"
+        placeholder="请输入课程名称"
+        clearable
+      ></el-input>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleAddCourse">新建</el-button>
+        </span>
+      </template>
+    </el-dialog>
     <el-row :gutter="20" class="course-row">
       <el-col
         v-for="item in courses"
@@ -7,7 +21,12 @@
         :span="6"
         class="course-col"
       >
-        <el-card :body-style="{ padding: '10px' }" shadow="hover">
+          <el-card
+            :body-style="{ padding: '10px' }"
+            shadow="hover"
+            @click="handleCardClick(item.id, item.name)"
+            style="cursor: pointer;"
+          >
           <img :src="courseImg" class="course-img" />
           <div class="course-info">
             <h3>{{ item.name }}</h3>
@@ -31,8 +50,8 @@ import courseImg from '../../assets/images/course.png'
 const store = mainStore();
 const router = useRouter();
 const courses = ref([]);
-
-
+const Cname = ref('');
+const dialogVisible = ref(false);
 onMounted(() => {
     getCourseList();
 });
@@ -66,6 +85,44 @@ const getCourseList = () => {
         grouping: true,
       });
     });
+};
+
+const handleAddCourse = () => {
+  if (!Cname.value.trim()) {
+    ElMessage.warning('请输入课程名称');
+    return;
+  }
+  const formData = new FormData();
+  formData.append('name', Cname.value)
+
+  axios({
+    method: 'post',
+    url: `${store.ip}/api/teacher/addCourse`,
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      Authorization: localStorage.getItem('token'),
+    },
+    data: formData,
+  })
+    .then((response) => {
+      const res = response.data;
+      if (res.ret === 0) {
+        ElMessage.success('新建课程成功！');
+        Cname.value = '';
+        getCourseList();
+        dialogVisible.value = false;
+      } else {
+        ElMessage.error('新建课程失败：' + res.msg);
+      }
+    })
+    .catch(() => {
+      ElMessage.error('请求失败，请稍后重试！');
+    });
+};
+
+const handleCardClick = (id: number, name:string) => {
+  localStorage.setItem('selectedCourseId', id.toString());
+  store.addTab(name, T_chapter);
 };
 
 
