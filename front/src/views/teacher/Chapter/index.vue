@@ -242,7 +242,7 @@ const confirmRename = () => {
 const showExercises = () => {
   localStorage.setItem('selectedChapter', JSON.stringify(selectedChapter.value));
 
-  store.addTab('习题', T_Exercises);
+  store.addTab('习题列表', T_Exercises);
   
 }
 

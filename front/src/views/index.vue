@@ -13,7 +13,6 @@
     </el-tabs>
     <el-button size="small" @click="store.addTab('新页面', Home)">+ 添加页面</el-button>
     </div>
-    <!-- 内容区域 -->
     <div class="tab-content">
       <component :is="getCurrentComponent()" />
     </div>
