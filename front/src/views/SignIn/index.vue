@@ -58,18 +58,7 @@ const signIn = () =>{
             localStorage.setItem('type', responseData.type);
             localStorage.setItem('name', responseData.name);
             localStorage.setItem('token', response.data.jwt);
-            if(responseData.type == 'T'){
-            router.push({path:'/Teacher'})
-            }
-            else{
-                if(responseData.type == 'S'){
-                    router.push({path:'/Student'})
-                }
-                else{
-                    router.push({path:'/Manager'})
-                }
-            }
-            
+            store.getUserInfo();           
         } else if(responseData.ret === 1) {
             ElMessage({message: '登录失败：' + responseData.msg, type: 'error', duration: 5 * 1000, grouping: true});
         }

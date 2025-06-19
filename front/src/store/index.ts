@@ -4,6 +4,10 @@ import Home from '../views/Home/index.vue';
 import T_chapter from '../views/Teacher/Chapter/index.vue'
 import T_exercises from '../views/Teacher/Exercises/index.vue'
 import T_exercise from '../views/Teacher/Exercise/index.vue'
+import T_info from '../views/Teacher/Infomation/index.vue'
+import T_home from '../views/Teacher/index.vue'
+import M_home from '../views/Manager/index.vue'
+import S_home from '../views/Student/index.vue'
 // 定义 Store
 export const mainStore = defineStore('main', {
   state: () => ({
@@ -13,6 +17,12 @@ export const mainStore = defineStore('main', {
     ],
     activeTab: 'home',
     tabIndex: 1,
+    account: '',
+    password: '',
+    gender: 'unknown',
+    type: 'U',
+    name: '请登录'
+
   }),
   getters: {},
   actions: {
@@ -30,6 +40,29 @@ export const mainStore = defineStore('main', {
           this.activeTab = this.tabs[Math.max(0, index - 1)].name;
         }
       }
+    },
+    getUserInfo(){
+      this.account = localStorage.getItem('account') || '';
+      this.password = localStorage.getItem('password') || '';
+      this.gender = localStorage.getItem('gender') || 'unknown';
+      this.type = localStorage.getItem('type') || 'U';
+      this.name = localStorage.getItem('name') || '请登录';
+
+      let homeComponent = Home;
+      if (this.type === 'T') {
+        homeComponent = T_home;
+      } else if (this.type === 'S') {
+        homeComponent = S_home;
+      } else if (this.type === 'M') {
+        homeComponent = M_home;
+      }
+
+      this.tabs[0] = {
+        name: 'home',
+        title: '首页',
+        component: homeComponent,
+        closable: false
+      };
     }
 
   },
