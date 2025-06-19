@@ -12,23 +12,26 @@
 
     <!-- 学生作答列表 -->
     <div class="student-section">
-    <div class="student-item" v-for="student in paginatedStudents" :key="student.student_id">
-    <div class="student-name">学生姓名：{{ student.student_name }}</div>
-    <div class="student-answer">作答内容：{{ student.student_answer }}</div>
-    <div class="answer-time">作答时间：{{ student.answer_time }}</div>
+      <div
+        class="student-item"
+        v-for="student in paginatedStudents"
+        :key="student.student_id"
+        @click="showAnalysis(student)"
+      >
+        <div class="student-name">学生姓名：{{ student.student_name }}</div>
+        <div class="student-answer">作答内容：{{ student.student_answer }}</div>
+        <div class="answer-time">作答时间：{{ student.answer_time }}</div>
+        <div class="correction">
+            <span v-if="student.check is null">❓</span>
+            <span v-else-if="student.check === 1">✔️</span>
+            <span v-else-if="student.check === 0">❌</span>
+            <span v-else-if="student.check === 2">⭕</span>
+        </div>
 
-    <div class="correction">
-        批改结果：
-        <span v-if="student.is_checked === 0">❓ 未批改</span>
-        <span v-else-if="student.check === 1">✔️ 正确</span>
-        <span v-else-if="student.check === 0">❌ 错误</span>
-        <span v-else-if="student.check === 2">⭕ 半对</span>
-    </div>
-
-    <el-button type="primary" size="small" @click="ansChecker(student)" :disabled="student.is_checked === 1">
-        批改习题
-    </el-button>
-    </div>
+        <el-button type="primary" size="small" @click="ansChecker(student)" :disabled="student.is_checked === 1">
+            批改习题
+        </el-button>
+      </div>
     </div>
 
     <!-- 分页器 -->
@@ -46,13 +49,23 @@
 <el-dialog v-model="analysisDialogVisible" title="批改结果分析" width="500px">
   <p><strong>学生：</strong>{{ selectedStudent?.student_name }}</p>
   <p><strong>作答内容：</strong>{{ selectedStudent?.student_answer }}</p>
-  <p><strong>分析：</strong>{{ selectedStudent?.analysis }}</p>
+  <p>
+    <strong>批改结果：</strong>
+    <span v-if="selectedStudent?.check === 0">❌ 错误</span>
+    <span v-else-if="selectedStudent?.check === 1">✔️ 正确</span>
+    <span v-else-if="selectedStudent?.check === 2">⭕ 半对半错</span>
+    <span v-else>❓ 未批改</span>
+  </p>
+  <p v-if="selectedStudent?.check != null && selectedStudent?.analyse">
+    <strong>分析：</strong>{{ selectedStudent?.analyse }}
+  </p>
   <template #footer>
     <span class="dialog-footer">
       <el-button @click="analysisDialogVisible = false">关闭</el-button>
     </span>
   </template>
 </el-dialog>
+
 
 </template>
 
@@ -123,13 +136,8 @@ const ansChecker = (student: any) => {
     })
     .then((res) => {
       if (res.data.ret === 0) {
-        student.is_checked = 1;
-        student.check = res.data.check;
-        student.analysis = res.data.analysis;
-
+        getExercisesAns();
         selectedStudent.value = student;
-        analysisDialogVisible.value = true;
-
         ElMessage.success('批改成功');
       } else {
         ElMessage.error('批改失败：' + res.data.msg);
@@ -148,6 +156,12 @@ const paginatedStudents = computed(() => {
   const start = (currentPage.value - 1) * pageSize;
   return students.value.slice(start, start + pageSize);
 });
+
+const showAnalysis = (student: any) => {
+  selectedStudent.value = student;
+  analysisDialogVisible.value = true;
+};
+
 
 onMounted(() => {
     exercise.value = JSON.parse(localStorage.getItem('selectedExercise') || '{}');
