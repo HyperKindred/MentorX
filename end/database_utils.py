@@ -211,12 +211,39 @@ def get_course_list_db():
     finally:
         closeSQL(conn, cursor)
 
-def get_exercises_list_db(chapter_id):
+def get_exercises_list_teacher_db(chapter_id):
     conn, cursor = connectSQL()
     try:
-        sql = "SELECT id, chapter_id, exercise_content, answer, difficulty, type FROM exercise WHERE chapter_id = %s AND is_official = 1;"
+        sql = "SELECT id, exercise_content, answer, difficulty, type FROM exercise WHERE chapter_id = %s AND is_official = 1;"
         cursor.execute(sql, (chapter_id,))
-        return cursor.fetchall()
+        rows =  cursor.fetchall()
+
+        new_rows = []
+        for row in rows:
+            sql = "SELECT COUNT(*) FROM practice_history WHERE exercise_id = %s;"
+            cursor.execute(sql, (row[0],))
+            count = cursor.fetchone()[0] or 0  
+            new_rows.append( (*row, count) )   
+        rows = new_rows  
+        return rows
+    finally:
+        closeSQL(conn, cursor)
+
+def get_exercises_list_student_db(student_id, chapter_id):
+    conn, cursor = connectSQL()
+    try:
+        sql = "SELECT id, type, difficulty, exercise_content, is_official FROM exercise WHERE chapter_id = %s AND (is_official = 1 OR student_id = %s);"
+        cursor.execute(sql, (chapter_id, student_id))
+        rows =  cursor.fetchall()
+
+        new_rows = []
+        for row in rows:
+            sql = "SELECT student_answer FROM practice_history WHERE exercise_id = %s AND student_id = %s;"
+            cursor.execute(sql, (row[0], student_id))
+            result = cursor.fetchone()
+            new_rows.append( (*row, 1 if result else 0) )   
+        rows = new_rows  
+        return rows
     finally:
         closeSQL(conn, cursor)
 
@@ -236,23 +263,25 @@ def join_course_db(course_id, student_id):
     finally:
         closeSQL(conn, cursor)
 
-def get_exercise_history_db(student_id):
+def commit_exercise_db(student_id, exercise_id, student_answer):
     conn, cursor = connectSQL()
     try:
-        sql = '''SELECT exercise.chapter_id, 
-                        exercise.id, 
-                        exercise.exercise_content, 
-                        exercise.difficulty, 
-                        exercise.type, 
-                        exercise.answer, 
-                        practice_history.student_answer, 
-                        practice_history.check, 
-                        practice_history.analyse
-                FROM exercise
-                JOIN practice_history ON practice_history.exercise_id = exercise.id
-                WHERE practice_history.student_id = %s;'''
-        cursor.execute(sql, (student_id,))
-        return cursor.fetchall()
+        sql = "SELECT `check` FROM practice_history WHERE student_id = %s AND exercise_id = %s;"
+        cursor.execute(sql, (student_id, exercise_id))
+        result = cursor.fetchone()
+        if not result:
+            sql = "SELECT chapter_id FROM exercise WHERE id = %s;"
+            cursor.execute(sql, (exercise_id,))
+            chapter_id = cursor.fetchone()[0]
+            sql = "INSERT INTO practice_history(student_id, exercise_id, student_answer, chapter_id, time) values(%s, %s, %s, %s, CURRENT_TIMESTAMP);"
+            cursor.execute(sql, (student_id, exercise_id, student_answer, chapter_id))
+            return True
+        elif result[0]:
+            return False
+        else:
+            sql = "UPDATE practice_history SET student_answer = %s, time = CURRENT_TIMESTAMP WHERE student_id = %s AND exercise_id = %s;"
+            cursor.execute(sql, (student_answer, student_id, exercise_id))
+            return True
     finally:
         closeSQL(conn, cursor)
 
@@ -323,6 +352,29 @@ def get_system_stats_db():
         sql = "SELECT * FROM system_stats;"
         cursor.execute(sql)
         return cursor.fetchone()
+    finally:
+        closeSQL(conn, cursor)
+
+def get_exercise_history_db(student_id, exercise_id):
+    conn, cursor = connectSQL()
+    try:
+        sql = "SELECT student_answer, time, `check`, analyse FROM practice_history WHERE student_id = %s AND exercise_id = %s;"
+        cursor.execute(sql, (student_id, exercise_id))
+        result = cursor.fetchone()
+        if not result:
+            return 2, None
+        if result[2] is None:
+            return 3, result
+        return 0, result
+    finally:
+        closeSQL(conn, cursor)
+
+def get_student_exercises_db(exercise_id):
+    conn, cursor = connectSQL()
+    try:
+        sql = "SELECT student_id, student_answer, time, `check`, analyse, user.name FROM practice_history, user WHERE exercise_id = %s AND practice_history.student_id = user.user_id;"
+        cursor.execute(sql, (exercise_id,))
+        return cursor.fetchall()
     finally:
         closeSQL(conn, cursor)
 

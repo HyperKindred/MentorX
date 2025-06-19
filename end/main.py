@@ -124,23 +124,56 @@ def getCourseList():
     data = {"ret": 0, "msg": "获取课程列表成功！", "courseList": courses}
     return jsonify(data)
 
-@app.route('/api/getExercisesList', methods=["POST"])
-def getExercisesList():
+@app.route('/api/teacher/getExercisesList', methods=["POST"])
+def getExercisesList_teacher():
     chapter_id = request.form.get("id")
-    rows = get_exercises_list_db(chapter_id)
+    rows = get_exercises_list_teacher_db(chapter_id)
     
-    exercisesList = []
-    for row in rows:
-        exercise = {
-            "id": row[0],
-            "content": row[2],
-            "answer": row[3],
-            "difficulty": row[4],
-            "type": row[5]
-        }
-        exercisesList.append(exercise)
+    keys = ["id", "content", "answer", "difficulty", "type", "committed_num"]
+    exercisesList = [{k:row[i] for i, k in enumerate(keys)} for row in rows]
     
     data = {"ret": 0, "msg": "获取习题列表成功！", "exercisesList": exercisesList}
+    return jsonify(data)
+
+@app.route('/api/student/getExercisesList', methods=["POST"])
+@jwt_required()
+def getExercisesList_student():
+    chapter_id = request.form.get("chapter_id")
+    student_id = int(get_jwt_identity())
+    rows = get_exercises_list_student_db(student_id, chapter_id)
+    
+    keys = ["exercise_id", "type", "difficulty", "exercise_content", "is_official", "is_committed"]
+    exercisesList = [{k:row[i] for i, k in enumerate(keys)} for row in rows]
+    
+    data = {"ret": 0, "msg": "获取习题列表成功！", "exercisesList": exercisesList}
+    return jsonify(data)
+
+@app.route('/api/student/getExerciseHistory', methods=["POST"])
+@jwt_required()
+def getExerciseHistory():
+    exercise_id = request.form.get("exercise_id")
+    student_id = int(get_jwt_identity())
+    stats, result = get_exercise_history_db(student_id, exercise_id)
+    
+    if stats == 2:
+        return jsonify({"ret":2, "msg":"习题未作答！"})
+    keys = ["student_answer", "answer_time", "check", "analyse"]
+    result_data = {k:result[i] for i, k in enumerate(keys)}
+    if stats == 3:
+        data = data = {"ret": 3, "msg": "习题未批改！"}
+    else:
+        data = {"ret": 0, "msg": "作答历史获取成功！"}
+    merge_data = {**data, **result_data}
+    return jsonify(merge_data)
+
+@app.route('/api/teacher/getStudentExercises', methods=["POST"])
+def getStudentExercises():
+    exercise_id = request.form.get("exercise_id")
+    rows = get_student_exercises_db(exercise_id)
+    
+    keys = ["student_id", "student_answer", "answer_time", "check", "analyse", "student_name"]
+    students = [{k:row[i] for i, k in enumerate(keys)} for row in rows]  
+    data = {"ret": 0, "msg": "获取学生习题作答成功！", "students": students}
     return jsonify(data)
 
 @app.route('/api/student/joinCourse', methods=["POST"])
@@ -157,18 +190,14 @@ def joinCourse():
         data = {"ret": 0, "msg": "加入课程成功！"}
     return jsonify(data)
 
-@app.route('/api/student/getExerciseHistory', methods=["POST"])
+@app.route('/api/student/commitExercise', methods=["POST"])
 @jwt_required()
-def getExercisesHistory():
+def commitExercise():
     student_id = int(get_jwt_identity())
-    rows = get_exercise_history_db(student_id)
-    
-    keys = ["chapterId", "exerciseId", "content", "difficulty", "type", 
-            "correct_answer", "answer", "check", "analyse"]
-    
-    exercises = [{k: row[i] for i, k in enumerate(keys)} for row in rows]
-    data = {"ret": 0, "exercises": exercises}
-    return jsonify(data)
+    exercise_id = int(request.form.get("exercise_id"))
+    student_answer = request.form.get("student_answer")
+    success = commit_exercise_db(student_id, exercise_id, student_answer)
+    return jsonify({"ret": 0} if success else {"ret": 1, "msg": "提交失败，练习已批改！"})
 
 @app.route('/api/teacher/addCourse', methods=["POST"])
 @jwt_required()
