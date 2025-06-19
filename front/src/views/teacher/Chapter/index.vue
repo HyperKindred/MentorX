@@ -22,7 +22,7 @@
         </el-space>
       </div>
     </div>
-    <div class="content-area" v-if="selectedChapter.value">
+    <div class="content-area" v-if="selectedChapter">
       <div class="header">
         <h3>{{ selectedChapter.name }}</h3>
         <el-button type="primary" @click="showExercises">习题</el-button>
@@ -68,10 +68,11 @@
 
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue';
-import { mainStore } from '../../store/index.ts';
+import { mainStore } from '../../../store/index.ts';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
+import T_exercise from '../Exercise/index.vue'
 const store = mainStore();
 const courseId = ref('');
 const chapters = ref([]);
@@ -97,7 +98,7 @@ const handleAddChapter = () => {
     url: `${store.ip}/api/teacher/generate_teachcontent`,
     headers: {
       'Content-Type': 'multipart/form-data',
-      Authorization: localStorage.getItem('token'),
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
     },
     data: formData,
   })
@@ -126,15 +127,20 @@ const getChapterList = () => {
     url: `${store.ip}/api/getChapterList`,
     headers: {
       'Content-Type': 'multipart/form-data',
-      Authorization: localStorage.getItem('token'),
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
     },
   })
     .then((response) => {
       const responseData = response.data;
-      if (responseData.ret === 0 && responseData.chapterList?.chapter) {
+      if (responseData.ret === 0) {
+        if (responseData.chapterList?.chapter){
         chapters.value = Array.isArray(responseData.chapterList.chapter)
           ? responseData.chapterList.chapter
           : [responseData.chapterList.chapter];
+          }
+          else {
+            chapters.value = [];
+          }
       } else {
         ElMessage({
           message: '获取章节列表失败：' + responseData.msg,
@@ -160,7 +166,7 @@ const deleteChapter = (id: number) => {
   axios.post(`${store.ip}/api/deleteChapter`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
-      Authorization: localStorage.getItem('token'),
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
     }
   }).then(res => {
     if (res.data.ret === 0) {
@@ -192,7 +198,7 @@ const toggleEditContent = () => {
     axios.post(`${store.ip}/api/teacher/updateChapter`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
-        Authorization: localStorage.getItem('token'),
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
       }
     }).then(res => {
       if (res.data.ret === 0) {
@@ -224,7 +230,7 @@ const confirmRename = () => {
   axios.post(`${store.ip}/api/teacher/updateChapter`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
-      Authorization: localStorage.getItem('token'),
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
     }
   }).then(res => {
     if (res.data.ret === 0) {
@@ -255,11 +261,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.Main {
-  display: flex;
-  height: 100vh;
-  background-color: rgba(135, 206, 250, 0.254);
-}
 
 .sidebar {
   width: 20%;

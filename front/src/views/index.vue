@@ -17,14 +17,13 @@
       <!-- 登录后头像 -->
       <template v-else>
         <el-dropdown trigger="click" @command="handleDropdownCommand">
-          <span style="cursor: pointer">
-            <el-avatar
-              shape="square"
-              :size="40"
-              :src="getUserAvatar()"
-              fit="cover"
-            />
-          </span>
+          <el-avatar
+            shape="square"
+            :size="40"
+            :src="getUserAvatar()"
+            fit="cover"
+            style="cursor: pointer"
+          />
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item v-if="store.type === 'S'" command="S_info">个人信息</el-dropdown-item>
@@ -58,8 +57,8 @@
     <div class="tab-content">
       <component :is="getCurrentComponent()" />
     </div>
-    <SignIn v-model:visible="showSignIn" @switch-to-signup="handleSwitchToSignUp" />
-    <SignUp v-model:visible="showSignUp" @switch-to-signin="handleSwitchToSignIn" />
+    <SignIn v-model:visible="showSignIn" @switch-to-signup="handleSwitchToSignUp" @close-signin="closeSignIn"/>
+    <SignUp v-model:visible="showSignUp" @switch-to-signin="handleSwitchToSignIn" @close-signup="closeSignUp"/>
   </div>
 </template>
 
@@ -76,6 +75,7 @@ import logIn from '../assets/images/logIn.png';
 
 import SignIn from './SignIn/index.vue'
 import SignUp from './SignUp/index.vue'
+import T_info from './Teacher/Infomation/index.vue'
 const store = mainStore();
 const router = useRouter();
 const message = ref('');
@@ -138,6 +138,14 @@ const handleSwitchToSignIn = () => {
   showSignIn.value = true;
 };
 
+const closeSignUp = () => {
+  showSignUp.value = false;
+}
+
+const closeSignIn = () => {
+  showSignIn.value = false;
+}
+
 onMounted(() => {
   store.getUserInfo();
 });
@@ -146,6 +154,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+
 .tab-container {
   display: flex;
   flex-direction: column;

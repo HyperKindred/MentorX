@@ -30,6 +30,7 @@ const props = defineProps<{ visible: boolean }>()
 const emit = defineEmits<{
   (e: 'update:visible', value: boolean): void
   (e: 'switch-to-signup'): void
+  (e: 'close-signin'): void
 }>()
 
 const dialogVisible = ref(props.visible)
@@ -58,6 +59,7 @@ const signIn = () =>{
             localStorage.setItem('type', responseData.type);
             localStorage.setItem('name', responseData.name);
             localStorage.setItem('token', response.data.jwt);
+            emit('close-signin');
             store.getUserInfo();           
         } else if(responseData.ret === 1) {
             ElMessage({message: '登录失败：' + responseData.msg, type: 'error', duration: 5 * 1000, grouping: true});

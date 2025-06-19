@@ -50,6 +50,7 @@ const props = defineProps<{ visible: boolean }>()
 const emit = defineEmits<{
   (e: 'update:visible', value: boolean): void
   (e: 'switch-to-signin'): void
+  (e: 'close-signup'): void
 }>()
 const dialogVisible = ref(props.visible)
 watch(() => props.visible, (val) => {
@@ -74,7 +75,7 @@ const signUp = () => {
 
     axios({
         method: 'post', 
-        url: `${store.ip}/api/signUp`, 
+        url: `${store.ip}/api/register`, 
         data: formData, 
         headers:{'Content-Type': 'multipart/form-data'}}
     )
@@ -83,7 +84,7 @@ const signUp = () => {
         if (responseData.ret === 0) {
         localStorage.setItem('account', account.value);
         localStorage.setItem('name', name.value);
-        router.push({path:'/SignIn'})
+        emit('switch-to-signin')
         } else if(responseData.ret === 1) {
         ElMessage({message: '注册失败：' + responseData.msg, type: 'error', duration: 5 * 1000, grouping: true});
         }

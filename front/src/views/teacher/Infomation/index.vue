@@ -81,8 +81,8 @@
 
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue';
-import { mainStore } from '../../store/index.ts';
+import { ref, onMounted, computed } from 'vue';
+import { mainStore } from '../../../store/index.ts';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
@@ -93,6 +93,10 @@ const password = ref(localStorage.getItem('password') || '');
 const gender = ref(localStorage.getItem('gender') || '');
 const type = ref(localStorage.getItem('type') || '');
 const name = ref(localStorage.getItem('name') || '');
+const editName = ref(false);
+const editGender = ref(false);
+const showPasswordEdit = ref(false);
+
 
 const genderText = computed(() => {
   if (gender.value === 'male') return '男';
@@ -128,7 +132,7 @@ const saveInfo = (field: 'name' | 'gender' | 'password') => {
     url: `${store.ip}/api/updateInfo`,
     headers: {
       'Content-Type': 'multipart/form-data',
-      Authorization: localStorage.getItem('token'),
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
     },
     data: formData,
   })
@@ -148,6 +152,7 @@ const saveInfo = (field: 'name' | 'gender' | 'password') => {
         // 同步本地
         localStorage.setItem('name', name.value);
         localStorage.setItem('gender', gender.value);
+        store.getUserInfo();
       } else {
         ElMessage.error('保存失败：' + res.msg);
       }
@@ -161,15 +166,7 @@ const saveInfo = (field: 'name' | 'gender' | 'password') => {
 </script>
 
 <style scoped>
-.Main {
-  left: 0%;
-  top: 0%;
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background-color: rgba(135, 206, 250, 0.254);
-}
+
 .info-card {
   width: 60%;
   margin: 50px auto;
