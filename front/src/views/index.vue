@@ -1,21 +1,6 @@
 <template>
   <div class="tab-container">
     <div class="tab-header-bar">
-      <!-- 登录前头像 -->
-      <template v-if="store.type === 'U'">
-        <el-avatar
-          shape="square"
-          :size="40"
-          :src="logIn"
-          alt="logIn"
-          fit="cover"
-          @click="showLogIn = true"
-          style="cursor: pointer"
-        />
-      </template>
-
-      <!-- 登录后头像 -->
-      <template v-else>
         <el-dropdown trigger="click" @command="handleDropdownCommand">
           <el-avatar
             shape="square"
@@ -34,7 +19,7 @@
             </el-dropdown-menu>
           </template>
         </el-dropdown>
-      </template>
+
 
       <div class="username">{{ store.name }}</div>
 
@@ -57,7 +42,6 @@
     <div class="tab-content">
       <component :is="getCurrentComponent()" />
     </div>
-    <LogIn v-model:visible="showLogIn" @close-login="closeLogIn"/>
   </div>
 </template>
 
@@ -70,14 +54,10 @@ import { ElMessage } from 'element-plus';
 import TeacherImg from '../assets/images/Teacher.jpg';
 import StudentImg from '../assets/images/Student.jpg';
 import ManagerImg from '../assets/images/Manager.jpg';
-import logIn from '../assets/images/logIn.png';
-import LogIn from './LogIn/index.vue'
 import T_info from './Teacher/Infomation/index.vue'
 const store = mainStore();
 const router = useRouter();
-const message = ref('');
 const activeTab = ref('home');
-const showLogIn = ref(false);
 const tabIndex = ref(1);
 
 const handleDropdownCommand = (command: string) => {
@@ -94,7 +74,7 @@ const handleDropdownCommand = (command: string) => {
     case 'logout':
       localStorage.clear();
       store.getUserInfo();
-      location.reload();
+      router.push({path:'/Main'})
       break;
   }
 };
@@ -108,8 +88,6 @@ const getUserAvatar = () => {
       return TeacherImg;
     case 'M':
       return ManagerImg;
-    default:
-      return logIn;
   }
 };
 
@@ -120,10 +98,6 @@ function getCurrentComponent() {
 
 function onTabClick(tab: any) {
   activeTab.value = tab.name;
-}
-
-const closeLogIn = () => {
-  showLogIn.value = false;
 }
 
 onMounted(() => {
@@ -147,13 +121,22 @@ onMounted(() => {
 }
 .tab-header {
   flex: 1;
-  margin-left: 16px;
+  margin-left: 0.5rem;
+  margin-top: 1rem;
 }
+
+
 .tab-content {
   flex-grow: 1;
   overflow: auto;
   padding: 16px;
   background: #f5f5f5;
+}
+
+.username {
+  margin-left: 0.5rem;
+  color:#080808;
+  letter-spacing: 0.1rem;
 }
 
 

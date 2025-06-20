@@ -1,8 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, onMounted } from 'vue';
 import Home from '../views/Home/index.vue';
-import T_chapter from '../views/Teacher/Chapter/index.vue'
-import T_exercises from '../views/Teacher/Exercises/index.vue'
 import T_home from '../views/Teacher/index.vue'
 import M_home from '../views/Manager/index.vue'
 import S_home from '../views/Student/index.vue'

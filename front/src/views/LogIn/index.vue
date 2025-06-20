@@ -141,7 +141,8 @@ const signIn = () =>{
             localStorage.setItem('name', responseData.name);
             localStorage.setItem('token', response.data.jwt);
             emit('close-login');
-            store.getUserInfo();           
+            store.getUserInfo(); 
+            router.push({path:'/Home'});          
         } else if(responseData.ret === 1) {
             ElMessage({message: '登录失败：' + responseData.msg, type: 'error', duration: 5 * 1000, grouping: true});
         }

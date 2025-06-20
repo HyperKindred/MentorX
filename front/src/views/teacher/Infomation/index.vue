@@ -22,11 +22,12 @@
           <div class="info-item">
             <strong>性别：</strong>
             <template v-if="editGender">
-              <el-select v-model="gender" placeholder="请选择" size="small">
+              <el-select v-model="gender" placeholder="请选择" size="small" class="genderSelect">
                 <el-option label="男" value="male" />
                 <el-option label="女" value="female" />
                 <el-option label="保密" value="unknow" />
               </el-select>
+              <el-button size="small" @click="editGender = false" class="edit-btn">取消</el-button>
               <el-button size="small" type="success" @click="saveInfo('gender')" class="edit-btn">保存</el-button>
             </template>
             <template v-else>
@@ -38,7 +39,7 @@
 
         <el-col :span="12">
           <div class="info-item">
-            <strong>身份：</strong>{{ type }}
+            <strong>身份：</strong>{{ getTypeLabel(type) }}
           </div>
         </el-col>
 
@@ -47,6 +48,7 @@
             <strong>姓名：</strong>
             <template v-if="editName">
               <el-input v-model="name" size="small" class="inline-input" />
+              <el-button size="small" @click="editName = false" class="edit-btn">取消</el-button>
               <el-button size="small" type="success" @click="saveInfo('name')" class="edit-btn">保存</el-button>
             </template>
             <template v-else>
@@ -103,6 +105,16 @@ const genderText = computed(() => {
   if (gender.value === 'female') return '女';
   return '保密';
 });
+
+const typeMap: Record<string, string> = {
+  T: '教师',
+  S: '学生',
+  M: '管理员'
+};
+
+const getTypeLabel = (type: string): string => {
+  return typeMap[type] || '未知';
+};
 
 onMounted(() => {
 
@@ -168,20 +180,30 @@ const saveInfo = (field: 'name' | 'gender' | 'password') => {
 <style scoped>
 
 .info-card {
-  width: 60%;
+  font-family: Arial, Helvetica, sans-serif;
+  width: 80%;
   margin: 50px auto;
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 .info-item {
   font-size: 16px;
   margin-bottom: 12px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+
 }
+.genderSelect {
+  width: 4rem;
+}
+
 .inline-input {
-  width: 60%;
+  width: auto;
+  height: 3rem;
 }
+
 .edit-btn {
   margin-left: 10px;
 }
