@@ -203,7 +203,7 @@ def get_course_list_db(student_id = None):
             sql = "SELECT DISTINCT id FROM course;"
             cursor.execute(sql)
         else:
-            sql = "SELECT DISTINCT id FROM course_student WHERE student_id = %s;"
+            sql = "SELECT DISTINCT course_id FROM course_student WHERE student_id = %s;"
             cursor.execute(sql, (student_id))
         course_ids = [row[0] for row in cursor.fetchall()]
         
