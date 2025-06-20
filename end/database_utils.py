@@ -178,11 +178,33 @@ def get_chapter_list_db(course_id):
     finally:
         closeSQL(conn, cursor)
 
-def get_course_list_db():
+def get_ai_list_db(course_id, student_id):
     conn, cursor = connectSQL()
     try:
-        sql = "SELECT DISTINCT id FROM course;"
-        cursor.execute(sql)
+        sql = "SELECT chapter.id, chapter.name FROM chapter, communicate_history WHERE course_id = %s AND student_id = %s AND chapter.id = communicate_history.chapter_id;"
+        cursor.execute(sql, (course_id, student_id))
+        return cursor.fetchall()
+    finally:
+        closeSQL(conn, cursor)
+
+def get_ai_chat_db(student_id, chapter_id):
+    conn, cursor = connectSQL()
+    try:
+        sql = "SELECT session_id, session_name, type, content, time FROM communicate_history WHERE student_id = %s AND chapter_id = %s;"
+        cursor.execute(sql, (student_id, chapter_id))
+        return cursor.fetchall()
+    finally:
+        closeSQL(conn, cursor)
+
+def get_course_list_db(student_id = None):
+    conn, cursor = connectSQL()
+    try:
+        if student_id is None:
+            sql = "SELECT DISTINCT id FROM course;"
+            cursor.execute(sql)
+        else:
+            sql = "SELECT DISTINCT course_id FROM course_student WHERE student_id = %s;"
+            cursor.execute(sql, (student_id))
         course_ids = [row[0] for row in cursor.fetchall()]
         
         courses = []
