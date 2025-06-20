@@ -9,7 +9,7 @@
           :src="logIn"
           alt="logIn"
           fit="cover"
-          @click="showSignIn = true"
+          @click="showLogIn = true"
           style="cursor: pointer"
         />
       </template>
@@ -57,8 +57,7 @@
     <div class="tab-content">
       <component :is="getCurrentComponent()" />
     </div>
-    <SignIn v-model:visible="showSignIn" @switch-to-signup="handleSwitchToSignUp" @close-signin="closeSignIn"/>
-    <SignUp v-model:visible="showSignUp" @switch-to-signin="handleSwitchToSignIn" @close-signup="closeSignUp"/>
+    <LogIn v-model:visible="showLogIn" @close-login="closeLogIn"/>
   </div>
 </template>
 
@@ -72,16 +71,13 @@ import TeacherImg from '../assets/images/Teacher.jpg';
 import StudentImg from '../assets/images/Student.jpg';
 import ManagerImg from '../assets/images/Manager.jpg';
 import logIn from '../assets/images/logIn.png';
-
-import SignIn from './SignIn/index.vue'
-import SignUp from './SignUp/index.vue'
+import LogIn from './LogIn/index.vue'
 import T_info from './Teacher/Infomation/index.vue'
 const store = mainStore();
 const router = useRouter();
 const message = ref('');
 const activeTab = ref('home');
-const showSignIn = ref(false);
-const showSignUp = ref(false);
+const showLogIn = ref(false);
 const tabIndex = ref(1);
 
 const handleDropdownCommand = (command: string) => {
@@ -122,28 +118,12 @@ function getCurrentComponent() {
   return tab ? tab.component : null;
 }
 
-
-
 function onTabClick(tab: any) {
   activeTab.value = tab.name;
 }
 
-const handleSwitchToSignUp = () => {
-  showSignIn.value = false;
-  showSignUp.value = true;
-};
-
-const handleSwitchToSignIn = () => {
-  showSignUp.value = false;
-  showSignIn.value = true;
-};
-
-const closeSignUp = () => {
-  showSignUp.value = false;
-}
-
-const closeSignIn = () => {
-  showSignIn.value = false;
+const closeLogIn = () => {
+  showLogIn.value = false;
 }
 
 onMounted(() => {
