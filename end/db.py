@@ -6,8 +6,8 @@ from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document as LCDocument
 
 # ===== 路径配置 =====
-docx_dir = './end/knowledge'
-image_output_dir = './end/model/images'
+docx_dir = './knowledge'
+image_output_dir = './images'
 os.makedirs(image_output_dir, exist_ok=True)
 
 all_documents = []
@@ -47,9 +47,9 @@ text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=50)
 split_docs = text_splitter.split_documents(all_documents)
 
 # ===== 构建向量库 =====
-embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
 db = FAISS.from_documents(split_docs, embedding_model)
 
 # ===== 保存向量库 =====
-db.save_local("./end/model/multi_doc_vector_db")
+db.save_local("./multi_doc_vector_db")
 print("✅ 向量数据库已保存")
