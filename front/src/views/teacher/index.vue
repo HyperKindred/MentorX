@@ -47,6 +47,8 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
 import courseImg from '../../assets/images/course.png'
+import T_chapter from './Chapter/index.vue';
+
 const store = mainStore();
 const router = useRouter();
 const courses = ref([]);
@@ -62,7 +64,7 @@ const getCourseList = () => {
     method: 'get',
     url: `${store.ip}/api/getCourseList`,
     headers: {
-      Authorization: localStorage.getItem('token'),
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
     },
   })
     .then((response) => {
@@ -100,7 +102,7 @@ const handleAddCourse = () => {
     url: `${store.ip}/api/teacher/addCourse`,
     headers: {
       'Content-Type': 'multipart/form-data',
-      Authorization: localStorage.getItem('token'),
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
     },
     data: formData,
   })
@@ -129,16 +131,6 @@ const handleCardClick = (id: number, name:string) => {
 </script>
 
 <style scoped>
-.Main {
-  left: 0%;
-  top: 0%;
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-  background-color: rgba(135, 206, 250, 0.254);
-  padding: 20px;
-}
 
 .course-row {
   display: flex;

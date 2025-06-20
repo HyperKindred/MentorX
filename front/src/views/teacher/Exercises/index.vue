@@ -12,10 +12,11 @@
 
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue';
-import { mainStore } from '../../store/index.ts';
+import { mainStore } from '../../../store/index.ts';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
+import T_exercise from '../Exercises/index.vue'
 const store = mainStore();
 const router = useRouter();
 const chapter = ref<Record<string, any>>({});
@@ -38,7 +39,7 @@ const getExercisesList = () => {
   axios.post(`${store.ip}/api/getExercisesList`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
-      Authorization: localStorage.getItem('token'),
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
     }
   }).then(res => {
     if (res.data.ret === 0 && res.data.exercisesList?.exercise) {
@@ -71,17 +72,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.Main {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  background-color: rgba(135, 206, 250, 0.1);
-  padding: 16px;
-  box-sizing: border-box;
-}
 
 .exercise-list {
   display: flex;

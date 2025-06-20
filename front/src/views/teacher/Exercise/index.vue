@@ -71,7 +71,7 @@
 
 <script lang="ts" setup>
 import { ref, onMounted, computed    } from 'vue';
-import { mainStore } from '../../store/index.ts';
+import { mainStore } from '../../../store/index.ts';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
@@ -102,7 +102,7 @@ const getExercisesAns = () => {
   axios.post(`${store.ip}/api/teacher/getStudentExercises`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
-      Authorization: localStorage.getItem('token'),
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
     }
   }).then(res => {
     if (res.data.ret === 0 && res.data.students?.student) {
@@ -131,7 +131,7 @@ const ansChecker = (student: any) => {
     .post(`${store.ip}/api/teacher/checkExercise`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
-        Authorization: localStorage.getItem('token'),
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
       },
     })
     .then((res) => {
@@ -175,17 +175,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.Main {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  background-color: rgba(135, 206, 250, 0.1);
-  padding: 20px;
-  box-sizing: border-box;
-}
 
 .exercise-section {
   background: #fff;

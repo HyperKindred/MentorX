@@ -3,15 +3,13 @@ import { ref, onMounted } from 'vue';
 import Home from '../views/Home/index.vue';
 import T_chapter from '../views/Teacher/Chapter/index.vue'
 import T_exercises from '../views/Teacher/Exercises/index.vue'
-import T_exercise from '../views/Teacher/Exercise/index.vue'
-import T_info from '../views/Teacher/Infomation/index.vue'
 import T_home from '../views/Teacher/index.vue'
 import M_home from '../views/Manager/index.vue'
 import S_home from '../views/Student/index.vue'
 // 定义 Store
 export const mainStore = defineStore('main', {
   state: () => ({
-    ip:'http://10.16.206.102:5000',
+    ip:'http://10.16.202.197:5000',
     tabs: [
       { name: 'home', title: '首页', component: Home, closable: false }
     ],
@@ -21,7 +19,8 @@ export const mainStore = defineStore('main', {
     password: '',
     gender: 'unknown',
     type: 'U',
-    name: '请登录'
+    name: '请登录',
+    token: ''
 
   }),
   getters: {},
@@ -47,6 +46,7 @@ export const mainStore = defineStore('main', {
       this.gender = localStorage.getItem('gender') || 'unknown';
       this.type = localStorage.getItem('type') || 'U';
       this.name = localStorage.getItem('name') || '请登录';
+      this.token = localStorage.getItem('token') || '';
 
       let homeComponent = Home;
       if (this.type === 'T') {
