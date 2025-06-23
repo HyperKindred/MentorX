@@ -11,8 +11,8 @@ db = FAISS.load_local("./multi_doc_vector_db", embedding_model, allow_dangerous_
 OLLAMA_API_URL = 'http://localhost:11434/api/generate'
 model_name = 'deepseek-r1:1.5b'
 
-pattern_exercise = r"<exercise>(.*?)<-exercise>\s*<answer>(.*?)</answer>"
-pattern_check = r"<check>(.*?)<-check>\s*<analyse>(.*?)</analyse>"
+pattern_exercise = r"(.*?)<exercise>(.*?)<answer>(.*?)"
+pattern_check = r"(.*?)<check>(.*?)<-check>(.*?)<analyse>(.*?)</analyse>(.*?)"
 
 def ds_generate_teachcontent(Cno, chapter):
     conn, cursor = connectSQL()
@@ -49,11 +49,11 @@ def ds_generate_teachcontent(Cno, chapter):
         cleaned_content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()   
         sql = "INSERT INTO chapter(name, content, course_id) values(%s, %s, %s);"
         cursor.execute(sql, (Cname, cleaned_content, Cno))
+        return True
     except:
         return False
     finally:
         closeSQL(conn, cursor)
-        return True
 
 def ds_generate_tasks(ChapterNo, difficulty, type, student_id = None):
     conn, cursor = connectSQL()
@@ -80,17 +80,21 @@ def ds_generate_tasks(ChapterNo, difficulty, type, student_id = None):
     TYPE = type_map.get(type, '简答题')  
     DIFFI = difficulty_map.get(difficulty, "中等")
 
-    full_prompt = f"""请根据以下课件内容和要求设计一个题目，并给出参考答案，
+    full_prompt = f"""请根据以下课件内容和要求只设计一个题目，并给出参考答案，必须严格满足下列要求：
+    1.只有一个题目和答案
+    2. 题目前使用<exercise>标签，答案前使用<answer>标签
+    3. 题目与答案之间不能有任何其他文本。
+    4. 输出内容必须完全符合格式示例，不允许包含代码块或额外信息。
+
+    输出格式示例：
+    <exercise>这是题目
+    <answer>这是答案
     课件内容：
     {content}
     难度等级：
     {DIFFI}
     题目类型：
     {TYPE}
-    
-    题目与答案包含在类型标识<>中，示例：
-    <exercise>这里是示例题目</exercise>
-    <answer>这里是示例答案</answer>
     """
     try:
         response = requests.post(OLLAMA_API_URL, json={
@@ -99,11 +103,17 @@ def ds_generate_tasks(ChapterNo, difficulty, type, student_id = None):
             'stream': False
         })
         result = response.json()
+        print(result)
         raw_output = result.get('response', '')
-        match = re.search(pattern_exercise, raw_output, re.DOTALL)
+        cleaned_content = re.sub(r"<think>.*?</think>", "", raw_output, flags=re.DOTALL).strip()
+        print(cleaned_content)
+        match = re.search(pattern_exercise, cleaned_content, re.DOTALL)
+        print("_______________________________________________________")
         if match:
-            exercise = match.group(1).strip()
-            answer = match.group(2).strip()
+            exercise = match.group(2).strip()
+            answer = match.group(3).strip()
+            print(exercise)
+            print(answer)
             if student_id:
                 sql = '''INSERT INTO exercise(exercise_content, answer, difficulty, type, chapter_id, is_official, student_id)
                 VALUES(%s, %s, %s, %s, %s, 0, %s);
@@ -114,13 +124,13 @@ def ds_generate_tasks(ChapterNo, difficulty, type, student_id = None):
                 VALUES(%s, %s, %s, %s, %s, 1);
                 '''
                 cursor.execute(sql, (exercise, answer, difficulty, type, ChapterNo))
+            return True
         else:
             return False
     except:
         return False
     finally:
         closeSQL(conn, cursor)
-        return True
 
 def ds_check_answer(Eno, student_id):
     conn, cursor = connectSQL()
@@ -159,19 +169,20 @@ def ds_check_answer(Eno, student_id):
         })    
         result = response.json()
         raw_output = result.get('response', '')
-        match = re.search(pattern_check, raw_output, re.DOTALL)
+        cleaned_content = re.sub(r"<think>.*?</think>", "", raw_output, flags=re.DOTALL).strip()
+        match = re.search(pattern_check, cleaned_content, re.DOTALL)
         if match:
             check = match.group(1).strip()
             analyse = match.group(2).strip()
             sql = "UPDATE practice_history SET analyse = %s, check = %s WHERE student_id = %s AND exercise_id = %s;"
             cursor.execute(sql, (analyse, check, student_id, Eno))
+            return True, None
         else:
             return False, "模型输出结果异常！"       
     except:
         return False, "模型调用异常！"
     finally:
         closeSQL(conn, cursor)
-        return True, None
 
 def ds_aichat(student_id, chapter_id, content, session_id):
     conn, cursor = connectSQL()      
@@ -194,7 +205,8 @@ def ds_aichat(student_id, chapter_id, content, session_id):
         })
         try:
             result = response.json()
-            answer = {'ret':0, 'ans':result.get('response', '')}
+            raw_answer = {'ret':0, 'ans':result.get('response', '')}
+            answer = re.sub(r"<think>.*?</think>", "", raw_answer, flags=re.DOTALL).strip()
             if session_id is None:
                 cursor.execute("SELECT MAX(session_id) FROM communicate_history;") 
                 res = cursor.fetchone()
