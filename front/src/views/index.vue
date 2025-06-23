@@ -11,10 +11,9 @@
           />
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item v-if="store.type === 'S'" command="S_info">个人信息</el-dropdown-item>
+              <el-dropdown-item  command="information">个人信息</el-dropdown-item>
               <el-dropdown-item v-if="store.type === 'S'" command="courses">我的课程</el-dropdown-item>
-              <el-dropdown-item v-if="store.type === 'T'" command="T_info">个人信息</el-dropdown-item>
-              <el-dropdown-item v-if="store.type === 'M'" command="M_info">个人信息</el-dropdown-item>
+              <el-dropdown-item v-if="store.type === 'A'" command="users">用户管理</el-dropdown-item>
               <el-dropdown-item command="logout">登出</el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -54,7 +53,8 @@ import { ElMessage } from 'element-plus';
 import TeacherImg from '../assets/images/Teacher.jpg';
 import StudentImg from '../assets/images/Student.jpg';
 import ManagerImg from '../assets/images/Manager.jpg';
-import T_info from './Teacher/Infomation/index.vue'
+import information from './Infomation/index.vue'
+import A_user from './Admin/Users/index.vue'
 const store = mainStore();
 const router = useRouter();
 const activeTab = ref('home');
@@ -62,14 +62,13 @@ const tabIndex = ref(1);
 
 const handleDropdownCommand = (command: string) => {
   switch (command) {
-    case 'S_info':
-      break;
-    case 'T_info':
-      store.addTab('个人信息', T_info);
-      break;
-    case 'M_info':
+    case 'information':
+      store.addTab('个人信息', information);
       break;
     case 'courses':
+      break;
+    case 'users':
+      store.addTab('用户管理', A_user);
       break;
     case 'logout':
       localStorage.clear();
@@ -86,7 +85,7 @@ const getUserAvatar = () => {
       return StudentImg;
     case 'T':
       return TeacherImg;
-    case 'M':
+    case 'A':
       return ManagerImg;
   }
 };

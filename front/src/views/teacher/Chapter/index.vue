@@ -72,7 +72,7 @@ import { mainStore } from '../../../store/index.ts';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
-import T_exercise from '../Exercise/index.vue'
+import T_Exercises from '../Exercises/index.vue'
 const store = mainStore();
 const courseId = ref('');
 const chapters = ref([]);
@@ -121,10 +121,12 @@ const handleAddChapter = () => {
 
 const getChapterList = () => {
   const formData = new FormData();
-  formData.append('id', courseId.value)
+  formData.append('id', courseId.value);
+
   axios({
     method: 'post',
     url: `${store.ip}/api/getChapterList`,
+    data: formData,
     headers: {
       'Content-Type': 'multipart/form-data',
       Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -132,15 +134,14 @@ const getChapterList = () => {
   })
     .then((response) => {
       const responseData = response.data;
+      console.log('响应数据:', responseData);
+
       if (responseData.ret === 0) {
-        if (responseData.chapterList?.chapter){
-        chapters.value = Array.isArray(responseData.chapterList.chapter)
-          ? responseData.chapterList.chapter
-          : [responseData.chapterList.chapter];
-          }
-          else {
-            chapters.value = [];
-          }
+        if (Array.isArray(responseData.chapterList)) {
+          chapters.value = responseData.chapterList;
+        } else {
+          chapters.value = [];
+        }
       } else {
         ElMessage({
           message: '获取章节列表失败：' + responseData.msg,
@@ -158,6 +159,7 @@ const getChapterList = () => {
       });
     });
 };
+
 
 
 const deleteChapter = (id: number) => {

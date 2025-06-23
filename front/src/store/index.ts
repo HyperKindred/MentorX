@@ -2,12 +2,12 @@ import { defineStore } from 'pinia';
 import { ref, onMounted } from 'vue';
 import Home from '../views/Home/index.vue';
 import T_home from '../views/Teacher/index.vue'
-import M_home from '../views/Manager/index.vue'
+import A_home from '../views/Admin/index.vue'
 import S_home from '../views/Student/index.vue'
 // 定义 Store
 export const mainStore = defineStore('main', {
   state: () => ({
-    ip:'http://10.16.202.197:5000',
+    ip:'http://10.16.205.171:5000',
     tabs: [
       { name: 'home', title: '首页', component: Home, closable: false }
     ],
@@ -51,8 +51,8 @@ export const mainStore = defineStore('main', {
         homeComponent = T_home;
       } else if (this.type === 'S') {
         homeComponent = S_home;
-      } else if (this.type === 'M') {
-        homeComponent = M_home;
+      } else if (this.type === 'A') {
+        homeComponent = A_home;
       }
 
       this.tabs[0] = {

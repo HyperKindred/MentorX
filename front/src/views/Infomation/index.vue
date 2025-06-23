@@ -13,7 +13,7 @@
             <strong>密码：</strong>
             <span>******</span>
             <el-button size="small" type="primary" @click="showPasswordEdit = !showPasswordEdit" class="edit-btn">
-              修改密码
+              {{ showPasswordEdit ? '取消修改' : '修改密码' }}
             </el-button>
           </div>
         </el-col>
@@ -27,12 +27,12 @@
                 <el-option label="女" value="female" />
                 <el-option label="保密" value="unknow" />
               </el-select>
-              <el-button size="small" @click="editGender = false" class="edit-btn">取消</el-button>
+              <el-button size="small" @click="cancelEditGender" class="edit-btn">取消</el-button>
               <el-button size="small" type="success" @click="saveInfo('gender')" class="edit-btn">保存</el-button>
             </template>
             <template v-else>
               <span>{{ genderText }}</span>
-              <el-button size="small" @click="editGender = true" class="edit-btn">修改</el-button>
+              <el-button size="small" @click="startEditGender" class="edit-btn">修改</el-button>
             </template>
           </div>
         </el-col>
@@ -48,12 +48,12 @@
             <strong>姓名：</strong>
             <template v-if="editName">
               <el-input v-model="name" size="small" class="inline-input" />
-              <el-button size="small" @click="editName = false" class="edit-btn">取消</el-button>
+              <el-button size="small" @click="cancelEditName" class="edit-btn">取消</el-button>
               <el-button size="small" type="success" @click="saveInfo('name')" class="edit-btn">保存</el-button>
             </template>
             <template v-else>
               <span>{{ name }}</span>
-              <el-button size="small" @click="editName = true" class="edit-btn">修改</el-button>
+              <el-button size="small" @click="startEditName" class="edit-btn">修改</el-button>
             </template>
           </div>
         </el-col>
@@ -84,7 +84,7 @@
 
 <script lang="ts" setup>
 import { ref, onMounted, computed } from 'vue';
-import { mainStore } from '../../../store/index.ts';
+import { mainStore } from '../../store/index.ts';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
@@ -98,18 +98,23 @@ const name = ref(localStorage.getItem('name') || '');
 const editName = ref(false);
 const editGender = ref(false);
 const showPasswordEdit = ref(false);
+const originalName = ref(name.value);
+const originalGender = ref(gender.value);
+const newPassword1 = ref('');
+const newPassword2 = ref('');
+
 
 
 const genderText = computed(() => {
   if (gender.value === 'male') return '男';
   if (gender.value === 'female') return '女';
-  return '保密';
+  return '未知';
 });
 
 const typeMap: Record<string, string> = {
   T: '教师',
   S: '学生',
-  M: '管理员'
+  A: '管理员'
 };
 
 const getTypeLabel = (type: string): string => {
@@ -172,6 +177,24 @@ const saveInfo = (field: 'name' | 'gender' | 'password') => {
     .catch(() => {
       ElMessage.error('请求失败，请稍后重试！');
     });
+};
+
+const startEditName = () => {
+  originalName.value = name.value;
+  editName.value = true;
+};
+const cancelEditName = () => {
+  name.value = originalName.value;
+  editName.value = false;
+};
+
+const startEditGender = () => {
+  originalGender.value = gender.value;
+  editGender.value = true;
+};
+const cancelEditGender = () => {
+  gender.value = originalGender.value;
+  editGender.value = false;
 };
 
 
