@@ -140,6 +140,7 @@ const signIn = () =>{
             localStorage.setItem('type', responseData.type);
             localStorage.setItem('name', responseData.name);
             localStorage.setItem('token', response.data.jwt);
+            localStorage.setItem('loginTime', Date.now().toString());
             emit('close-login');
             store.getUserInfo(); 
             router.push({path:'/Home'});          

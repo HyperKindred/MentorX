@@ -63,6 +63,7 @@ import { ref, computed, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { mainStore } from '../../../store/index.ts';
 import axios from 'axios';
+import { marked } from 'marked';
 import Exercises from '../Exercises/index.vue';
 import Practice from '../Practice/index.vue';
 import AiAssistant from '../AiAssistant/index.vue';
@@ -86,37 +87,36 @@ const courseInfo = ref<CourseInfo | null>(null);
 const chapters = ref<Chapter[]>([]);
 
 /**
- * 模拟章节数据
+ * Markdown渲染器实例
  */
-const mockChapters: Chapter[] = [
-  {
-    id: 1,
-    name: '第一章：Vue基础入门',
-    content: '<h2>Vue.js 简介</h2><p>Vue.js 是一套用于构建用户界面的渐进式框架。与其它大型框架不同的是，Vue 被设计为可以自底向上逐层应用。</p><h3>核心特性</h3><ul><li>响应式数据绑定</li><li>组件化开发</li><li>虚拟DOM</li><li>指令系统</li></ul>'
-  },
-  {
-    id: 2,
-    name: '第二章：组件开发',
-    content: '<h2>Vue组件</h2><p>组件是Vue.js最强大的功能之一。组件可以扩展HTML元素，封装可重用的代码。</p><h3>组件基础</h3><ul><li>组件注册</li><li>Props传递</li><li>事件通信</li><li>插槽使用</li></ul>'
-  },
-  {
-    id: 3,
-    name: '第三章：状态管理',
-    content: '<h2>Vuex状态管理</h2><p>Vuex是一个专为Vue.js应用程序开发的状态管理模式。它采用集中式存储管理应用的所有组件的状态。</p><h3>核心概念</h3><ul><li>State</li><li>Getters</li><li>Mutations</li><li>Actions</li></ul>'
-  },
-  {
-    id: 4,
-    name: '第四章：路由配置',
-    content: '<h2>Vue Router</h2><p>Vue Router是Vue.js官方的路由管理器。它和Vue.js的核心深度集成，让构建单页面应用变得易如反掌。</p><h3>主要功能</h3><ul><li>嵌套的路由/视图表</li><li>模块化的、基于组件的路由配置</li><li>路由参数、查询、通配符</li><li>导航守卫</li></ul>'
-  }
-];
+/**
+ * 配置marked选项
+ */
+marked.setOptions({
+  gfm: true,
+  breaks: true,
+  sanitize: false
+});
 
 
-// 当前选中章节的课件内容
+
+
+/**
+ * 当前选中章节的课件内容
+ * 将Markdown格式的内容渲染为HTML
+ */
 const currentCourseware = computed(() => {
   if (activeChapter.value === null) return null;
   const chapter = chapters.value.find(c => c.id === activeChapter.value);
-  return chapter ? { title: chapter.name, content: chapter.content } : null;
+  if (!chapter) return null;
+  
+  // 渲染Markdown内容为HTML
+  const renderedContent = chapter.content ? marked.parse(chapter.content) : '';
+  
+  return { 
+    title: chapter.name, 
+    content: renderedContent 
+  };
 });
 
 // 选择章节
@@ -136,7 +136,7 @@ const handleTabClick = (tab: any) => {
 
     switch (tabName) {
       case 'exercises':
-        tabTitle = '习题练习';
+        tabTitle = '习题';
         component = Exercises;
         break;
       case 'practice':
@@ -183,32 +183,38 @@ onMounted(() => {
   }
 });
 
+/**
+ * 获取课程章节列表
+ * @param courseId 课程ID
+ */
 const getChapterList = async (courseId: number) => {
   try {
-    const response = await axios.post(`${store.ip}/api/getChapterList`, { id: courseId }, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
+    // 使用FormData格式发送请求
+    const formData = new FormData();
+    formData.append('id', courseId.toString());
+    
+    const response = await axios.post(`${store.ip}/api/getChapterList`, formData, {
       timeout: 5000
     });
-    if (response.data.ret === 0 && response.data.chapterList?.chapter) {
-      chapters.value = Array.isArray(response.data.chapterList.chapter) ? response.data.chapterList.chapter : [response.data.chapterList.chapter];
-      if (chapters.value.length > 0) {
-        activeChapter.value = chapters.value[0].id;
+    if (response.data.ret === 0) {
+      // 处理API返回的章节数据，确保chapterList是数组格式
+      const chapterList = response.data.chapterList;
+      if (chapterList) {
+        chapters.value = Array.isArray(chapterList) ? chapterList : [chapterList];
+        if (chapters.value.length > 0) {
+          activeChapter.value = chapters.value[0].id;
+        }
+      } else {
+        chapters.value = [];
       }
     } else {
-      // API返回错误时使用模拟数据
-      chapters.value = mockChapters;
-      activeChapter.value = mockChapters[0].id;
-      ElMessage.info('已切换到模拟数据模式');
+      chapters.value = [];
+      ElMessage.error('获取章节列表失败：' + response.data.msg);
     }
   } catch (error) {
     console.error('获取章节列表失败', error);
-    ElMessage.warning('网络请求失败，已切换到模拟数据模式');
-    // 使用模拟数据作为后备
-    chapters.value = mockChapters;
-    activeChapter.value = mockChapters[0].id;
+    ElMessage.error('网络请求失败，请稍后重试');
+    chapters.value = [];
   }
 };
 </script>
@@ -216,7 +222,7 @@ const getChapterList = async (courseId: number) => {
 <style scoped>
 .course-page {
   display: flex;
-  height: 100vh;
+  height: 100%;
   background-color: #f5f7fa;
 }
 
@@ -356,27 +362,162 @@ const getChapterList = async (courseId: number) => {
 .courseware-body {
   line-height: 1.6;
   color: #5a6c7d;
+  font-size: 14px;
+}
+
+/* Markdown渲染内容样式 */
+.courseware-body h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 32px 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e4e7ed;
+}
+
+.courseware-body h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 28px 0 14px 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.courseware-body h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 24px 0 12px 0;
 }
 
 .courseware-body h4 {
   font-size: 18px;
   font-weight: 600;
   color: #2c3e50;
-  margin: 24px 0 12px 0;
+  margin: 20px 0 10px 0;
+}
+
+.courseware-body h5 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 18px 0 8px 0;
+}
+
+.courseware-body h6 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 16px 0 6px 0;
 }
 
 .courseware-body p {
   margin: 12px 0;
   text-align: justify;
+  line-height: 1.7;
 }
 
-.courseware-body ul {
+.courseware-body ul,
+.courseware-body ol {
   margin: 12px 0;
   padding-left: 24px;
 }
 
 .courseware-body li {
   margin: 6px 0;
+  line-height: 1.6;
+}
+
+.courseware-body blockquote {
+  margin: 16px 0;
+  padding: 12px 16px;
+  background-color: #f8f9fa;
+  border-left: 4px solid #409eff;
+  color: #5a6c7d;
+  font-style: italic;
+}
+
+.courseware-body code {
+  background-color: #f1f2f6;
+  color: #e74c3c;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+}
+
+.courseware-body pre {
+  background-color: #2d3748;
+  color: #e2e8f0;
+  padding: 16px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 16px 0;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.courseware-body pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+}
+
+.courseware-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 13px;
+}
+
+.courseware-body th,
+.courseware-body td {
+  border: 1px solid #e4e7ed;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.courseware-body th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.courseware-body a {
+  color: #409eff;
+  text-decoration: none;
+}
+
+.courseware-body a:hover {
+  color: #66b1ff;
+  text-decoration: underline;
+}
+
+.courseware-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 12px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.courseware-body hr {
+  border: none;
+  border-top: 1px solid #e4e7ed;
+  margin: 24px 0;
+}
+
+.courseware-body strong {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.courseware-body em {
+  font-style: italic;
+  color: #5a6c7d;
 }
 
 .empty-content,

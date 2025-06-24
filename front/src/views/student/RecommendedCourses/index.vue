@@ -84,53 +84,7 @@ const loading = ref(false);
 const joinLoading = ref<Record<number, boolean>>({});
 const store = mainStore();
 
-/**
- * 模拟课程数据
- */
-const mockCourses: RecommendedCourse[] = [
-  {
-    id: 1,
-    name: 'Vue.js 3.0 完整开发教程',
-    teacher_id: 1,
-    teacher_name: '张老师',
-    student_num: 1250
-  },
-  {
-    id: 2,
-    name: 'Python数据分析实战',
-    teacher_id: 2,
-    teacher_name: '李教授',
-    student_num: 890
-  },
-  {
-    id: 3,
-    name: '机器学习基础',
-    teacher_id: 3,
-    teacher_name: '王博士',
-    student_num: 2100
-  },
-  {
-    id: 4,
-    name: 'React 现代开发实践',
-    teacher_id: 4,
-    teacher_name: '陈老师',
-    student_num: 1680
-  },
-  {
-    id: 5,
-    name: 'Node.js 后端开发',
-    teacher_id: 5,
-    teacher_name: '刘教授',
-    student_num: 950
-  },
-  {
-    id: 6,
-    name: 'TypeScript 进阶指南',
-    teacher_id: 6,
-    teacher_name: '赵老师',
-    student_num: 720
-  }
-];
+
 
 /**
  * 根据搜索关键词过滤课程
@@ -158,25 +112,21 @@ const fetchCourses = async () => {
     });
     
     if (response.data.ret === 0) {
-      // 根据API响应结构处理数据
+      // 服务器返回的是CourseList数组，确保courseList是数组格式
       const courseList = response.data.courseList;
-      if (courseList && courseList.course) {
-        // 如果返回的是单个课程对象，转换为数组
-        courses.value = Array.isArray(courseList.course) ? courseList.course : [courseList.course];
+      if (courseList) {
+        courses.value = Array.isArray(courseList) ? courseList : [courseList];
       } else {
         courses.value = [];
       }
     } else {
       ElMessage.error(response.data.msg || '获取课程列表失败');
-      // 使用模拟数据作为备用
-      courses.value = mockCourses;
-      ElMessage.info('已切换到模拟数据模式');
+      courses.value = [];
     }
   } catch (error) {
     console.error('获取课程列表失败:', error);
-    // 请求失败或超时时使用模拟数据
-    courses.value = mockCourses;
-    ElMessage.warning('网络请求失败，已切换到模拟数据模式');
+    courses.value = [];
+    ElMessage.error('网络请求失败，请稍后重试');
   } finally {
     loading.value = false;
   }
@@ -196,15 +146,20 @@ const joinCourse = async (course: RecommendedCourse) => {
       return;
     }
 
+    // 创建FormData对象，使用multipart/form-data格式发送课程ID
+    const formData = new FormData();
+    formData.append('course_id', course.id.toString());
+
     // 设置请求超时时间为3秒
-    const response = await axios.post('/api/student/joinCourse', {
-      course_id: course.id
-    }, {
+    const response = await axios.post(`${store.ip}/api/student/joinCourse`, formData, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data'
       },
       timeout: 3000
     });
+
+    console.log(response)
 
     if (response.data.ret === 0) {
       ElMessage.success('成功加入课程');
@@ -212,15 +167,10 @@ const joinCourse = async (course: RecommendedCourse) => {
       course.student_num += 1;
     } else {
       ElMessage.error(response.data.msg || '加入课程失败');
-      // 模拟加入成功（备用逻辑）
-      course.student_num += 1;
-      ElMessage.info('模拟加入课程成功');
     }
   } catch (error) {
     console.error('加入课程失败:', error);
-    // 请求失败或超时时的模拟处理
-    course.student_num += 1;
-    ElMessage.warning('网络请求失败，已模拟加入课程');
+    ElMessage.error('网络请求失败，请稍后重试');
   } finally {
     // 清除加载状态
     joinLoading.value[course.id] = false;
@@ -247,7 +197,7 @@ onMounted(() => {
 .recommended-courses {
   padding: 20px;
   background-color: #f5f7fa;
-  min-height: 100vh;
+  min-height: 100%;
 }
 
 /* 搜索栏样式 */
