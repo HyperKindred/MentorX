@@ -28,7 +28,6 @@
               <span>{{ getGenderLabel(item.gender) }}</span>
               <el-button size="small" @click="startEditGender(item)" class="edit-btn">修改</el-button>
             </template>
-            <div class="user-frequence">登录次数：{{ item.frequence }}</div>
             <div class="user-time">登录时长：{{ formatDuration(item.sum_time) }}</div>
         <el-button @click="deleteStudent(item.id)">删除</el-button>
       </div>
@@ -61,7 +60,6 @@
               <span>{{ getGenderLabel(item.gender) }}</span>
               <el-button size="small" @click="startEditGender(item)" class="edit-btn">修改</el-button>
             </template>
-            <div class="user-frequence">登录次数：{{ item.frequence }}</div>
             <div class="user-time">登录时长：{{ formatDuration(item.sum_time) }}</div>
         <el-button @click="deleteTeacher(item.id)">删除</el-button>
       </div>

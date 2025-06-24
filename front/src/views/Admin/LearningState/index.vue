@@ -7,7 +7,7 @@
             <div class="course_name">{{ item1.name }} </div>
             <div class="student-item-chapter" v-for="item2 in item1.chapters" :key="item2.id">
                 <div class="chapter_name">章节：{{ item2.name }} </div>
-                <div class="AIFrequence">AI使用次数：{{ item2.AIFrequence }} </div>
+                <div class="AIFrequence">AI使用次数：{{ item2.AiFrequence }} </div>
                 <div class="correctness">答题准确率：{{ item2.correctness }} </div>
             </div>
         </div>
@@ -18,7 +18,7 @@
         <div class="course_name">{{ item.name }} </div>
         <div class="course-item-chapter" v-for="item1 in item.chapters" :key="item1.id">
             <div class="chapter_name">章节：{{ item1.name }} </div>
-            <div class="AIFrequence">AI使用次数：{{ item1.AIFrequence }} </div>
+            <div class="AIFrequence">AI使用次数：{{ item1.AiFrequence }} </div>
             <div class="correctness">答题准确率：{{ item1.correctness }} </div>
         </div>
       </div>
@@ -51,10 +51,14 @@ const getStudentsList = () => {
   }).then(res => {
     const data = res.data;
 
-    if (data.ret === 0 && Array.isArray(data.students)) {
-      students.value = data.students;
-    } else {
-      students.value = []; 
+    if (data.ret === 0) {
+      if (Array.isArray(data.students)){
+        students.value = data.students;
+      }
+      else {
+        students.value = []; 
+      }
+    } else {    
       ElMessage.error('获取学习情况(按学生)失败：' + data.msg);
     }
   }).catch(() => {
@@ -72,10 +76,14 @@ const getCoursesList = () => {
   }).then(res => {
     const data = res.data;
 
-    if (data.ret === 0 && Array.isArray(data.courses)) {
-      courses.value = data.courses;
-    } else {
-      courses.value = []; 
+    if (data.ret === 0) {
+      if (Array.isArray(data.courses)){
+        courses.value = data.courses;
+      }
+      else {
+        courses.value = []; 
+      }
+    } else {   
       ElMessage.error('获取学习情况(按课程)失败：' + data.msg);
     }
   }).catch(() => {
