@@ -28,7 +28,7 @@ def closeSQL(p_conn, p_cursor):
 
 
 
-#     sql = "SELECT chapter_id, COUNT(*) FROM practice_history WHERE check = 'T' AND student_id = %s GROUP BY chapter_id;"
+#     sql = "SELECT chapter_id, COUNT(*) FROM practice_history WHERE `check`` = 'T' AND student_id = %s GROUP BY chapter_id;"
 #     cursor.execute(sql, (user_id,))
 #     right = cursor.fetchall()
 #     for row in right:         
@@ -79,7 +79,7 @@ def f_getLearningStatsByPerson(user_id):
     cursor.execute(sql, (user_id))
     course_ids = cursor.fetchall()
     for course_id in course_ids:
-        course = f_getLearningStatsByCourse(user_id, course_id)
+        course = f_getLearningStatsByCourse(course_id, user_id)
         courses.append(course)
     
     student["courses"] = courses
@@ -103,7 +103,7 @@ def f_getLearningStatsByChapter(chapter_id, student_id = None):
         cursor.execute(sql, (chapter_id, student_id))
         total = cursor.fetchone()[0]
         
-        sql = "SELECT COUNT(*) FROM practice_history WHERE chapter_id = %s AND check = 'T' AND student_id = %s;"
+        sql = "SELECT COUNT(*) FROM practice_history WHERE chapter_id = %s AND `check` = 'T' AND student_id = %s;"
         cursor.execute(sql, (chapter_id, student_id))
         right = cursor.fetchone()[0]
         
@@ -117,7 +117,7 @@ def f_getLearningStatsByChapter(chapter_id, student_id = None):
         cursor.execute(sql, (chapter_id,))
         total = cursor.fetchone()[0]
         
-        sql = "SELECT COUNT(*) FROM practice_history WHERE chapter_id = %s AND check = 'T';"
+        sql = "SELECT COUNT(*) FROM practice_history WHERE chapter_id = %s AND `check` = 'T';"
         cursor.execute(sql, (chapter_id,))
         right = cursor.fetchone()[0]
         
@@ -155,12 +155,19 @@ def f_getLearningStatsByCourse(course_id, student_id = None):
 
 def sign_in_db(phone_number):
     conn, cursor = connectSQL()
-    try:
+    try:       
         sql = "SELECT password, user_id, type, name, gender FROM user WHERE phone_number = %s;"
-        cursor.execute(sql, (phone_number,))
-        sql = "UPDATE user SET frequence = frequence + 1 WHERE phone_number = %s;"
-        cursor.execute(sql, (phone_number, ))
-        return cursor.fetchone(), None
+        cursor.execute(sql, (phone_number,))  
+        password = cursor.fetchone() 
+        return password
+    finally:
+        closeSQL(conn, cursor)
+
+def increase_frequence(student_id):
+    conn, cursor = connectSQL()
+    try:
+        sql = "UPDATE user SET frequence = frequence + 1 WHERE user_id = %s;"
+        cursor.execute(sql, (student_id, ))
     finally:
         closeSQL(conn, cursor)
 
@@ -523,6 +530,6 @@ def sum_time_db(user_id, time):
     try:
         sql = "UPDATE user SET sum_time = sum_time + %s WHERE user_id = %s;"
         cursor.execute(sql, (time, user_id))
-        return True
+        return True, "使用时长统计成功！"
     finally:
         closeSQL(conn, cursor)

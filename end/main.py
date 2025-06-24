@@ -72,7 +72,6 @@ def updateInfo():
 def getLearningStatsByPerson():
     user_id = request.form.get("user_id")
     user_ids = get_learning_stats_by_person_db(user_id)
-    
     students = []
     if user_ids is None:
         data = {"ret": 1, "msg": "该用户不存在！"}
@@ -320,6 +319,7 @@ def AIchat():
     success, answer = ds_aichat(student_id, chapter_id, content, int(session_id))
     if success:
         increase_count("AIchat")
+        increase_frequence(student_id)
     return jsonify({"ret":0, "answer":answer} if success else {"ret": 1, "msg": answer})
 
 @app.route('/api/student/generate_exercises', methods=['POST'])
@@ -379,7 +379,7 @@ def check_answer():
 def sumTime():
     time = request.form.get("time")
     user_id = int(get_jwt_identity())
-    success, info = sum_time_db(user_id, sumTime)
+    success, info = sum_time_db(user_id, time)
     return jsonify({"ret": 0} if success else {"ret": 1, "msg": info})
 
 if __name__ == '__main__':
