@@ -24,6 +24,40 @@
           </div>
         </div>
       </div>
+      
+      <!-- 生成习题区域 -->
+      <div class="generate-section">
+        <h3 class="nav-title">生成习题</h3>
+        <div class="generate-form">
+          <div class="form-item">
+            <label>题目类型：</label>
+            <el-select v-model="generateForm.type" placeholder="选择题目类型">
+              <el-option label="选择题" value="choices"></el-option>
+              <el-option label="填空题" value="blanks"></el-option>
+              <el-option label="问答题" value="answers"></el-option>
+              <el-option label="编程题" value="code"></el-option>
+            </el-select>
+          </div>
+          <div class="form-item">
+            <label>难度等级：</label>
+            <el-select v-model="generateForm.difficulty" placeholder="选择难度">
+              <el-option label="容易" :value="1"></el-option>
+              <el-option label="中等" :value="2"></el-option>
+              <el-option label="困难" :value="3"></el-option>
+              <el-option label="极难" :value="4"></el-option>
+            </el-select>
+          </div>
+          <el-button 
+            @click="generateExercise" 
+            type="primary" 
+            :loading="generating"
+            :disabled="!activeChapter || !generateForm.type || !generateForm.difficulty"
+            class="generate-btn"
+          >
+            {{ generating ? '生成中...' : '生成习题' }}
+          </el-button>
+        </div>
+      </div>
     </div>
     
     <!-- 右侧面板 -->
@@ -39,20 +73,78 @@
         <div v-else-if="!selectedPractice">
           <div class="practice-list">
             <div v-for="practice in practices" :key="practice.exercise_id" class="practice-item" @click="selectPractice(practice)">
-              <div class="practice-content">{{ practice.exercise_content }}</div>
+              <div class="practice-content">{{ formatPracticeContent(practice.exercise_content, 80) }}</div>
               <div class="practice-meta">
-                <span>类型: {{ practice.type }}</span>
-                <span>难度: {{ practice.difficulty }}</span>
+                <span class="practice-type">{{ getPracticeTypeText(practice.type) }}</span>
+                <span class="practice-difficulty">难度: {{ practice.difficulty }}</span>
+                <span class="practice-status" :class="{ 'submitted': practice.is_committed === 1 }">
+                  {{ practice.is_committed === 1 ? '已批改' : '未批改' }}
+                </span>
               </div>
             </div>
           </div>
         </div>
         <div v-else class="practice-detail">
           <el-button @click="backToList" class="back-button">返回列表</el-button>
-          <h3>{{ selectedPractice.exercise_content }}</h3>
-          <p><strong>类型:</strong> {{ selectedPractice.type }}</p>
-          <p><strong>难度:</strong> {{ selectedPractice.difficulty }}</p>
-          <!-- 这里可以添加更多练习详情 -->
+          
+          <!-- 题目区域 -->
+          <div class="question-section">
+            <div class="question-header">
+              <h2>题目内容</h2>
+              <div class="question-meta">
+                <el-tag type="info">{{ getPracticeTypeText(selectedPractice.type) }}</el-tag>
+                <el-tag type="warning">难度: {{ selectedPractice.difficulty }}</el-tag>
+                <el-tag v-if="selectedPractice.is_committed" type="success">已批改</el-tag>
+                <el-tag v-else type="danger">未批改</el-tag>
+              </div>
+            </div>
+            <div class="question-content" v-html="md.render(selectedPractice.exercise_content)"></div>
+          </div>
+          
+          <!-- 作答区域 -->
+          <div class="answer-section">
+            <div class="answer-header">
+              <h3>{{ selectedPractice.is_committed ? '历史答题内容' : '作答区' }}</h3>
+              <div v-if="selectedPractice.is_committed && selectedPractice.submitted_at" class="submit-time">
+                提交时间: {{ new Date(selectedPractice.submitted_at).toLocaleString() }}
+              </div>
+            </div>
+            
+            <!-- 已批改状态：显示历史答案和批改结果 -->
+            <div v-if="selectedPractice.is_committed" class="submitted-answer">
+              <div class="answer-content">
+                <h4>学生答案：</h4>
+                <pre>{{ selectedPractice.student_answer }}</pre>
+                <div v-if="selectedPractice.check_result" class="check-result">
+                  <h4>批改结果：</h4>
+                  <div class="check-score" :class="getScoreClass(selectedPractice.check_result)">
+                    评分: {{ selectedPractice.check_result }}
+                  </div>
+                  <div v-if="selectedPractice.analyse" class="check-analyse">
+                    <h4>详细分析：</h4>
+                    <div v-html="md.render(selectedPractice.analyse)"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 未批改状态：显示作答区和批改按钮 -->
+            <div v-else class="answer-input">
+              <el-input
+                v-model="currentAnswer"
+                type="textarea"
+                :rows="8"
+                placeholder="请在此输入您的答案..."
+                maxlength="2000"
+                show-word-limit
+              />
+              <div class="answer-actions">
+                <el-button @click="submitAndCheck" type="primary" :loading="checking">
+                  {{ checking ? '批改中...' : '提交并批改' }}
+                </el-button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -64,6 +156,7 @@ import { ref, onMounted, watch } from 'vue';
 import { ElMessage } from 'element-plus';
 import { mainStore } from '../../../store/index.ts';
 import axios from 'axios';
+import MarkdownIt from 'markdown-it';
 
 interface Chapter {
   id: number;
@@ -81,7 +174,17 @@ interface Practice {
   type: string;
   difficulty: number;
   exercise_content: string;
-  is_official: string;
+  is_official: string | number;
+  is_committed?: number;
+  student_answer?: string;
+  submitted_at?: string;
+  check_result?: string;
+  analyse?: string;
+}
+
+interface GenerateForm {
+  type: string;
+  difficulty: number | null;
 }
 
 const store = mainStore();
@@ -91,50 +194,15 @@ const activeChapter = ref<number | null>(null);
 const practices = ref<Practice[]>([]);
 const loading = ref(false);
 const selectedPractice = ref<Practice | null>(null);
+const currentAnswer = ref<string>('');
+const checking = ref(false);
+const generating = ref(false);
+const generateForm = ref<GenerateForm>({
+  type: '',
+  difficulty: null
+});
 
-/**
- * 模拟章节数据
- */
-const mockChapters: Chapter[] = [
-  { id: 1, name: '第一章：Vue基础' },
-  { id: 2, name: '第二章：组件开发' },
-  { id: 3, name: '第三章：状态管理' },
-  { id: 4, name: '第四章：路由配置' }
-];
 
-/**
- * 模拟个人练习数据
- */
-const mockPractices: Practice[] = [
-  {
-    exercise_id: 101,
-    type: 'choices',
-    difficulty: 1,
-    exercise_content: '个人练习：Vue组件的基本结构包含哪些部分？',
-    is_official: '0'
-  },
-  {
-    exercise_id: 102,
-    type: 'blanks',
-    difficulty: 2,
-    exercise_content: '个人练习：请填空：在Vue中，______用于定义组件的响应式数据',
-    is_official: '0'
-  },
-  {
-    exercise_id: 103,
-    type: 'answers',
-    difficulty: 3,
-    exercise_content: '个人练习：请解释Vue中props和emit的作用和使用场景',
-    is_official: '0'
-  },
-  {
-    exercise_id: 104,
-    type: 'choices',
-    difficulty: 2,
-    exercise_content: '个人练习：下列哪个指令用于条件渲染？',
-    is_official: '0'
-  }
-];
 
 onMounted(() => {
   const storedCourse = localStorage.getItem('currentCourse');
@@ -156,30 +224,27 @@ watch(activeChapter, (newChapterId) => {
 
 const getChapterList = async (courseId: number) => {
   try {
-    const response = await axios.post(`${store.ip}/api/getChapterList`, { id: courseId }, {
+    const formData = new FormData();
+    formData.append('id', courseId.toString());
+    const response = await axios.post(`${store.ip}/api/getChapterList`, formData, {
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        'Content-Type': 'multipart/form-data'
       },
       timeout: 5000
     });
-    if (response.data.ret === 0 && response.data.chapterList?.chapter) {
-      chapters.value = Array.isArray(response.data.chapterList.chapter) ? response.data.chapterList.chapter : [response.data.chapterList.chapter];
+    if (response.data.ret === 0 && response.data.chapterList) {
+      chapters.value = Array.isArray(response.data.chapterList) ? response.data.chapterList : [response.data.chapterList];
       if (chapters.value.length > 0) {
         activeChapter.value = chapters.value[0].id;
       }
     } else {
-      // API返回错误时使用模拟数据
-      chapters.value = mockChapters;
-      activeChapter.value = mockChapters[0].id;
-      ElMessage.info('已切换到模拟数据模式');
+      chapters.value = [];
+      ElMessage.error('获取章节列表失败：' + response.data.msg);
     }
   } catch (error) {
     console.error('获取章节列表失败', error);
-    ElMessage.warning('网络请求失败，已切换到模拟数据模式');
-    // 使用模拟数据作为后备
-    chapters.value = mockChapters;
-    activeChapter.value = mockChapters[0].id;
+    ElMessage.error('网络请求失败，请稍后重试');
+    chapters.value = [];
   }
 };
 
@@ -194,19 +259,17 @@ const getPracticeList = async (chapterId: number) => {
       },
       timeout: 5000
     });
-    if (response.data.ret === 0 && response.data.exercisesList?.exercise) {
-      const allPractices = Array.isArray(response.data.exercisesList.exercise) ? response.data.exercisesList.exercise : [response.data.exercisesList.exercise];
-      practices.value = allPractices.filter(ex => ex.is_official !== '1');
+    if (response.data.ret === 0 && response.data.exercisesList) {
+      const allPractices = Array.isArray(response.data.exercisesList) ? response.data.exercisesList : [response.data.exercisesList];
+      practices.value = allPractices.filter(ex => ex.is_official !== 1 && ex.is_official !== '1');
     } else {
-      // API返回错误时使用模拟数据
-      practices.value = mockPractices;
-      ElMessage.info('已切换到模拟数据模式');
+      practices.value = [];
+      ElMessage.error('获取练习列表失败：' + response.data.msg);
     }
   } catch (error) {
     console.error('获取练习列表失败', error);
-    ElMessage.warning('网络请求失败，已切换到模拟数据模式');
-    // 使用模拟数据作为后备
-    practices.value = mockPractices;
+    ElMessage.error('网络请求失败，请稍后重试');
+    practices.value = [];
   } finally {
     loading.value = false;
   }
@@ -217,12 +280,224 @@ const selectChapter = (chapter: Chapter) => {
   selectedPractice.value = null; // 切换章节时清空选中的练习
 };
 
-const selectPractice = (practice: Practice) => {
+const selectPractice = async (practice: Practice) => {
   selectedPractice.value = practice;
+  
+  // 如果习题已批改，获取历史作答记录
+  if (practice.is_committed === 1) {
+    await getPracticeHistory(practice.exercise_id);
+  }
 };
 
 const backToList = () => {
   selectedPractice.value = null;
+  currentAnswer.value = '';
+};
+
+/**
+ * 生成习题
+ */
+const generateExercise = async () => {
+  if (!activeChapter.value || !generateForm.value.type || !generateForm.value.difficulty) {
+    ElMessage.warning('请选择章节、题目类型和难度等级');
+    return;
+  }
+  
+  generating.value = true;
+  try {
+    const formData = new FormData();
+    formData.append('ChapterNo', activeChapter.value.toString());
+    formData.append('difficulty', generateForm.value.difficulty.toString());
+    formData.append('type', generateForm.value.type);
+    
+    const response = await axios.post(`${store.ip}/api/student/generate_exercises`, formData, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      timeout: 120000 // 生成习题可能需要较长时间
+    });
+    
+    if (response.data.ret === 0) {
+      ElMessage.success('习题生成成功！');
+      // 重新获取练习列表
+      await getPracticeList(activeChapter.value);
+      // 重置生成表单
+      generateForm.value = {
+        type: '',
+        difficulty: null
+      };
+    } else {
+      ElMessage.error(response.data.msg || '生成习题失败，请重试');
+    }
+  } catch (error) {
+    console.error('生成习题失败:', error);
+    ElMessage.error('生成习题失败，请重试');
+  } finally {
+    generating.value = false;
+  }
+};
+
+/**
+ * 提交答案并批改
+ */
+const submitAndCheck = async () => {
+  if (!selectedPractice.value || !currentAnswer.value.trim()) {
+    ElMessage.warning('请填写答案后再提交');
+    return;
+  }
+  
+  checking.value = true;
+  try {
+    // 先提交答案
+    const submitFormData = new FormData();
+    submitFormData.append('exercise_id', selectedPractice.value.exercise_id.toString());
+    submitFormData.append('student_answer', currentAnswer.value);
+    
+    const submitResponse = await axios.post(`${store.ip}/api/student/commitExercise`, submitFormData, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      timeout: 5000
+    });
+    
+    if (submitResponse.data.ret === 0) {
+      // 提交成功后进行批改
+      const checkFormData = new FormData();
+      checkFormData.append('Eno', selectedPractice.value.exercise_id.toString());
+      
+      const checkResponse = await axios.post(`${store.ip}/api/student/check_exercises`, checkFormData, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        timeout: 120000 // 批改可能需要较长时间
+      });
+      
+      if (checkResponse.data.ret === 0) {
+        // 批改成功，获取批改结果
+        await getPracticeHistory(selectedPractice.value.exercise_id);
+        
+        // 更新本地数据
+        selectedPractice.value.student_answer = currentAnswer.value;
+        selectedPractice.value.submitted_at = new Date().toISOString();
+        selectedPractice.value.is_committed = 1;
+        
+        // 更新practices列表中的对应项
+        const practiceIndex = practices.value.findIndex(ex => ex.exercise_id === selectedPractice.value!.exercise_id);
+        if (practiceIndex !== -1) {
+          practices.value[practiceIndex] = { ...selectedPractice.value };
+        }
+        
+        // 清空当前答案输入
+        currentAnswer.value = '';
+        
+        ElMessage.success('答案提交并批改成功！');
+      } else {
+        ElMessage.error(checkResponse.data.msg || '批改失败，请重试');
+      }
+    } else {
+      ElMessage.error(submitResponse.data.msg || '提交失败，请重试');
+    }
+  } catch (error) {
+    console.error('提交并批改失败:', error);
+    ElMessage.error('提交并批改失败，请重试');
+  } finally {
+    checking.value = false;
+  }
+};
+
+/**
+ * 获取练习历史作答记录
+ */
+const getPracticeHistory = async (exerciseId: number) => {
+  try {
+    const formData = new FormData();
+    formData.append('exercise_id', exerciseId.toString());
+    
+    const response = await axios.post(`${store.ip}/api/student/getExerciseHistory`, formData, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      timeout: 5000
+    });
+    
+    if (response.data.ret === 0) {
+      // 习题已作答且批改
+      if (selectedPractice.value) {
+        selectedPractice.value.student_answer = response.data.student_answer;
+        selectedPractice.value.submitted_at = response.data.answer_time;
+        selectedPractice.value.check_result = response.data.check;
+        selectedPractice.value.analyse = response.data.analyse;
+      }
+    } else if (response.data.ret === 2) {
+      // 习题未作答
+      if (selectedPractice.value) {
+        selectedPractice.value.is_committed = 0;
+      }
+    } else if (response.data.ret === 3) {
+      // 习题已作答但未批改
+      if (selectedPractice.value) {
+        selectedPractice.value.student_answer = response.data.student_answer;
+        selectedPractice.value.submitted_at = response.data.answer_time;
+      }
+    }
+  } catch (error) {
+    console.error('获取练习历史记录失败:', error);
+  }
+};
+
+/**
+ * 将英文练习类型转换为中文显示
+ */
+const getPracticeTypeText = (type: string): string => {
+  const typeMap: Record<string, string> = {
+    'choices': '选择题',
+    'blanks': '填空题',
+    'answers': '问答题',
+    'code': '编程题',
+    'coding': '编程题',
+    'true_false': '判断题'
+  };
+  return typeMap[type] || type;
+};
+
+/**
+ * 根据评分获取样式类名
+ */
+const getScoreClass = (score: string): string => {
+  const numScore = parseInt(score);
+  if (numScore >= 90) return 'excellent';
+  if (numScore >= 80) return 'good';
+  if (numScore >= 60) return 'pass';
+  return 'fail';
+};
+
+/**
+ * Markdown 渲染器实例
+ */
+const md = new MarkdownIt({
+  html: true,
+  linkify: true,
+  typographer: true
+});
+
+/**
+ * 将 Markdown 内容转换为纯文本并截取指定长度
+ */
+const formatPracticeContent = (content: string, maxLength: number = 50): string => {
+  if (!content) return '';
+  
+  // 将 Markdown 转换为 HTML
+  const html = md.render(content);
+  
+  // 创建临时 DOM 元素来解析 HTML
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = html;
+  
+  // 获取纯文本内容
+  const plainText = tempDiv.textContent || tempDiv.innerText || '';
+  
+  // 截取指定长度并添加省略号
+  return plainText.length > maxLength ? plainText.substring(0, maxLength) + '...' : plainText;
 };
 
 </script>
@@ -230,7 +505,7 @@ const backToList = () => {
 <style scoped>
 .course-page {
   display: flex;
-  height: 100vh;
+  height: 100%;
   background-color: #f5f7fa;
 }
 
@@ -405,5 +680,259 @@ const backToList = () => {
   color: #909399;
   display: flex;
   gap: 16px;
+}
+
+/* 生成习题区域样式 */
+.generate-section {
+  border-top: 1px solid #e4e7ed;
+  padding: 20px;
+}
+
+.generate-form {
+  padding: 0 8px;
+}
+
+.form-item {
+  margin-bottom: 16px;
+}
+
+.form-item label {
+  display: block;
+  font-size: 14px;
+  color: #606266;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.generate-btn {
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* 题目区域样式 */
+.question-section {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.question-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.question-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #2c3e50;
+}
+
+.question-meta {
+  display: flex;
+  gap: 8px;
+}
+
+.question-content {
+  background: white;
+  padding: 20px;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+  line-height: 1.6;
+  color: #303133;
+}
+
+/* Markdown 内容样式 */
+.question-content h1,
+.question-content h2,
+.question-content h3,
+.question-content h4,
+.question-content h5,
+.question-content h6 {
+  color: #2c3e50;
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.question-content p {
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+
+.question-content ul,
+.question-content ol {
+  margin-bottom: 16px;
+  padding-left: 24px;
+}
+
+.question-content li {
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.question-content code {
+  background-color: #f1f2f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9em;
+  color: #e83e8c;
+}
+
+.question-content pre {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 16px;
+  overflow-x: auto;
+  margin-bottom: 16px;
+}
+
+.question-content pre code {
+  background: none;
+  padding: 0;
+  color: #2c3e50;
+}
+
+.question-content strong {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.question-content blockquote {
+  border-left: 4px solid #409eff;
+  padding-left: 16px;
+  margin: 16px 0;
+  color: #606266;
+  font-style: italic;
+}
+
+/* 作答区域样式 */
+.answer-section {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #e4e7ed;
+}
+
+.answer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.answer-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #2c3e50;
+}
+
+.submit-time {
+  font-size: 14px;
+  color: #909399;
+}
+
+.submitted-answer {
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.answer-content h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #606266;
+  font-weight: 600;
+}
+
+.answer-content pre {
+  background: white;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  padding: 12px;
+  margin: 0 0 16px 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.check-result {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e4e7ed;
+}
+
+.check-score {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.check-score.excellent {
+  background-color: #f0f9ff;
+  color: #1890ff;
+  border: 1px solid #b3d8ff;
+}
+
+.check-score.good {
+  background-color: #f6ffed;
+  color: #52c41a;
+  border: 1px solid #b7eb8f;
+}
+
+.check-score.pass {
+  background-color: #fff7e6;
+  color: #fa8c16;
+  border: 1px solid #ffd591;
+}
+
+.check-score.fail {
+  background-color: #fff2f0;
+  color: #ff4d4f;
+  border: 1px solid #ffb3b3;
+}
+
+.check-analyse {
+  background: white;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  padding: 16px;
+  margin-top: 12px;
+}
+
+.answer-input {
+  margin-top: 8px;
+}
+
+.answer-actions {
+  margin-top: 16px;
+  text-align: right;
+}
+
+.practice-status {
+  font-weight: 500;
+}
+
+.practice-status.submitted {
+  color: #67c23a;
+}
+
+.practice-type {
+  color: #409eff;
+  font-weight: 500;
+}
+
+.practice-difficulty {
+  color: #e6a23c;
 }
 </style>

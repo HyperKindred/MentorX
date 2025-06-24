@@ -7,7 +7,6 @@ from deepseek_model import *
 
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = "secret key"
-
 jwt = JWTManager(app)
 
 # 网络跨域问题
@@ -131,7 +130,7 @@ def getCourseList_student():
 def getAiList():
     student_id = int(get_jwt_identity())
     course_id = request.form.get("course_id")
-    rows = get_ai_list_db(student_id, course_id)
+    rows = get_ai_list_db(course_id=course_id, student_id=student_id)
     chapters = [{"chapter_id": row[0], "chapter_name": row[1]} for row in rows]
 
     data = {"ret": 0, "msg": "获取聊天记录章节列表成功！", "chapters": chapters}
@@ -312,20 +311,33 @@ def deleteExercise():
     
 # 与大模型交互相关联
 @app.route('/api/student/AIchat', methods=['POST'])
+@jwt_required()
 def AIchat():
-    ChapterNo = request.form.get("ChapterNo")  
-    question = request.form.get("question")
-    
+    chapter_id = request.form.get("chapter_id")  
+    content = request.form.get("content")
+    session_id = request.form.get("session_id")
+    student_id = int(get_jwt_identity())
+    success, answer = ds_aichat(student_id, chapter_id, content, int(session_id))
+    return jsonify({"ret":0, "answer":answer} if success else {"ret": 1, "msg": answer})
 
 @app.route('/api/student/generate_exercises', methods=['POST'])
+@jwt_required()
 def generate_exercises():
-    ChapterNo = request.form.get("ChapterNo")   #章节号->课件内容
+    ChapterNo = request.form.get("ChapterNo")   
+    difficulty = request.form.get("difficulty")
+    type = request.form.get("type")
+    student_id = int(get_jwt_identity())
+    success = ds_generate_tasks(ChapterNo, difficulty, type, student_id)
+    return jsonify({"ret": 0} if success else {"ret": 1, "msg": "习题生成失败！"})
     
 
 @app.route('/api/student/check_exercises', methods=['POST'])
+@jwt_required()
 def check_exercises():
-    Eno = request.form.get("Eno")   #习题号->习题内容
-    ans = request.form.get("ans")
+    Eno = request.form.get("Eno")
+    student_id = int(get_jwt_identity())
+    success, info = ds_check_answer(Eno, student_id)
+    return jsonify({"ret": 0} if success else {"ret": 1, "msg": info})
     
 
 @app.route('/api/teacher/generate_teachcontent', methods=['POST'])
@@ -347,8 +359,8 @@ def generate_tasks():
 def check_answer():
     Eno = request.form.get("Eno")
     student_id = request.form.get("student_id")
-    success = ds_check_answer(Eno, student_id)
-    return jsonify({"ret": 0} if success else {"ret": 1, "msg": "批改习题失败！"})
+    success, info = ds_check_answer(Eno, student_id)
+    return jsonify({"ret": 0} if success else {"ret": 1, "msg": info})
 
 
 if __name__ == '__main__':

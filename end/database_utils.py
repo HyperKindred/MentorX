@@ -181,7 +181,7 @@ def get_chapter_list_db(course_id):
 def get_ai_list_db(course_id, student_id):
     conn, cursor = connectSQL()
     try:
-        sql = "SELECT chapter.id, chapter.name FROM chapter, communicate_history WHERE course_id = %s AND student_id = %s AND chapter.id = communicate_history.chapter_id;"
+        sql = "SELECT DISTINCT chapter.id, chapter.name FROM chapter, communicate_history WHERE course_id = %s AND student_id = %s AND chapter.id = communicate_history.chapter_id;"
         cursor.execute(sql, (course_id, student_id))
         return cursor.fetchall()
     finally:
@@ -278,10 +278,12 @@ def join_course_db(course_id, student_id):
         
         if result is None:
             return False
-        
+    
         sql = "INSERT INTO course_student values(%s, %s);"
         cursor.execute(sql, (course_id, student_id))   
         return True
+    except:
+        return False
     finally:
         closeSQL(conn, cursor)
 
