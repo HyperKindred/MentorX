@@ -29,6 +29,7 @@
         <el-button type="primary" @click="toggleEditContent">
           {{ isEditing ? '保存' : '修改课件内容' }}
         </el-button>
+        <el-button type="primary" @click="exportToWord">导出为 Word</el-button>
       </div>
 
       <div class="chapter-content">
@@ -40,7 +41,7 @@
           resize="none"
         />
         <el-scrollbar v-else class="read-only-content">
-          <pre>{{ selectedChapter.content }}</pre>
+          <div v-html="renderedHtml"></div>
         </el-scrollbar>
       </div>
     </div>
@@ -67,10 +68,11 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { mainStore } from '../../../store/index.ts';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+import { marked } from 'marked';
 import { ElMessage } from 'element-plus';
 import T_Exercises from '../Exercises/index.vue'
 const store = mainStore();
@@ -84,6 +86,39 @@ const editedContent = ref('');
 const renameDialogVisible = ref(false);
 const renameValue = ref('');
 const renameTargetId = ref(0);
+
+
+const renderedHtml = computed(() => {
+  return marked(selectedChapter.value.content || '');
+});
+
+const exportToWord = () => {
+  if (!selectedChapter.value) {
+    ElMessage.warning('请先选择章节');
+    return;
+  }
+
+  const markdown = selectedChapter.value.content || '';
+  const htmlContent = marked(markdown);
+
+  const fullHtml = `
+  <!DOCTYPE html>
+  <html>
+  <head><meta charset="utf-8"><title>${selectedChapter.value.name}</title></head>
+  <body>${htmlContent}</body>
+  </html>
+  `;
+
+  const blob = (window as any).htmlDocx.asBlob(fullHtml);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${selectedChapter.value.name}.docx`;
+  a.click();
+};
+
+
+
 
 const handleAddChapter = () => {
   if (!Cname.value.trim()) {

@@ -1,41 +1,27 @@
 <template>
   <div class="tab-container">
     <div class="tab-header-bar">
-        <el-dropdown trigger="click" @command="handleDropdownCommand">
-          <el-avatar
-            shape="square"
-            :size="40"
-            :src="getUserAvatar()"
-            fit="cover"
-            style="cursor: pointer"
-          />
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item  command="information">个人信息</el-dropdown-item>
-              <el-dropdown-item v-if="store.type === 'S'" command="courses">我的课程</el-dropdown-item>
-              <el-dropdown-item v-if="store.type === 'A'" command="users">用户管理</el-dropdown-item>
-              <el-dropdown-item command="logout">登出</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
+      <el-dropdown trigger="click" @command="handleDropdownCommand">
+        <el-avatar shape="square" :size="40" :src="getUserAvatar()" fit="cover" style="cursor: pointer" />
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="information">个人信息</el-dropdown-item>
+            <el-dropdown-item v-if="store.type === 'S'" command="courses">我的课程</el-dropdown-item>
+            <el-dropdown-item v-if="store.type === 'A'" command="users">用户管理</el-dropdown-item>
+            <el-dropdown-item v-if="store.type === 'A'" command="learningInfo">学习情况</el-dropdown-item>
+            <el-dropdown-item v-if="store.type === 'A'" command="stats">统计信息</el-dropdown-item>
+            <el-dropdown-item command="logout">登出</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
 
 
       <div class="username">{{ store.name }}</div>
 
-      <el-tabs
-        v-model="store.activeTab"
-        type="card"
-        @tab-remove="store.removeTab"
-        @tab-click="onTabClick"
-        class="tab-header"
-      >
-        <el-tab-pane
-          v-for="tab in store.tabs"
-          :key="tab.name"
-          :label="tab.title"
-          :name="tab.name"
-          :closable="tab.closable !== false"
-        />
+      <el-tabs v-model="store.activeTab" type="card" @tab-remove="store.removeTab" @tab-click="onTabClick"
+        class="tab-header">
+        <el-tab-pane v-for="tab in store.tabs" :key="tab.name" :label="tab.title" :name="tab.name"
+          :closable="tab.closable !== false" />
       </el-tabs>
     </div>
     <div class="tab-content">
@@ -55,11 +41,14 @@ import StudentImg from '../assets/images/Student.jpg';
 import ManagerImg from '../assets/images/Manager.jpg';
 import information from './Infomation/index.vue'
 import A_user from './Admin/Users/index.vue'
+import A_stats from './Admin/Statistic/index.vue'
+import A_learningInfo from './Admin/LearningState/index.vue'
 const store = mainStore();
 const router = useRouter();
 const activeTab = ref('home');
 const tabIndex = ref(1);
-
+const loginTime = parseInt(localStorage.getItem('loginTime') || '0', 10);
+const logoutTime = Date.now();
 const handleDropdownCommand = (command: string) => {
   switch (command) {
     case 'information':
@@ -70,10 +59,23 @@ const handleDropdownCommand = (command: string) => {
     case 'users':
       store.addTab('用户管理', A_user);
       break;
+    case 'learningInfo':
+      store.addTab('学习情况', A_learningInfo);
+      break;
+    case 'stats':
+      store.addTab('统计信息', A_stats);
+      break;
     case 'logout':
+      if (loginTime) {
+        const durationMs = logoutTime - loginTime;
+
+      }
       localStorage.clear();
-      store.getUserInfo();
-      router.push({path:'/Main'})
+      store.tabs = [
+        { name: 'home', title: '首页', component: Home, closable: false }
+      ],
+        store.getUserInfo();
+      router.push({ path: '/Main' })
       break;
   }
 };
@@ -107,17 +109,17 @@ onMounted(() => {
 </script>
 
 <style scoped>
-
 .tab-container {
   display: flex;
   flex-direction: column;
-    left: 0%;
-    top:0%;
-    position: absolute;
-    width: 100vw;
-    height: 98.5vh;
-    overflow: hidden;
+  left: 0%;
+  top: 0%;
+  position: absolute;
+  width: 100vw;
+  height: 98.5vh;
+  overflow: hidden;
 }
+
 .tab-header {
   flex: 1;
   margin-left: 0.5rem;
@@ -134,7 +136,7 @@ onMounted(() => {
 
 .username {
   margin-left: 0.5rem;
-  color:#080808;
+  color: #080808;
   letter-spacing: 0.1rem;
 }
 
@@ -147,5 +149,4 @@ onMounted(() => {
   background-color: #fff;
   border-bottom: 1px solid #eee;
 }
-
 </style>
