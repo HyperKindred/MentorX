@@ -42,12 +42,21 @@
               {{ course.student_num }}人学习
             </span>
             <el-button 
+              v-if="!isCourseEnrolled(course.id)"
               type="primary" 
               size="small" 
               :loading="joinLoading[course.id]"
               @click.stop="joinCourse(course)"
             >
               加入课程
+            </el-button>
+            <el-button 
+              v-else
+              type="success" 
+              size="small" 
+              disabled
+            >
+              已选课程
             </el-button>
           </div>
         </div>
@@ -80,6 +89,7 @@ interface RecommendedCourse {
 // 响应式数据
 const searchQuery = ref('');
 const courses = ref<RecommendedCourse[]>([]);
+const enrolledCourses = ref<RecommendedCourse[]>([]);
 const loading = ref(false);
 const joinLoading = ref<Record<number, boolean>>({});
 const store = mainStore();
@@ -98,6 +108,36 @@ const filteredCourses = computed(() => {
     course.teacher_name.toLowerCase().includes(searchQuery.value.toLowerCase())
   );
 });
+
+/**
+ * 获取已选课程列表
+ */
+const fetchEnrolledCourses = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return;
+    }
+
+    const response = await axios.get(`${store.ip}/api/student/getCourseList`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      timeout: 5000
+    });
+
+    if (response.data.ret === 0) {
+      const courseList = response.data.courseList;
+      if (courseList) {
+        enrolledCourses.value = Array.isArray(courseList) ? courseList : [courseList];
+      } else {
+        enrolledCourses.value = [];
+      }
+    }
+  } catch (error) {
+    console.error('获取已选课程列表失败:', error);
+  }
+};
 
 /**
  * 获取课程列表
@@ -165,6 +205,14 @@ const joinCourse = async (course: RecommendedCourse) => {
       ElMessage.success('成功加入课程');
       // 更新学生人数
       course.student_num += 1;
+      // 将课程添加到已选课程列表中
+      enrolledCourses.value.push({
+        id: course.id,
+        name: course.name,
+        teacher_id: course.teacher_id,
+        teacher_name: course.teacher_name,
+        student_num: course.student_num
+      });
     } else {
       ElMessage.error(response.data.msg || '加入课程失败');
     }
@@ -185,10 +233,18 @@ const viewCourse = (course: RecommendedCourse) => {
 };
 
 /**
+ * 检查课程是否已选
+ */
+const isCourseEnrolled = (courseId: number): boolean => {
+  return enrolledCourses.value.some(course => course.id === courseId || course.course_id === courseId);
+};
+
+/**
  * 组件挂载时的初始化操作
  */
-onMounted(() => {
-  fetchCourses();
+onMounted(async () => {
+  await fetchEnrolledCourses();
+  await fetchCourses();
   console.log('推荐课程组件已加载');
 });
 </script>
