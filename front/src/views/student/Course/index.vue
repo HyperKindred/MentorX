@@ -344,6 +344,7 @@ const getChapterList = async (courseId: number) => {
   flex: 1;
   overflow-y: auto;
   padding: 24px;
+  text-align: left;
 }
 
 .courseware-content {
@@ -365,159 +366,262 @@ const getChapterList = async (courseId: number) => {
   font-size: 14px;
 }
 
-/* Markdown渲染内容样式 */
-.courseware-body h1 {
-  font-size: 28px;
-  font-weight: 700;
+/* 课件内容 Markdown 样式 - Typora风格 */
+.courseware-body {
+  line-height: 1.7;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-size: 14px;
   color: #2c3e50;
-  margin: 32px 0 16px 0;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #e4e7ed;
+}
+
+/* 标题样式 */
+.courseware-body h1,
+.courseware-body h2,
+.courseware-body h3,
+.courseware-body h4,
+.courseware-body h5,
+.courseware-body h6 {
+  margin: 24px 0 16px 0;
+  font-weight: 600;
+  color: #2c3e50;
+  line-height: 1.4;
+}
+
+.courseware-body h1 {
+  font-size: 2em;
+  border-bottom: 2px solid #eaecef;
+  padding-bottom: 12px;
+  margin-bottom: 20px;
 }
 
 .courseware-body h2 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 28px 0 14px 0;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #e4e7ed;
+  font-size: 1.6em;
+  border-bottom: 1px solid #eaecef;
+  padding-bottom: 8px;
 }
 
 .courseware-body h3 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 24px 0 12px 0;
+  font-size: 1.3em;
 }
 
 .courseware-body h4 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 20px 0 10px 0;
+  font-size: 1.1em;
 }
 
 .courseware-body h5 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 18px 0 8px 0;
+  font-size: 1em;
 }
 
 .courseware-body h6 {
-  font-size: 14px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 16px 0 6px 0;
+  font-size: 0.9em;
+  color: #6a737d;
 }
 
+/* 段落样式 */
 .courseware-body p {
-  margin: 12px 0;
+  margin: 16px 0;
   text-align: justify;
-  line-height: 1.7;
+  text-justify: inter-ideograph;
 }
 
+/* 列表样式 */
 .courseware-body ul,
 .courseware-body ol {
-  margin: 12px 0;
+  margin: 16px 0;
   padding-left: 24px;
 }
 
 .courseware-body li {
-  margin: 6px 0;
+  margin: 8px 0;
   line-height: 1.6;
 }
 
+.courseware-body ul li {
+  list-style-type: disc;
+}
+
+.courseware-body ol li {
+  list-style-type: decimal;
+}
+
+/* 嵌套列表 */
+.courseware-body ul ul,
+.courseware-body ol ol,
+.courseware-body ul ol,
+.courseware-body ol ul {
+  margin: 4px 0;
+}
+
+/* 引用样式 */
 .courseware-body blockquote {
+  border-left: 4px solid #dfe2e5;
   margin: 16px 0;
-  padding: 12px 16px;
+  padding: 0 16px;
+  color: #6a737d;
   background-color: #f8f9fa;
-  border-left: 4px solid #409eff;
-  color: #5a6c7d;
-  font-style: italic;
+  border-radius: 0 3px 3px 0;
 }
 
+.courseware-body blockquote p {
+  margin: 12px 0;
+}
+
+/* 行内代码样式 */
 .courseware-body code {
-  background-color: #f1f2f6;
-  color: #e74c3c;
-  padding: 2px 6px;
+  background-color: #f6f8fa;
+  border: 1px solid #e1e4e8;
   border-radius: 3px;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: 13px;
+  padding: 2px 6px;
+  font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', 'Courier', monospace;
+  font-size: 0.85em;
+  color: #d73a49;
 }
 
+/* 代码块样式 */
 .courseware-body pre {
-  background-color: #2d3748;
-  color: #e2e8f0;
-  padding: 16px;
+  background-color: #f6f8fa;
+  border: 1px solid #e1e4e8;
   border-radius: 6px;
-  overflow-x: auto;
+  padding: 16px;
   margin: 16px 0;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: 13px;
-  line-height: 1.5;
+  overflow-x: auto;
+  font-size: 0.85em;
+  line-height: 1.45;
 }
 
 .courseware-body pre code {
   background: none;
-  color: inherit;
+  border: none;
   padding: 0;
-  border-radius: 0;
+  color: #24292e;
+  font-size: inherit;
 }
 
+/* 表格样式 */
 .courseware-body table {
-  width: 100%;
   border-collapse: collapse;
-  margin: 16px 0;
-  font-size: 13px;
+  margin: 20px 0;
+  width: 100%;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  overflow: hidden;
 }
 
 .courseware-body th,
 .courseware-body td {
-  border: 1px solid #e4e7ed;
-  padding: 8px 12px;
+  border: 1px solid #d0d7de;
+  padding: 12px 16px;
   text-align: left;
+  vertical-align: top;
 }
 
 .courseware-body th {
-  background-color: #f8f9fa;
+  background-color: #f6f8fa;
   font-weight: 600;
-  color: #2c3e50;
+  color: #24292e;
 }
 
+.courseware-body tr:nth-child(even) {
+  background-color: #f6f8fa;
+}
+
+.courseware-body tr:hover {
+  background-color: #f1f8ff;
+}
+
+/* 链接样式 */
 .courseware-body a {
-  color: #409eff;
+  color: #0969da;
   text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: all 0.2s ease;
 }
 
 .courseware-body a:hover {
-  color: #66b1ff;
-  text-decoration: underline;
+  color: #0550ae;
+  border-bottom-color: #0969da;
 }
 
+.courseware-body a:visited {
+  color: #8250df;
+}
+
+/* 图片样式 */
 .courseware-body img {
   max-width: 100%;
   height: auto;
-  border-radius: 4px;
-  margin: 12px 0;
+  border-radius: 6px;
+  margin: 16px 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* 分隔线样式 */
 .courseware-body hr {
   border: none;
-  border-top: 1px solid #e4e7ed;
+  height: 2px;
+  background-color: #d0d7de;
   margin: 24px 0;
+  border-radius: 1px;
 }
 
+/* 强调样式 */
 .courseware-body strong {
   font-weight: 600;
-  color: #2c3e50;
+  color: #24292e;
 }
 
 .courseware-body em {
   font-style: italic;
-  color: #5a6c7d;
+  color: #656d76;
+}
+
+/* 删除线样式 */
+.courseware-body del {
+  text-decoration: line-through;
+  color: #656d76;
+}
+
+/* 高亮样式 */
+.courseware-body mark {
+  background-color: #fff8c5;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+/* 任务列表样式 */
+.courseware-body input[type="checkbox"] {
+  margin-right: 8px;
+  transform: scale(1.1);
+}
+
+.courseware-body .task-list-item {
+  list-style: none;
+  margin-left: -20px;
+}
+
+/* 键盘按键样式 */
+.courseware-body kbd {
+  background-color: #f6f8fa;
+  border: 1px solid #d0d7de;
+  border-bottom-color: #afb8c1;
+  border-radius: 6px;
+  box-shadow: inset 0 -1px 0 #afb8c1;
+  color: #24292e;
+  display: inline-block;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 11px;
+  line-height: 10px;
+  padding: 3px 5px;
+  vertical-align: middle;
+}
+
+/* 首行缩进优化 */
+.courseware-body p:first-child {
+  margin-top: 0;
+}
+
+.courseware-body p:last-child {
+  margin-bottom: 0;
 }
 
 .empty-content,
