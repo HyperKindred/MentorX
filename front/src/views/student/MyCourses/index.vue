@@ -35,6 +35,7 @@
           v-for="course in filteredCourses" 
           :key="course.id"
           class="course-item"
+          @click="openCourse(course)"
         >
           
           <div class="course-info">
@@ -49,11 +50,7 @@
             </div>
           </div>
           
-          <div class="course-actions">
-            <el-button type="primary" @click="viewDetails(course)">
-              查看详情
-            </el-button>
-          </div>
+
         </div>
       </div>
     </div>
@@ -65,6 +62,8 @@ import { ref, computed, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { User, Search } from '@element-plus/icons-vue';
 import axios from 'axios';
+import { mainStore } from '../../../store/index.ts';
+import Course from '../Course/index.vue';
 
 /**
  * 我的课程数据接口定义（基于API）
@@ -79,7 +78,6 @@ interface MyCourse {
 }
 
 // 响应式数据
-const activeTab = ref('all');
 const searchQuery = ref('');
 const myCourses = ref<MyCourse[]>([]);
 const loading = ref(false);
@@ -126,11 +124,12 @@ const fetchMyCourses = async () => {
       return;
     }
 
-    // 调用API获取学生课程列表
-    const response = await axios.get('/api/student/getCourseList', {
+    // 调用API获取学生课程列表，设置5秒超时
+    const response = await axios.get(`${store.ip}/api/student/getCourseList`, {
       headers: {
         'Authorization': `Bearer ${token}`
-      }
+      },
+      timeout: 5000
     });
 
     if (response.data.ret === 0) {
@@ -144,11 +143,13 @@ const fetchMyCourses = async () => {
       }));
       ElMessage.success('课程列表加载成功');
     } else {
-      throw new Error(response.data.msg || '获取课程列表失败');
+      // API返回错误时使用模拟数据
+      myCourses.value = mockCourses;
+      ElMessage.info('已切换到模拟数据模式');
     }
   } catch (error) {
     console.error('获取我的课程失败:', error);
-    ElMessage.warning('获取课程列表失败，使用模拟数据');
+    ElMessage.warning('网络请求失败，已切换到模拟数据模式');
     // 使用模拟数据作为后备
     myCourses.value = mockCourses;
   } finally {
@@ -171,12 +172,15 @@ const filteredCourses = computed(() => {
 
 
 
+const store = mainStore();
+
 /**
- * 查看课程详情
+ * 打开课程页面
  * @param course 课程对象
  */
-const viewDetails = (course: MyCourse) => {
-  ElMessage.info(`查看课程详情：${course.name}`);
+const openCourse = (course: MyCourse) => {
+  localStorage.setItem('currentCourse', JSON.stringify(course));
+  store.addTab(`${course.name}`, Course);
 };
 
 
@@ -271,6 +275,7 @@ onMounted(() => {
   padding: 24px;
   border-bottom: 1px solid #f0f2f5;
   transition: background-color 0.2s ease;
+  cursor: pointer;
 }
 
 .course-item:last-child {

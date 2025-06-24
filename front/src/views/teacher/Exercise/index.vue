@@ -22,9 +22,9 @@
         <div class="student-answer">作答内容：{{ student.student_answer }}</div>
         <div class="answer-time">作答时间：{{ student.answer_time }}</div>
         <div class="correction">
-            <span v-if="student.check is null">❓</span>
-            <span v-else-if="student.check === 1">✔️</span>
-            <span v-else-if="student.check === 0">❌</span>
+            <span v-if="student.check === null || student.check === undefined">❓</span>
+            <span v-else-if="student.check === 0">✔️</span>
+            <span v-else-if="student.check === 1">❌</span>
             <span v-else-if="student.check === 2">⭕</span>
         </div>
 
@@ -51,8 +51,8 @@
   <p><strong>作答内容：</strong>{{ selectedStudent?.student_answer }}</p>
   <p>
     <strong>批改结果：</strong>
-    <span v-if="selectedStudent?.check === 0">❌ 错误</span>
-    <span v-else-if="selectedStudent?.check === 1">✔️ 正确</span>
+    <span v-if="selectedStudent?.check === 1">❌ 错误</span>
+    <span v-else-if="selectedStudent?.check === 0">✔️ 正确</span>
     <span v-else-if="selectedStudent?.check === 2">⭕ 半对半错</span>
     <span v-else>❓ 未批改</span>
   </p>
@@ -83,7 +83,6 @@ const selectedStudent = ref<any>(null);
 const currentPage = ref(1);
 const pageSize = 4;
 const analysisDialogVisible = ref(false);
-const selectedStudent = ref<any>(null);
 
 
 const typeMap: Record<string, string> = {
@@ -105,10 +104,13 @@ const getExercisesAns = () => {
       Authorization: `Bearer ${localStorage.getItem('token')}`,
     }
   }).then(res => {
-    if (res.data.ret === 0 && res.data.students?.student) {
-      students.value = Array.isArray(res.data.students.student)
-        ? res.data.students.student
-        : [res.data.students.student];
+    if (res.data.ret === 0) {
+      if (Array.isArray(res.data.students)){
+      students.value = res.data.students;
+        }
+      else{
+        students.value = [];
+      }
     } else {
       ElMessage.error('获取学生作答情况失败：' + res.data.msg);
     }
@@ -118,17 +120,16 @@ const getExercisesAns = () => {
 }
 
 const ansChecker = (student: any) => {
-  if (student.is_checked === 1) {
+  if (student.check) {
     ElMessage.warning('该学生的习题已批改');
     return;
   }
 
   const formData = new FormData();
   formData.append('Eno', exercise.value.id);
-  formData.append('ans', student.student_answer);
-
+  formData.append('student_id', student.student_id);
   axios
-    .post(`${store.ip}/api/teacher/checkExercise`, formData, {
+    .post(`${store.ip}/api/teacher/check`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
         Authorization: `Bearer ${localStorage.getItem('token')}`,

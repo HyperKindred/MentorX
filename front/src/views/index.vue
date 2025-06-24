@@ -1,21 +1,6 @@
 <template>
   <div class="tab-container">
     <div class="tab-header-bar">
-      <!-- 登录前头像 -->
-      <template v-if="store.type === 'U'">
-        <el-avatar
-          shape="square"
-          :size="40"
-          :src="logIn"
-          alt="logIn"
-          fit="cover"
-          @click="showSignIn = true"
-          style="cursor: pointer"
-        />
-      </template>
-
-      <!-- 登录后头像 -->
-      <template v-else>
         <el-dropdown trigger="click" @command="handleDropdownCommand">
           <el-avatar
             shape="square"
@@ -26,15 +11,14 @@
           />
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item v-if="store.type === 'S'" command="S_info">个人信息</el-dropdown-item>
+              <el-dropdown-item  command="information">个人信息</el-dropdown-item>
               <el-dropdown-item v-if="store.type === 'S'" command="courses">我的课程</el-dropdown-item>
-              <el-dropdown-item v-if="store.type === 'T'" command="T_info">个人信息</el-dropdown-item>
-              <el-dropdown-item v-if="store.type === 'M'" command="M_info">个人信息</el-dropdown-item>
+              <el-dropdown-item v-if="store.type === 'A'" command="users">用户管理</el-dropdown-item>
               <el-dropdown-item command="logout">登出</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
-      </template>
+
 
       <div class="username">{{ store.name }}</div>
 
@@ -57,8 +41,6 @@
     <div class="tab-content">
       <component :is="getCurrentComponent()" />
     </div>
-    <SignIn v-model:visible="showSignIn" @switch-to-signup="handleSwitchToSignUp" @close-signin="closeSignIn"/>
-    <SignUp v-model:visible="showSignUp" @switch-to-signin="handleSwitchToSignIn" @close-signup="closeSignUp"/>
   </div>
 </template>
 
@@ -71,34 +53,27 @@ import { ElMessage } from 'element-plus';
 import TeacherImg from '../assets/images/Teacher.jpg';
 import StudentImg from '../assets/images/Student.jpg';
 import ManagerImg from '../assets/images/Manager.jpg';
-import logIn from '../assets/images/logIn.png';
-
-import SignIn from './SignIn/index.vue'
-import SignUp from './SignUp/index.vue'
-import T_info from './Teacher/Infomation/index.vue'
+import information from './Infomation/index.vue'
+import A_user from './Admin/Users/index.vue'
 const store = mainStore();
 const router = useRouter();
-const message = ref('');
 const activeTab = ref('home');
-const showSignIn = ref(false);
-const showSignUp = ref(false);
 const tabIndex = ref(1);
 
 const handleDropdownCommand = (command: string) => {
   switch (command) {
-    case 'S_info':
-      break;
-    case 'T_info':
-      store.addTab('个人信息', T_info);
-      break;
-    case 'M_info':
+    case 'information':
+      store.addTab('个人信息', information);
       break;
     case 'courses':
+      break;
+    case 'users':
+      store.addTab('用户管理', A_user);
       break;
     case 'logout':
       localStorage.clear();
       store.getUserInfo();
-      location.reload();
+      router.push({path:'/Main'})
       break;
   }
 };
@@ -110,10 +85,8 @@ const getUserAvatar = () => {
       return StudentImg;
     case 'T':
       return TeacherImg;
-    case 'M':
+    case 'A':
       return ManagerImg;
-    default:
-      return logIn;
   }
 };
 
@@ -122,28 +95,8 @@ function getCurrentComponent() {
   return tab ? tab.component : null;
 }
 
-
-
 function onTabClick(tab: any) {
   activeTab.value = tab.name;
-}
-
-const handleSwitchToSignUp = () => {
-  showSignIn.value = false;
-  showSignUp.value = true;
-};
-
-const handleSwitchToSignIn = () => {
-  showSignUp.value = false;
-  showSignIn.value = true;
-};
-
-const closeSignUp = () => {
-  showSignUp.value = false;
-}
-
-const closeSignIn = () => {
-  showSignIn.value = false;
 }
 
 onMounted(() => {
@@ -167,13 +120,22 @@ onMounted(() => {
 }
 .tab-header {
   flex: 1;
-  margin-left: 16px;
+  margin-left: 0.5rem;
+  margin-top: 1rem;
 }
+
+
 .tab-content {
   flex-grow: 1;
   overflow: auto;
   padding: 16px;
   background: #f5f5f5;
+}
+
+.username {
+  margin-left: 0.5rem;
+  color:#080808;
+  letter-spacing: 0.1rem;
 }
 
 

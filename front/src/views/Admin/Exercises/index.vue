@@ -1,51 +1,24 @@
 <template>
   <div class="Main">
-    <el-button type="primary" @click="dialogVisible = true" class="add-btn">生成习题</el-button>
     <div class="exercise-list">
-      <div class="exercise-item" v-for="item in exercises" :key="item.id" @click="handleExerciseClick(item)">
+      <div class="exercise-item" v-for="item in exercises" :key="item.id">
         <div class="question-text" :title="item.content">{{ item.content }}</div>
         <div class="difficulty">难度等级：{{ item.difficulty }} </div>
         <div class="type">题型：{{ getTypeLabel(item.type) }} </div>
         <el-button @click="deleteExercise(item)">删除</el-button>
       </div>
     </div>
-    <el-dialog v-model="dialogVisible" title="生成习题" width="30%">
-      <h2 class="input-title">请选择难度等级</h2>
-      <el-select v-model="difficulty" placeholder="难度等级" style="width: 115px" size="large">
-        <el-option label="等级1" value="1" />
-        <el-option label="等级2" value="2" />
-        <el-option label="等级3" value="3" />
-        <el-option label="等级4" value="4" />
-      </el-select>
-      <h2 class="input-title">请选择题目类型</h2>
-      <el-select v-model="type" placeholder="题目类型" style="width: 115px" size="large">
-        <el-option label="选择题" value="choices" />
-        <el-option label="填空题" value="blanks" />
-        <el-option label="简答题" value="answers" />
-      </el-select>
-      <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="createExercise">生成</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue';
 import { mainStore } from '../../../store/index.ts';
-import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
-import T_exercise from '../Exercise/index.vue'
 const store = mainStore();
-const router = useRouter();
 const chapter = ref<Record<string, any>>({});
 const exercises = ref([]);
-const difficulty = ref('');
-const type = ref('');
-const selectedExercise = ref<any>(null);
-const dialogVisible = ref(false);
 
 const typeMap: Record<string, string> = {
   choices: '选择题',
@@ -79,38 +52,6 @@ const getExercisesList = () => {
     ElMessage.error('获取习题列表失败：网络错误');
   });
 };
-
-
-const handleExerciseClick = (item: any) => {
-  selectedExercise.value = item;
-  localStorage.setItem('selectedExercise', JSON.stringify(selectedExercise.value));
-  store.addTab('习题', T_exercise);
-}
-
-const createExercise = () => {
-  const formData = new FormData();
-  formData.append('ChapterNo', chapter.value.id);
-  formData.append('difficulty', difficulty.value);
-  formData.append('type', type.value);
-
-  axios.post(`${store.ip}/api/teacher/generate_tasks`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    }
-  }).then(res => {
-    const data = res.data;
-
-    if (data.ret === 0) {
-      dialogVisible = false;
-      getExercisesList();
-    } else {
-      ElMessage.error('新建习题失败' + data.msg);
-    }
-  }).catch(() => {
-    ElMessage.error('新建习题失败：网络错误');
-  });
-}
 
 const deleteExercise = (exercise: any) => {
   const formData = new FormData();

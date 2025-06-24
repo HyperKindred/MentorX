@@ -1,16 +1,6 @@
 <template>
   <div class="student-dashboard">
-    <!-- 导航标签页 -->
-    <div class="dashboard-tabs">
-      <el-tabs v-model="activeTab" @tab-click="handleTabClick">
-        <el-tab-pane label="推荐课程" name="recommended">
-          <RecommendedCourses />
-        </el-tab-pane>
-        <el-tab-pane label="我的课程" name="my-courses">
-          <MyCourses />
-        </el-tab-pane>
-      </el-tabs>
-    </div>
+    <RecommendedCourses />
   </div>
 </template>
 
@@ -28,21 +18,7 @@ const router = useRouter();
 const message = ref('');
 const activeTab = ref('recommended');
 
-/**
- * 导航到指定组件
- * @param componentName 组件名称
- */
-function navigateTo(componentName: string) {
-  router.push({ name: componentName });
-}
 
-/**
- * 处理标签页切换事件
- * @param tab 标签页对象
- */
-const handleTabClick = (tab: any) => {
-  console.log('切换到标签页:', tab.props.name);
-};
 
 /**
  * 组件挂载时的初始化操作
