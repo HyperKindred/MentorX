@@ -1,3 +1,4 @@
+
 <template>
   <div class="tab-container">
     <div class="tab-header-bar">
@@ -11,9 +12,10 @@
           />
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item  command="information">个人信息</el-dropdown-item>
+              <el-dropdown-item v-if="store.type === 'S'" command="S_info">个人信息</el-dropdown-item>
               <el-dropdown-item v-if="store.type === 'S'" command="courses">我的课程</el-dropdown-item>
-              <el-dropdown-item v-if="store.type === 'A'" command="users">用户管理</el-dropdown-item>
+              <el-dropdown-item v-if="store.type === 'T'" command="T_info">个人信息</el-dropdown-item>
+              <el-dropdown-item v-if="store.type === 'M'" command="M_info">个人信息</el-dropdown-item>
               <el-dropdown-item command="logout">登出</el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -53,24 +55,37 @@ import { ElMessage } from 'element-plus';
 import TeacherImg from '../assets/images/Teacher.jpg';
 import StudentImg from '../assets/images/Student.jpg';
 import ManagerImg from '../assets/images/Manager.jpg';
-import information from './Infomation/index.vue'
-import A_user from './Admin/Users/index.vue'
+import T_info from './Teacher/Infomation/index.vue'
+import S_info from './Student/Infomation/index.vue'
+import S_courses from './Student/MyCourses/index.vue'
 const store = mainStore();
 const router = useRouter();
 const activeTab = ref('home');
 const tabIndex = ref(1);
 
+/**
+ * 处理下拉菜单命令
+ * @param {string} command - 菜单命令
+ */
 const handleDropdownCommand = (command: string) => {
   switch (command) {
-    case 'information':
-      store.addTab('个人信息', information);
+    case 'S_info':
+      // 学生个人信息页面
+      store.addTab('个人信息', S_info);
+      break;
+    case 'T_info':
+      // 教师个人信息页面
+      store.addTab('个人信息', T_info);
+      break;
+    case 'M_info':
+      // 管理员个人信息页面
       break;
     case 'courses':
-      break;
-    case 'users':
-      store.addTab('用户管理', A_user);
+      // 学生我的课程页面
+      store.addTab('我的课程', S_courses);
       break;
     case 'logout':
+      // 登出功能
       localStorage.clear();
       store.getUserInfo();
       router.push({path:'/Main'})
@@ -78,23 +93,34 @@ const handleDropdownCommand = (command: string) => {
   }
 };
 
-// 获取用户头像
+/**
+ * 获取用户头像
+ * @returns {string} 头像图片路径
+ */
 const getUserAvatar = () => {
   switch (store.type) {
     case 'S':
       return StudentImg;
     case 'T':
       return TeacherImg;
-    case 'A':
+    case 'M':
       return ManagerImg;
   }
 };
 
+/**
+ * 获取当前激活标签页的组件
+ * @returns {Component|null} 当前组件或null
+ */
 function getCurrentComponent() {
   const tab = store.tabs.find(t => t.name === store.activeTab);
   return tab ? tab.component : null;
 }
 
+/**
+ * 处理标签页点击事件
+ * @param {any} tab - 标签页对象
+ */
 function onTabClick(tab: any) {
   activeTab.value = tab.name;
 }
