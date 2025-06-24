@@ -146,21 +146,40 @@ onMounted(() => {
 
 .tab-header {
   flex: 1;
-  margin-left: 0.5rem;
-  margin-top: 1rem;
+  margin-left: 2rem;
+  margin-top: 1.6rem;
+  border: none;
+
 }
 
+.tab-header :deep(.el-tabs__item) {
+    background-color: white;
+    height: 3rem;
+    color: #417dff;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-right: 1px solid #417dff;
+}
+
+.tab-header :deep(.el-tabs) {
+  border-bottom: none !important;
+}
+
+
+.tab-header :deep(.el-tabs__nav) {
+  border: none !important;
+}
 
 .tab-content {
   flex-grow: 1;
   overflow: auto;
   padding: 16px;
-  background: #f5f5f5;
+  background-color: #1c3976ac;
 }
 
 .username {
   margin-left: 0.5rem;
-  color: #080808;
+  color: #ffffff;
   letter-spacing: 0.1rem;
 }
 
@@ -170,7 +189,22 @@ onMounted(() => {
   align-items: center;
   padding: 0 16px;
   height: 60px;
-  background-color: #fff;
-  border-bottom: 1px solid #eee;
+  background-color: #417dff;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.el-dropdown-menu {
+  background-color: #417dff;
+  color: white;
+}
+
+.el-dropdown-menu :deep(.el-dropdown-menu__item) {
+  background-color: #417dff;
+  color: white;
+}
+
+.el-dropdown-menu :deep(.el-dropdown-menu__item:hover) {
+  background-color: #729fff;
+  color: white;
 }
 </style>

@@ -32,7 +32,7 @@ onMounted(() => {
 .student-dashboard {
   width: 100%;
   height: 100%;
-  background-color: #f5f7fa;
+  background-color: transparent;
   overflow: hidden;
 }
 

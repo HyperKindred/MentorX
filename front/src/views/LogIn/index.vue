@@ -337,7 +337,7 @@ button.ghost:hover{
 }
 
 .overlay {
-    background-color: #417dff;
+    background-color: #1c3976ac;
     width: 200%;
     height: 100%;
     position: relative;
