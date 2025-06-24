@@ -79,7 +79,19 @@
               <div v-else class="bot-avatar">AI</div>
             </div>
             <div class="message-content">
-              <div class="message-text">{{ message.text }}</div>
+              <div class="message-text" v-if="message.sender === 'user'">{{ message.text }}</div>
+              <div 
+                class="message-text" 
+                v-else-if="message.isTyping"
+              >
+                <span class="typing-text">{{ message.displayText }}</span>
+                <span class="typing-cursor">|</span>
+              </div>
+              <div 
+                class="message-text markdown-content" 
+                v-else
+                v-html="marked(message.displayText || message.text)"
+              ></div>
               <div class="message-time">{{ formatMessageTime(message.timestamp) }}</div>
             </div>
           </div>
@@ -102,10 +114,11 @@
           <el-button 
             type="primary" 
             @click="sendMessage"
-            :disabled="!newMessage.trim()"
+            :disabled="!newMessage.trim() || isLoading"
+            :loading="isLoading"
             class="send-button"
           >
-            <i class="el-icon-position"></i>
+            <i class="el-icon-position" v-if="!isLoading"></i>
           </el-button>
         </div>
         <div class="input-hint">
@@ -117,10 +130,11 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, watch, computed, nextTick } from 'vue';
+import { ref, reactive, onMounted, watch, computed, nextTick } from 'vue';
 import { ElMessage, ElSelect, ElOption } from 'element-plus';
 import { mainStore } from '../../../store/index.ts';
 import axios from 'axios';
+import { marked } from 'marked';
 
 /**
  * 章节接口定义
@@ -147,6 +161,8 @@ interface Message {
   text: string;
   sender: 'user' | 'bot';
   timestamp?: number;
+  isTyping?: boolean;
+  displayText?: string;
 }
 
 /**
@@ -168,6 +184,7 @@ const newMessage = ref('');
 const conversationList = ref<Conversation[]>([]);
 const activeConversation = ref<number | null>(null);
 const messageList = ref<HTMLElement>();
+const isLoading = ref(false);
 
 /**
  * 当前章节名称计算属性
@@ -240,8 +257,6 @@ const getChatHistory = async (chapterId: number) => {
       }
     });
 
-    console.log(response)
-
     if (response.data.ret === 0 && response.data.sessions) {
       const sessions = Array.isArray(response.data.sessions) ? response.data.sessions : [response.data.sessions];
       
@@ -284,19 +299,19 @@ const getChatHistory = async (chapterId: number) => {
         
         sortedSessions.forEach((s: any) => {
           if (s.type === 'Q') {
-            messageList.push({
+            messageList.push(reactive<Message>({
               id: messageId++,
               text: s.content,
               sender: 'user',
               timestamp: new Date(s.time).getTime()
-            });
+            }));
           } else if (s.type === 'A') {
-            messageList.push({
+            messageList.push(reactive<Message>({
               id: messageId++,
               text: s.content,
               sender: 'bot',
               timestamp: new Date(s.time).getTime()
-            });
+            }));
           }
         });
         
@@ -397,14 +412,14 @@ const selectConversation = (conversation: Conversation) => {
  * 发送消息
  */
 const sendMessage = async () => {
-  if (!newMessage.value.trim() || activeChapter.value === null) return;
+  if (!newMessage.value.trim() || activeChapter.value === null || isLoading.value) return;
 
-  const userMessage: Message = {
+  const userMessage = reactive<Message>({
     id: Date.now(),
     text: newMessage.value,
     sender: 'user',
     timestamp: Date.now()
-  };
+  });
   messages.value.push(userMessage);
 
   const question = newMessage.value;
@@ -412,6 +427,20 @@ const sendMessage = async () => {
   
   // 记录是否为新对话
   const isNewConversation = activeConversation.value === null;
+  
+  // 设置加载状态
+  isLoading.value = true;
+  
+  // 添加加载消息
+  const loadingMessage = reactive<Message>({
+    id: Date.now() + 1,
+    text: '',
+    sender: 'bot',
+    timestamp: Date.now(),
+    isTyping: true,
+    displayText: 'AI正在思考中...'
+  });
+  messages.value.push(loadingMessage);
 
   try {
     const formData = new FormData();
@@ -431,29 +460,73 @@ const sendMessage = async () => {
       }
     });
 
-    console.log(response)
-
     if (response.data.ret === 0) {
-      const botMessage: Message = {
-        id: Date.now() + 1,
+      // 移除加载消息
+      messages.value.pop();
+      
+      // 创建AI回复消息（使用reactive确保响应式）
+      const botMessage = reactive<Message>({
+        id: Date.now() + 2,
         text: response.data.answer,
         sender: 'bot',
-        timestamp: Date.now()
-      };
+        timestamp: Date.now(),
+        isTyping: true,
+        displayText: ''
+      });
       messages.value.push(botMessage);
+      
+      // 开始逐字显示效果
+      typewriterEffect(botMessage, response.data.answer, 30);
       
       // 如果是新对话且成功，重新获取历史对话列表
       if (isNewConversation && activeChapter.value) {
         getChatHistory(activeChapter.value);
       }
     } else {
+      // 移除加载消息
+      messages.value.pop();
       ElMessage.error(response.data.msg || 'AI助手出错了');
       throw new Error(response.data.msg || 'AI助手出错了');
     }
   } catch (error) {
+    // 移除加载消息
+    if (messages.value.length > 0 && messages.value[messages.value.length - 1].isTyping) {
+      messages.value.pop();
+    }
     console.error('发送消息失败', error);
     ElMessage.error('发送消息失败');
+  } finally {
+    isLoading.value = false;
   }
+};
+
+/**
+ * 逐字显示文本效果
+ * @param message - 要显示的消息对象
+ * @param fullText - 完整的文本内容
+ * @param speed - 显示速度（毫秒）
+ */
+const typewriterEffect = (message: Message, fullText: string, speed: number = 30) => {
+  let index = 0;
+  
+  // 确保响应式更新
+  message.displayText = '';
+  message.isTyping = true;
+  message.text = fullText; // 先设置完整文本
+  
+  const timer = setInterval(() => {
+    if (index < fullText.length) {
+      message.displayText = fullText.substring(0, index + 1);
+      index++;
+      // 自动滚动到底部
+      nextTick(() => {
+        scrollToBottom();
+      });
+    } else {
+      message.isTyping = false;
+      clearInterval(timer);
+    }
+  }, speed);
 };
 
 /**
@@ -722,6 +795,142 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 
 .message-item.user .message-time {
   text-align: left;
+}
+
+/* 打字效果样式 */
+.typing-text {
+  display: inline;
+}
+
+.typing-cursor {
+  display: inline-block;
+  animation: blink 1s infinite;
+  color: #6366f1;
+  font-weight: bold;
+}
+
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
+/* Markdown内容样式 */
+.markdown-content {
+  line-height: 1.6;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  margin: 16px 0 8px 0;
+  font-weight: 600;
+  color: #374151;
+}
+
+.markdown-content h1 {
+  font-size: 1.5em;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 8px;
+}
+
+.markdown-content h2 {
+  font-size: 1.3em;
+}
+
+.markdown-content h3 {
+  font-size: 1.1em;
+}
+
+.markdown-content p {
+  margin: 8px 0;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.markdown-content li {
+  margin: 4px 0;
+}
+
+.markdown-content code {
+  background-color: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+  color: #e11d48;
+}
+
+.markdown-content pre {
+  background-color: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 12px 0;
+  overflow-x: auto;
+}
+
+.markdown-content pre code {
+  background: none;
+  padding: 0;
+  color: #374151;
+  font-size: 0.9em;
+}
+
+.markdown-content blockquote {
+  border-left: 4px solid #6366f1;
+  margin: 12px 0;
+  padding: 8px 16px;
+  background-color: #f8fafc;
+  color: #4b5563;
+  font-style: italic;
+}
+
+.markdown-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 12px 0;
+}
+
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid #e5e7eb;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.markdown-content th {
+  background-color: #f9fafb;
+  font-weight: 600;
+}
+
+.markdown-content a {
+  color: #6366f1;
+  text-decoration: none;
+}
+
+.markdown-content a:hover {
+  text-decoration: underline;
+}
+
+.markdown-content strong {
+  font-weight: 600;
+  color: #374151;
+}
+
+.markdown-content em {
+  font-style: italic;
+  color: #6b7280;
 }
 
 /* 输入区域样式 */
