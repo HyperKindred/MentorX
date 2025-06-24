@@ -44,6 +44,7 @@ import A_user from './Admin/Users/index.vue'
 import A_stats from './Admin/Statistic/index.vue'
 import A_learningInfo from './Admin/LearningState/index.vue'
 import S_myCourse from './Student/MyCourses/index.vue'
+import Home from './Home/index.vue';
 const store = mainStore();
 const router = useRouter();
 const activeTab = ref('home');
@@ -69,9 +70,10 @@ const handleDropdownCommand = (command: string) => {
       break;
     case 'logout':
       if (loginTime) {
-        const durationMs = logoutTime - loginTime;
+        const durationS = logoutTime - loginTime;
+        const durationInt = Math.trunc(durationS); 
           const formData = new FormData();
-          formData.append('time', durationMs/1000);
+          formData.append('time', durationS);
           axios({
             method: 'post',
             url: `${store.ip}/api/sumTime`,
@@ -84,7 +86,7 @@ const handleDropdownCommand = (command: string) => {
             .then((response) => {
               const res = response.data;
               if (res.ret === 0) {
-                alert(formData.time);
+
               } else {
                 ElMessage.error('上传时间数据失败：' + res.msg);
               }
@@ -95,10 +97,7 @@ const handleDropdownCommand = (command: string) => {
         };
       
       localStorage.clear();
-      store.tabs = [
-        { name: 'home', title: '首页', component: Home, closable: false }
-      ],
-        store.getUserInfo();
+      store.getUserInfo();
       router.push({ path: '/Main' })
       break;
   }
