@@ -63,7 +63,7 @@ import { ref, computed, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { mainStore } from '../../../store/index.ts';
 import axios from 'axios';
-import MarkdownIt from 'markdown-it';
+import { marked } from 'marked';
 import Exercises from '../Exercises/index.vue';
 import Practice from '../Practice/index.vue';
 import AiAssistant from '../AiAssistant/index.vue';
@@ -89,10 +89,13 @@ const chapters = ref<Chapter[]>([]);
 /**
  * Markdown渲染器实例
  */
-const md = new MarkdownIt({
-  html: true,
-  linkify: true,
-  typographer: true
+/**
+ * 配置marked选项
+ */
+marked.setOptions({
+  gfm: true,
+  breaks: true,
+  sanitize: false
 });
 
 
@@ -108,7 +111,7 @@ const currentCourseware = computed(() => {
   if (!chapter) return null;
   
   // 渲染Markdown内容为HTML
-  const renderedContent = chapter.content ? md.render(chapter.content) : '';
+  const renderedContent = chapter.content ? marked.parse(chapter.content) : '';
   
   return { 
     title: chapter.name, 

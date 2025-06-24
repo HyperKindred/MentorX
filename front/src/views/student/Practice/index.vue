@@ -98,7 +98,7 @@
                 <el-tag v-else type="danger">未批改</el-tag>
               </div>
             </div>
-            <div class="question-content" v-html="md.render(selectedPractice.exercise_content)"></div>
+            <div class="question-content" v-html="marked.parse(selectedPractice.exercise_content)"></div>
           </div>
           
           <!-- 作答区域 -->
@@ -122,7 +122,7 @@
                   </div>
                   <div v-if="selectedPractice.analyse" class="check-analyse">
                     <h4>详细分析：</h4>
-                    <div v-html="md.render(selectedPractice.analyse)"></div>
+                    <div v-html="marked.parse(selectedPractice.analyse)"></div>
                   </div>
                 </div>
               </div>
@@ -156,7 +156,7 @@ import { ref, onMounted, watch } from 'vue';
 import { ElMessage } from 'element-plus';
 import { mainStore } from '../../../store/index.ts';
 import axios from 'axios';
-import MarkdownIt from 'markdown-it';
+import { marked } from 'marked';
 
 interface Chapter {
   id: number;
@@ -358,7 +358,7 @@ const submitAndCheck = async () => {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       },
       timeout: 5000
-    });
+    }); 
     
     if (submitResponse.data.ret === 0) {
       // 提交成功后进行批改
@@ -474,10 +474,13 @@ const getScoreClass = (score: string): string => {
 /**
  * Markdown 渲染器实例
  */
-const md = new MarkdownIt({
-  html: true,
-  linkify: true,
-  typographer: true
+/**
+ * 配置marked选项
+ */
+marked.setOptions({
+  gfm: true,
+  breaks: true,
+  sanitize: false
 });
 
 /**
@@ -487,7 +490,7 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   if (!content) return '';
   
   // 将 Markdown 转换为 HTML
-  const html = md.render(content);
+  const html = marked.parse(content);
   
   // 创建临时 DOM 元素来解析 HTML
   const tempDiv = document.createElement('div');
@@ -507,6 +510,7 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   display: flex;
   height: 100%;
   background-color: #f5f7fa;
+  color: #303133;
 }
 
 .left-panel {
@@ -515,6 +519,7 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   border-right: 1px solid #e4e7ed;
   display: flex;
   flex-direction: column;
+  color: #303133;
 }
 
 .course-header {
@@ -560,6 +565,7 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 .practice-content {
   font-size: 16px;
   margin-bottom: 12px;
+  color: #303133;
 }
 
 .practice-meta {
@@ -636,6 +642,7 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   font-size: 14px;
   line-height: 1.4;
   flex: 1;
+  color: #303133;
 }
 
 .right-panel {
@@ -643,12 +650,14 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   display: flex;
   flex-direction: column;
   background: white;
+  color: #303133;
 }
 
 .content-area {
   flex: 1;
   overflow-y: auto;
   padding: 24px;
+  color: #303133;
 }
 
 .practice-list {

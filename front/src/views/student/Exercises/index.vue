@@ -64,7 +64,7 @@
                 <el-tag v-else type="danger">未提交</el-tag>
               </div>
             </div>
-            <div class="question-content" v-html="md.render(selectedExercise.exercise_content)"></div>
+            <div class="question-content" v-html="marked.parse(selectedExercise.exercise_content)"></div>
           </div>
           
           <!-- 作答区域 -->
@@ -116,7 +116,7 @@ import { ref, onMounted, watch } from 'vue';
 import { ElMessage } from 'element-plus';
 import { mainStore } from '../../../store/index.ts';
 import axios from 'axios';
-import MarkdownIt from 'markdown-it';
+import { marked } from 'marked';
 
 interface Chapter {
   id: number;
@@ -356,10 +356,13 @@ const getExerciseTypeText = (type: string): string => {
 /**
  * Markdown 渲染器实例
  */
-const md = new MarkdownIt({
-  html: true,
-  linkify: true,
-  typographer: true
+/**
+ * 配置marked选项
+ */
+marked.setOptions({
+  gfm: true,
+  breaks: true,
+  sanitize: false
 });
 
 /**
@@ -372,7 +375,7 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   if (!content) return '';
   
   // 将 Markdown 转换为 HTML
-  const html = md.render(content);
+  const html = marked.parse(content);
   
   // 创建临时 DOM 元素来解析 HTML
   const tempDiv = document.createElement('div');
