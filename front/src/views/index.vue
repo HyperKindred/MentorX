@@ -1,4 +1,7 @@
 <template>
+  <div class="background">
+    <Waves></Waves>
+  </div>
   <div class="tab-container">
     <div class="tab-header-bar">
       <el-dropdown trigger="click" @command="handleDropdownCommand">
@@ -45,6 +48,7 @@ import A_stats from './Admin/Statistic/index.vue'
 import A_learningInfo from './Admin/LearningState/index.vue'
 import S_myCourse from './Student/MyCourses/index.vue'
 import Home from './Home/index.vue';
+import Waves from './Background/Wave.vue'
 const store = mainStore();
 const router = useRouter();
 const activeTab = ref('home');
@@ -145,7 +149,7 @@ onMounted(() => {
 }
 
 .tab-header {
-  flex: 1;
+  flex: none;
   margin-left: 2rem;
   margin-top: 1.6rem;
   border: none;
@@ -159,10 +163,6 @@ onMounted(() => {
     border-top-left-radius: 3px;
     border-top-right-radius: 3px;
     border-right: 1px solid #417dff;
-}
-
-.tab-header :deep(.el-tabs) {
-  border-bottom: none !important;
 }
 
 

@@ -12,7 +12,6 @@ import axios from 'axios';
 import { ElMessage } from 'element-plus';
 import RecommendedCourses from './RecommendedCourses/index.vue';
 import MyCourses from './MyCourses/index.vue';
-
 const store = mainStore();
 const router = useRouter();
 const message = ref('');
