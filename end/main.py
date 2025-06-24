@@ -7,7 +7,6 @@ from deepseek_model import *
 
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = "secret key"
-
 jwt = JWTManager(app)
 
 # 网络跨域问题
@@ -131,7 +130,7 @@ def getCourseList_student():
 def getAiList():
     student_id = int(get_jwt_identity())
     course_id = request.form.get("course_id")
-    rows = get_ai_list_db(student_id, course_id)
+    rows = get_ai_list_db(course_id=course_id, student_id=student_id)
     chapters = [{"chapter_id": row[0], "chapter_name": row[1]} for row in rows]
 
     data = {"ret": 0, "msg": "获取聊天记录章节列表成功！", "chapters": chapters}
@@ -318,7 +317,7 @@ def AIchat():
     content = request.form.get("content")
     session_id = request.form.get("session_id")
     student_id = int(get_jwt_identity())
-    success, answer = ds_aichat(student_id, chapter_id, content, session_id)
+    success, answer = ds_aichat(student_id, chapter_id, content, int(session_id))
     return jsonify({"ret":0, "answer":answer} if success else {"ret": 1, "msg": answer})
 
 @app.route('/api/student/generate_exercises', methods=['POST'])

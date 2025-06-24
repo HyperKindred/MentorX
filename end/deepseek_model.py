@@ -80,15 +80,7 @@ def ds_generate_tasks(ChapterNo, difficulty, type, student_id = None):
     TYPE = type_map.get(type, '简答题')  
     DIFFI = difficulty_map.get(difficulty, "中等")
 
-    full_prompt = f"""请根据以下课件内容和要求只设计一个题目，并给出参考答案，必须严格满足下列要求：
-    1.只有一个题目和答案
-    2. 题目前使用<exercise>标签，答案前使用<answer>标签
-    3. 题目与答案之间不能有任何其他文本。
-    4. 输出内容必须完全符合格式示例，不允许包含代码块或额外信息。
-
-    输出格式示例：
-    <exercise>这是题目
-    <answer>这是答案
+    full_prompt = f"""请根据以下课件内容和要求设计一道练习题目，只用生成一道；
     课件内容：
     {content}
     难度等级：
@@ -103,30 +95,54 @@ def ds_generate_tasks(ChapterNo, difficulty, type, student_id = None):
             'stream': False
         })
         result = response.json()
-        print(result)
         raw_output = result.get('response', '')
-        cleaned_content = re.sub(r"<think>.*?</think>", "", raw_output, flags=re.DOTALL).strip()
-        print(cleaned_content)
-        match = re.search(pattern_exercise, cleaned_content, re.DOTALL)
-        print("_______________________________________________________")
-        if match:
-            exercise = match.group(2).strip()
-            answer = match.group(3).strip()
-            print(exercise)
-            print(answer)
-            if student_id:
-                sql = '''INSERT INTO exercise(exercise_content, answer, difficulty, type, chapter_id, is_official, student_id)
-                VALUES(%s, %s, %s, %s, %s, 0, %s);
-                '''
-                cursor.execute(sql, (exercise, answer, difficulty, type, ChapterNo, student_id))
-            else:
-                sql = '''INSERT INTO exercise(exercise_content, answer, difficulty, type, chapter_id, is_official)
-                VALUES(%s, %s, %s, %s, %s, 1);
-                '''
-                cursor.execute(sql, (exercise, answer, difficulty, type, ChapterNo))
-            return True
+        exercise = re.sub(r"<think>.*?</think>", "", raw_output, flags=re.DOTALL).strip()
+        # match = re.search(pattern_exercise, cleaned_content, re.DOTALL)
+
+        new_prompt = f"""请根据以下课件内容和题目类型，给出练习题目的答案，要求去掉分析；
+        课件内容：
+        {content}
+        题目类型：
+        {TYPE}
+        题目：
+        {exercise}
+        """
+
+        response = requests.post(OLLAMA_API_URL, json={
+            'model': model_name,
+            'prompt': new_prompt,
+            'stream': False
+        })
+        result = response.json()
+        raw_output = result.get('response', '')
+        answer = re.sub(r"<think>.*?</think>", "", raw_output, flags=re.DOTALL).strip()
+        # if match:
+        #     exercise = match.group(2).strip()
+        #     answer = match.group(3).strip()
+        #     if student_id:
+        #         sql = '''INSERT INTO exercise(exercise_content, answer, difficulty, type, chapter_id, is_official, student_id)
+        #         VALUES(%s, %s, %s, %s, %s, 0, %s);
+        #         '''
+        #         cursor.execute(sql, (exercise, answer, difficulty, type, ChapterNo, student_id))
+        #     else:
+        #         sql = '''INSERT INTO exercise(exercise_content, answer, difficulty, type, chapter_id, is_official)
+        #         VALUES(%s, %s, %s, %s, %s, 1);
+        #         '''
+        #         cursor.execute(sql, (exercise, answer, difficulty, type, ChapterNo))
+        #     return True
+        # else:
+        #     return False
+        if student_id:
+            sql = '''INSERT INTO exercise(exercise_content, answer, difficulty, type, chapter_id, is_official, student_id)
+            VALUES(%s, %s, %s, %s, %s, 0, %s);
+            '''
+            cursor.execute(sql, (exercise, answer, difficulty, type, ChapterNo, student_id))
         else:
-            return False
+            sql = '''INSERT INTO exercise(exercise_content, answer, difficulty, type, chapter_id, is_official)
+            VALUES(%s, %s, %s, %s, %s, 1);
+            '''
+            cursor.execute(sql, (exercise, answer, difficulty, type, ChapterNo))
+        return True
     except:
         return False
     finally:
@@ -149,17 +165,13 @@ def ds_check_answer(Eno, student_id):
     else:
         return False, "该习题未作答！"
     
-    full_prompt = f"""请批改练习题，
+    full_prompt = f"""请批改练习题，要求仅给出一个数字，0代表正确，1代表错误，2代表部分正确
     题目：
     {content}
     参考答案：
     {answer}
     学生答案：
     {student_answer}
-
-    输出正误与做题分析，其中正误部分0代表正确，1代表错误，2代表部分正确，两部分格式参考示例：
-    <check>0</check>
-    <analyse>这是示例分析</analyse>  
     """
     try:
         response = requests.post(OLLAMA_API_URL, json={
@@ -169,16 +181,39 @@ def ds_check_answer(Eno, student_id):
         })    
         result = response.json()
         raw_output = result.get('response', '')
-        cleaned_content = re.sub(r"<think>.*?</think>", "", raw_output, flags=re.DOTALL).strip()
-        match = re.search(pattern_check, cleaned_content, re.DOTALL)
-        if match:
-            check = match.group(1).strip()
-            analyse = match.group(2).strip()
-            sql = "UPDATE practice_history SET analyse = %s, check = %s WHERE student_id = %s AND exercise_id = %s;"
+        check = re.sub(r"<think>.*?</think>", "", raw_output, flags=re.DOTALL).strip()
+        # match = re.search(pattern_check, cleaned_content, re.DOTALL)
+        # if match:
+        #     check = match.group(1).strip()
+        #     analyse = match.group(2).strip()
+        #     sql = "UPDATE practice_history SET analyse = %s, check = %s WHERE student_id = %s AND exercise_id = %s;"
+        #     cursor.execute(sql, (analyse, check, student_id, Eno))
+        #     return True, None
+        # else:
+        #     return False, "模型输出结果异常！"       
+        new_prompt = f"""请根据参考答案与学生答案，给出该学生作答的分析，指出关键点、错误点和可以改进的地方；
+        题目：
+        {content}
+        参考答案：
+        {answer}
+        学生答案：
+        {student_answer}
+        """
+        response = requests.post(OLLAMA_API_URL, json={
+            'model': model_name,
+            'prompt': new_prompt,
+            'stream': False
+        })    
+        result = response.json()
+        raw_output = result.get('response', '')
+        analyse = re.sub(r"<think>.*?</think>", "", raw_output, flags=re.DOTALL).strip()
+
+        try:
+            sql = "UPDATE practice_history SET analyse = %s, `check` = %s WHERE student_id = %s AND exercise_id = %s;"
             cursor.execute(sql, (analyse, check, student_id, Eno))
             return True, None
-        else:
-            return False, "模型输出结果异常！"       
+        except:
+            return False, "数据库操作异常！"
     except:
         return False, "模型调用异常！"
     finally:
@@ -205,17 +240,20 @@ def ds_aichat(student_id, chapter_id, content, session_id):
         })
         try:
             result = response.json()
-            raw_answer = {'ret':0, 'ans':result.get('response', '')}
+            raw_answer = result.get('response', '')
             answer = re.sub(r"<think>.*?</think>", "", raw_answer, flags=re.DOTALL).strip()
-            if session_id is None:
-                cursor.execute("SELECT MAX(session_id) FROM communicate_history;") 
-                res = cursor.fetchone()
-                session_id = res[0] + 1 if res else 1
-            sql = "INSERT INTO communicate_history values(%s, %s, 'Q', %s, CURRENT_TIMESTAMP, %s, '默认名称');"
-            cursor.execute(sql, (student_id, chapter_id, content, session_id))
-            sql = "INSERT INTO communicate_history values(%s, %s, 'A', %s, CURRENT_TIMESTAMP + INTERVAL '3 seconds', %s, '默认名称');"
-            cursor.execute(sql, (student_id, chapter_id, answer, session_id))
-            return True, answer
+            try:
+                if session_id == -1:
+                    cursor.execute("SELECT MAX(session_id) FROM communicate_history;") 
+                    res = cursor.fetchone()[0]
+                    session_id = res + 1 if res else 1
+                sql = "INSERT INTO communicate_history values(%s, %s, 'Q', %s, CURRENT_TIMESTAMP, %s, '默认名称');"
+                cursor.execute(sql, (student_id, chapter_id, content, session_id))
+                sql = "INSERT INTO communicate_history values(%s, %s, 'A', %s, CURRENT_TIMESTAMP + INTERVAL 3 SECOND, %s, '默认名称');"
+                cursor.execute(sql, (student_id, chapter_id, answer, session_id))
+                return True, answer
+            except:
+                return False, "数据库操作异常！"
         except:
             return False, "模型输出结果异常！"
     except:
