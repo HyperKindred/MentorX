@@ -3,7 +3,6 @@
     <div class="students-list">
       <h2>学生列表</h2>
       <div class="user-item" v-for="item in students" :key="item.id">
-        <div class="user-account">手机号：{{ item.phone_number }}</div>
             <strong>姓名：</strong>
             <template v-if="item.editName">
               <el-input v-model="item.name" size="small" class="inline-input" />
@@ -14,7 +13,8 @@
               <span>{{ item.name }}</span>
               <el-button size="small" @click="startEditName(item)" class="edit-btn">修改</el-button>
             </template>
-        <strong>性别：</strong>
+            <div class="user-account">手机号：{{ item.phone_number }}</div>
+            <strong>性别：</strong>
             <template v-if="item.editGender">
               <el-select v-model="item.gender" placeholder="请选择" size="small" class="genderSelect">
                 <el-option label="男" value="male" />
@@ -28,13 +28,14 @@
               <span>{{ getGenderLabel(item.gender) }}</span>
               <el-button size="small" @click="startEditGender(item)" class="edit-btn">修改</el-button>
             </template>
+            <div class="user-frequence">登录次数：{{ item.frequence }}</div>
+            <div class="user-time">登录时长：{{ formatDuration(item.sum_time) }}</div>
         <el-button @click="deleteStudent(item.id)">删除</el-button>
       </div>
     </div>
     <div class="teacher-list">
       <h2>教师列表</h2>
       <div class="user-item" v-for="item in teachers" :key="item.id">
-        <div class="user-account">手机号：{{ item.phone_number }}</div>
             <strong>姓名：</strong>
             <template v-if="item.editName">
               <el-input v-model="item.name" size="small" class="inline-input" />
@@ -45,7 +46,8 @@
               <span>{{ item.name }}</span>
               <el-button size="small" @click="startEditName(item)" class="edit-btn">修改</el-button>
             </template>
-        <strong>性别：</strong>
+            <div class="user-account">手机号：{{ item.phone_number }}</div>
+            <strong>性别：</strong>
             <template v-if="item.editGender">
               <el-select v-model="item.gender" placeholder="请选择" size="small" class="genderSelect">
                 <el-option label="男" value="male" />
@@ -59,6 +61,8 @@
               <span>{{ getGenderLabel(item.gender) }}</span>
               <el-button size="small" @click="startEditGender(item)" class="edit-btn">修改</el-button>
             </template>
+            <div class="user-frequence">登录次数：{{ item.frequence }}</div>
+            <div class="user-time">登录时长：{{ formatDuration(item.sum_time) }}</div>
         <el-button @click="deleteTeacher(item.id)">删除</el-button>
       </div>
     </div>
@@ -84,6 +88,14 @@ const genderMap: Record<string, string> = {
 const getGenderLabel = (gender: string): string => {
   return genderMap[gender];
 };
+
+const formatDuration = (seconds: number): string => {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return `${h}小时 ${m}分钟 ${s}秒`;
+};
+
 
 onMounted(() => {
     getStudentList();
