@@ -167,8 +167,9 @@ onMounted(() => {
 <style scoped>
 .my-courses {
   padding: 24px;
-  background-color: #f5f7fa;
+  background-color: transparent;
   min-height: 100%;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 /* 页面标题样式 */
@@ -179,7 +180,7 @@ onMounted(() => {
 .page-title {
   font-size: 28px;
   font-weight: 600;
-  color: #2c3e50;
+  color: #ffffff;
   margin: 0 0 8px 0;
 }
 
@@ -187,12 +188,13 @@ onMounted(() => {
 .search-container {
   margin-bottom: 24px;
   display: flex;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .search-input {
   max-width: 400px;
   width: 100%;
+  height: 40px;
 }
 
 .page-subtitle {
@@ -220,10 +222,11 @@ onMounted(() => {
 
 /* 课程容器样式 */
 .courses-container {
-  background: white;
-  border-radius: 8px;
+  background: transparent;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  margin-left: 2rem;
+  margin-right: 2rem;
 }
 
 .loading-state {
@@ -243,9 +246,11 @@ onMounted(() => {
   display: flex;
   align-items: center;
   padding: 24px;
-  border-bottom: 1px solid #f0f2f5;
+  margin-bottom: 0.5rem;
+  background-color: #f8f8f8;
   transition: background-color 0.2s ease;
   cursor: pointer;
+  border-radius: 8px;
 }
 
 .course-item:last-child {
@@ -355,6 +360,7 @@ onMounted(() => {
     flex-direction: column;
     align-items: flex-start;
     padding: 20px;
+    
   }
   
   .course-image {

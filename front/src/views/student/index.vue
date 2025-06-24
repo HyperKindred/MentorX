@@ -23,7 +23,6 @@ const activeTab = ref('recommended');
  * 组件挂载时的初始化操作
  */
 onMounted(() => {
-  console.log('学生仪表板已加载');
 });
 </script>
 
@@ -49,7 +48,7 @@ onMounted(() => {
 
 .dashboard-tabs :deep(.el-tabs__header) {
   margin: 0;
-  background: white;
+  background: rgb(186, 186, 186);
   padding: 0 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   z-index: 10;

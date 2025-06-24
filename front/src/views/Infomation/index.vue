@@ -74,7 +74,7 @@
           type="password"
           class="password-input"
         />
-        <el-button type="success" @click="saveInfo('password')">保存新密码</el-button>
+        <el-button type="success" @click="saveInfo('password')" class="edit-btn">保存新密码</el-button>
       </div>
     </el-card>
   </div>
@@ -223,21 +223,34 @@ const cancelEditGender = () => {
 }
 
 .inline-input {
+  max-width: 5rem;
+  height: 1.5rem;
   width: auto;
-  height: 3rem;
+  overflow-x: hidden;
 }
 
 .edit-btn {
   margin-left: 10px;
+  background-color: #417dff;
+  color: #f8f8f8;
+  outline: none;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.edit-btn:hover {
+  background-color: #719eff;
 }
 .password-edit {
-  margin-top: 20px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 0.5rem;
 }
 .password-input {
   width: 300px;
+  margin-bottom: 0.5rem;
+  border: none;
 }
 
 

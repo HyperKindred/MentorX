@@ -159,10 +159,14 @@ onMounted(() => {
 .tab-header :deep(.el-tabs__item) {
     background-color: white;
     height: 3rem;
-    color: #417dff;
+    color: #417dff6e;
     border-top-left-radius: 3px;
     border-top-right-radius: 3px;
     border-right: 1px solid #417dff;
+}
+
+.tab-header :deep(.el-tabs__item.is-active) {
+    color: #417dff;
 }
 
 
