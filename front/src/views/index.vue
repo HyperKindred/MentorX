@@ -95,7 +95,8 @@ const handleDropdownCommand = (command: string) => {
               ElMessage.error('上传时间数据失败，请稍后重试！');
             });
         };
-      
+      store.tabs = [{ name: 'home', title: '首页', component: Home, closable: false }];
+      store.activeTab= 'home';
       localStorage.clear();
       store.getUserInfo();
       router.push({ path: '/Main' })
