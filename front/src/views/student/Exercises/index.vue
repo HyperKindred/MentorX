@@ -39,20 +39,72 @@
         <div v-else-if="!selectedExercise">
           <div class="exercise-list">
             <div v-for="exercise in exercises" :key="exercise.exercise_id" class="exercise-item" @click="selectExercise(exercise)">
-              <div class="exercise-content">{{ exercise.exercise_content }}</div>
+              <div class="exercise-content">{{ formatExerciseContent(exercise.exercise_content, 80) }}</div>
               <div class="exercise-meta">
-                <span>类型: {{ exercise.type }}</span>
-                <span>难度: {{ exercise.difficulty }}</span>
+                <span class="exercise-type">{{ getExerciseTypeText(exercise.type) }}</span>
+                <span class="exercise-difficulty">难度: {{ exercise.difficulty }}</span>
+                <span class="exercise-status" :class="{ 'submitted': exercise.is_committed === 1 }">
+                  {{ exercise.is_committed === 1 ? '已提交' : '未提交' }}
+                </span>
               </div>
             </div>
           </div>
         </div>
         <div v-else class="exercise-detail">
           <el-button @click="backToList" class="back-button">返回列表</el-button>
-          <h3>{{ selectedExercise.exercise_content }}</h3>
-          <p><strong>类型:</strong> {{ selectedExercise.type }}</p>
-          <p><strong>难度:</strong> {{ selectedExercise.difficulty }}</p>
-          <!-- 这里可以添加更多习题详情，例如选项、答案等 -->
+          
+          <!-- 题目区域 -->
+          <div class="question-section">
+            <div class="question-header">
+              <h2>题目内容</h2>
+              <div class="question-meta">
+                <el-tag type="info">{{ getExerciseTypeText(selectedExercise.type) }}</el-tag>
+                <el-tag type="warning">难度: {{ selectedExercise.difficulty }}</el-tag>
+                <el-tag v-if="selectedExercise.is_committed" type="success">已提交</el-tag>
+                <el-tag v-else type="danger">未提交</el-tag>
+              </div>
+            </div>
+            <div class="question-content" v-html="md.render(selectedExercise.exercise_content)"></div>
+          </div>
+          
+          <!-- 作答区域 -->
+          <div class="answer-section">
+            <div class="answer-header">
+              <h3>{{ selectedExercise.is_committed ? '历史答题内容' : '作答区' }}</h3>
+              <div v-if="selectedExercise.is_committed && selectedExercise.submitted_at" class="submit-time">
+                提交时间: {{ new Date(selectedExercise.submitted_at).toLocaleString() }}
+              </div>
+            </div>
+            
+            <!-- 已提交状态：显示历史答案 -->
+            <div v-if="selectedExercise.is_committed" class="submitted-answer">
+              <div class="answer-content">
+                <pre>{{ selectedExercise.student_answer }}</pre>
+              </div>
+              <div class="answer-actions">
+                <el-button @click="editAnswer" type="primary" plain disabled>已提交，不可重新作答</el-button>
+              </div>
+            </div>
+            
+            <!-- 未提交状态：显示作答区 -->
+            <div v-else class="answer-input">
+              <el-input
+                v-model="currentAnswer"
+                type="textarea"
+                :rows="8"
+                placeholder="请在此输入您的答案..."
+                maxlength="2000"
+                show-word-limit
+              />
+              <div class="answer-actions">
+                <el-button @click="submitAnswer" type="primary" :loading="submitting">
+                  {{ submitting ? '提交中...' : '提交答案' }}
+                </el-button>
+              </div>
+            </div>
+            
+            <!-- 重新作答状态（已移除，因为已提交的题目不允许重新作答） -->
+          </div>
         </div>
       </div>
     </div>
@@ -64,6 +116,7 @@ import { ref, onMounted, watch } from 'vue';
 import { ElMessage } from 'element-plus';
 import { mainStore } from '../../../store/index.ts';
 import axios from 'axios';
+import MarkdownIt from 'markdown-it';
 
 interface Chapter {
   id: number;
@@ -81,7 +134,10 @@ interface Exercise {
   type: string;
   difficulty: number;
   exercise_content: string;
-  is_official: string;
+  is_official: number | string;
+  is_committed: number;
+  student_answer?: string;
+  submitted_at?: string;
 }
 
 const store = mainStore();
@@ -91,50 +147,10 @@ const activeChapter = ref<number | null>(null);
 const exercises = ref<Exercise[]>([]);
 const loading = ref(false);
 const selectedExercise = ref<Exercise | null>(null);
+const currentAnswer = ref<string>('');
+const submitting = ref(false);
 
-/**
- * 模拟章节数据
- */
-const mockChapters: Chapter[] = [
-  { id: 1, name: '第一章：Vue基础' },
-  { id: 2, name: '第二章：组件开发' },
-  { id: 3, name: '第三章：状态管理' },
-  { id: 4, name: '第四章：路由配置' }
-];
 
-/**
- * 模拟习题数据
- */
-const mockExercises: Exercise[] = [
-  {
-    exercise_id: 1,
-    type: 'choices',
-    difficulty: 1,
-    exercise_content: 'Vue.js是什么类型的框架？',
-    is_official: '1'
-  },
-  {
-    exercise_id: 2,
-    type: 'blanks',
-    difficulty: 2,
-    exercise_content: '请填空：Vue.js使用______语法进行数据绑定',
-    is_official: '1'
-  },
-  {
-    exercise_id: 3,
-    type: 'answers',
-    difficulty: 3,
-    exercise_content: '请简述Vue.js的生命周期钩子函数',
-    is_official: '1'
-  },
-  {
-    exercise_id: 4,
-    type: 'choices',
-    difficulty: 2,
-    exercise_content: '下列哪个是Vue.js的核心特性？',
-    is_official: '1'
-  }
-];
 
 onMounted(() => {
   const storedCourse = localStorage.getItem('currentCourse');
@@ -156,30 +172,25 @@ watch(activeChapter, (newChapterId) => {
 
 const getChapterList = async (courseId: number) => {
   try {
-    const response = await axios.post(`${store.ip}/api/getChapterList`, { id: courseId }, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
+    const formData = new FormData();
+    formData.append('id', courseId.toString());
+
+    const response = await axios.post(`${store.ip}/api/getChapterList`, formData, {
       timeout: 5000
     });
-    if (response.data.ret === 0 && response.data.chapterList?.chapter) {
-      chapters.value = Array.isArray(response.data.chapterList.chapter) ? response.data.chapterList.chapter : [response.data.chapterList.chapter];
+    if (response.data.ret === 0 && response.data.chapterList) {
+      chapters.value = Array.isArray(response.data.chapterList) ? response.data.chapterList : [response.data.chapterList];
       if (chapters.value.length > 0) {
         activeChapter.value = chapters.value[0].id;
       }
     } else {
-      // API返回错误时使用模拟数据
-      chapters.value = mockChapters;
-      activeChapter.value = mockChapters[0].id;
-      ElMessage.info('已切换到模拟数据模式');
+      chapters.value = [];
+      ElMessage.error('获取章节列表失败：' + response.data.msg);
     }
   } catch (error) {
     console.error('获取章节列表失败', error);
-    ElMessage.warning('网络请求失败，已切换到模拟数据模式');
-    // 使用模拟数据作为后备
-    chapters.value = mockChapters;
-    activeChapter.value = mockChapters[0].id;
+    ElMessage.error('网络请求失败，请稍后重试');
+    chapters.value = [];
   }
 };
 
@@ -194,19 +205,18 @@ const getExercisesList = async (chapterId: number) => {
       },
       timeout: 5000
     });
-    if (response.data.ret === 0 && response.data.exercisesList?.exercise) {
-      const allExercises = Array.isArray(response.data.exercisesList.exercise) ? response.data.exercisesList.exercise : [response.data.exercisesList.exercise];
-      exercises.value = allExercises.filter(ex => ex.is_official === '1');
+
+    if (response.data.ret === 0 && response.data.exercisesList) {
+      const allExercises = Array.isArray(response.data.exercisesList) ? response.data.exercisesList : [response.data.exercisesList];
+      exercises.value = allExercises.filter(ex => ex.is_official === 1 || ex.is_official === '1');
     } else {
-      // API返回错误时使用模拟数据
-      exercises.value = mockExercises;
-      ElMessage.info('已切换到模拟数据模式');
+      exercises.value = [];
+      ElMessage.error('获取习题列表失败：' + response.data.msg);
     }
   } catch (error) {
     console.error('获取习题列表失败', error);
-    ElMessage.warning('网络请求失败，已切换到模拟数据模式');
-    // 使用模拟数据作为后备
-    exercises.value = mockExercises;
+    ElMessage.error('网络请求失败，请稍后重试');
+    exercises.value = [];
   } finally {
     loading.value = false;
   }
@@ -217,12 +227,162 @@ const selectChapter = (chapter: Chapter) => {
   selectedExercise.value = null; // 切换章节时清空选中的习题
 };
 
-const selectExercise = (exercise: Exercise) => {
+const selectExercise = async (exercise: Exercise) => {
   selectedExercise.value = exercise;
+  
+  // 如果习题已提交，获取历史作答记录
+  if (exercise.is_committed === 1) {
+    await getExerciseHistory(exercise.exercise_id);
+  }
 };
 
 const backToList = () => {
   selectedExercise.value = null;
+  currentAnswer.value = '';
+};
+
+const submitAnswer = async () => {
+  if (!selectedExercise.value || !currentAnswer.value.trim()) {
+    ElMessage.warning('请填写答案后再提交');
+    return;
+  }
+  
+  submitting.value = true;
+  try {
+    const formData = new FormData();
+    formData.append('exercise_id', selectedExercise.value.exercise_id.toString());
+    formData.append('student_answer', currentAnswer.value);
+    
+    const response = await axios.post(`${store.ip}/api/student/commitExercise`, formData, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      timeout: 5000
+    });
+    
+    if (response.data.ret === 0) {
+      // 提交成功，更新本地数据
+      selectedExercise.value.student_answer = currentAnswer.value;
+      selectedExercise.value.submitted_at = new Date().toISOString();
+      selectedExercise.value.is_committed = 1;
+      
+      // 更新exercises列表中的对应项
+      const exerciseIndex = exercises.value.findIndex(ex => ex.exercise_id === selectedExercise.value!.exercise_id);
+      if (exerciseIndex !== -1) {
+        exercises.value[exerciseIndex] = { ...selectedExercise.value };
+      }
+      
+      // 清空当前答案输入
+      currentAnswer.value = '';
+      
+      ElMessage.success('答案提交成功！');
+    } else {
+      ElMessage.error(response.data.msg || '提交失败，请重试');
+    }
+  } catch (error) {
+    console.error('提交答案失败:', error);
+    ElMessage.error('提交失败，请重试');
+  } finally {
+    submitting.value = false;
+  }
+};
+
+const editAnswer = () => {
+  // 已作答的题目不允许重新作答
+  if (selectedExercise.value?.is_committed === 1) {
+    ElMessage.warning('该题目已提交，不可重新作答');
+    return;
+  }
+  
+  if (selectedExercise.value?.student_answer) {
+    currentAnswer.value = selectedExercise.value.student_answer;
+  }
+};
+
+/**
+ * 获取习题历史作答记录
+ */
+const getExerciseHistory = async (exerciseId: number) => {
+  try {
+    const formData = new FormData();
+    formData.append('exercise_id', exerciseId.toString());
+    
+    const response = await axios.post(`${store.ip}/api/student/getExerciseHistory`, formData, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      timeout: 5000
+    });
+    
+    if (response.data.ret === 0) {
+      // 习题已作答且批改
+      if (selectedExercise.value) {
+        selectedExercise.value.student_answer = response.data.student_answer;
+        selectedExercise.value.submitted_at = response.data.answer_time;
+      }
+    } else if (response.data.ret === 2) {
+      // 习题未作答
+      if (selectedExercise.value) {
+        selectedExercise.value.is_committed = 0;
+      }
+    } else if (response.data.ret === 3) {
+      // 习题已作答但未批改
+      if (selectedExercise.value) {
+        selectedExercise.value.student_answer = response.data.student_answer;
+        selectedExercise.value.submitted_at = response.data.answer_time;
+      }
+    }
+  } catch (error) {
+    console.error('获取习题历史记录失败:', error);
+  }
+};
+
+/**
+ * 将英文习题类型转换为中文显示
+ * @param {string} type - 习题类型
+ * @returns {string} 中文类型名称
+ */
+const getExerciseTypeText = (type: string): string => {
+  const typeMap: Record<string, string> = {
+    'choices': '选择题',
+    'blanks': '填空题',
+    'answers': '问答题',
+    'coding': '编程题',
+    'true_false': '判断题'
+  };
+  return typeMap[type] || type;
+};
+
+/**
+ * Markdown 渲染器实例
+ */
+const md = new MarkdownIt({
+  html: true,
+  linkify: true,
+  typographer: true
+});
+
+/**
+ * 将 Markdown 内容转换为纯文本并截取指定长度
+ * @param {string} content - Markdown 格式的内容
+ * @param {number} maxLength - 最大显示字符数
+ * @returns {string} 处理后的纯文本
+ */
+const formatExerciseContent = (content: string, maxLength: number = 50): string => {
+  if (!content) return '';
+  
+  // 将 Markdown 转换为 HTML
+  const html = md.render(content);
+  
+  // 创建临时 DOM 元素来解析 HTML
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = html;
+  
+  // 获取纯文本内容
+  const plainText = tempDiv.textContent || tempDiv.innerText || '';
+  
+  // 截取指定长度并添加省略号
+  return plainText.length > maxLength ? plainText.substring(0, maxLength) + '...' : plainText;
 };
 
 </script>
@@ -230,12 +390,14 @@ const backToList = () => {
 <style scoped>
 .course-page {
   display: flex;
-  height: 100vh;
+  height: 100%;
   background-color: #f5f7fa;
 }
 
 .left-panel {
   width: 300px;
+  min-width: 300px;
+  flex-shrink: 0;
   background: white;
   border-right: 1px solid #e4e7ed;
   display: flex;
@@ -275,6 +437,10 @@ const backToList = () => {
   border: 1px solid #e4e7ed;
   cursor: pointer;
   transition: all 0.2s ease;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .exercise-item:hover {
@@ -284,24 +450,206 @@ const backToList = () => {
 
 .exercise-content {
   font-size: 16px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.4;
+  flex: 1;
+  width: 100%;
+  max-width: 100%;
+  color: #303133;
+  font-weight: 500;
 }
 
 .exercise-meta {
-  font-size: 14px;
+  font-size: 12px;
   color: #606266;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
 }
 
-.exercise-meta span {
-  margin-right: 16px;
+.exercise-type {
+  background-color: #f0f2f5;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.exercise-difficulty {
+  color: #909399;
+}
+
+.exercise-status {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  background-color: #f56c6c;
+  color: white;
+}
+
+.exercise-status.submitted {
+  background-color: #67c23a;
+  color: white;
 }
 
 .exercise-detail {
   padding: 24px;
 }
 
+.question-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #409eff;
+}
+
+.question-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.question-header h2 {
+  margin: 0;
+  color: #303133;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.question-meta {
+  display: flex;
+  gap: 8px;
+}
+
+.question-content {
+  background: white;
+  padding: 20px;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+  line-height: 1.6;
+  color: #303133;
+}
+
+.answer-section {
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e4e7ed;
+}
+
+.answer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.answer-header h3 {
+  margin: 0;
+  color: #303133;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.submit-time {
+  color: #909399;
+  font-size: 14px;
+}
+
+.submitted-answer .answer-content {
+  background: #f5f7fa;
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+  margin-bottom: 15px;
+}
+
+.submitted-answer pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: 'Courier New', monospace;
+  color: #303133;
+  line-height: 1.5;
+}
+
+.answer-input, .re-answer {
+  margin-top: 10px;
+}
+
+.answer-actions {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.re-answer {
+  margin-top: 20px;
+  padding-top: 20px;
+}
+
 .back-button {
   margin-bottom: 20px;
+}
+
+.exercise-detail h3 {
+  line-height: 1.6;
+  color: #303133;
+  margin-bottom: 20px;
+}
+
+.exercise-detail h1,
+.exercise-detail h2,
+.exercise-detail h3,
+.exercise-detail h4,
+.exercise-detail h5,
+.exercise-detail h6 {
+  margin-top: 16px;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.exercise-detail p {
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.exercise-detail ul,
+.exercise-detail ol {
+  margin-bottom: 12px;
+  padding-left: 20px;
+}
+
+.exercise-detail li {
+  margin-bottom: 4px;
+}
+
+.exercise-detail code {
+  background-color: #f5f5f5;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+}
+
+.exercise-detail pre {
+  background-color: #f5f5f5;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin-bottom: 12px;
+}
+
+.exercise-detail pre code {
+  background: none;
+  padding: 0;
 }
 
 .nav-title {
@@ -382,28 +730,87 @@ const backToList = () => {
   gap: 16px;
 }
 
-.exercise-item {
-  background: #fff;
-  border: 1px solid #e4e7ed;
-  border-radius: 8px;
-  padding: 16px;
-  cursor: pointer;
-  transition: box-shadow 0.3s;
+/* 题目内容 Markdown 样式 */
+.question-content h1,
+.question-content h2,
+.question-content h3,
+.question-content h4,
+.question-content h5,
+.question-content h6 {
+  margin: 16px 0 12px 0;
+  color: #303133;
+  font-weight: 600;
 }
 
-.exercise-item:hover {
-  box-shadow: 0 2px 12px 0 rgba(0,0,0,.1);
+.question-content h1 {
+  font-size: 24px;
+  border-bottom: 2px solid #e4e7ed;
+  padding-bottom: 8px;
 }
 
-.exercise-content {
-  font-size: 16px;
-  margin-bottom: 12px;
+.question-content h2 {
+  font-size: 20px;
+  border-bottom: 1px solid #e4e7ed;
+  padding-bottom: 6px;
 }
 
-.exercise-meta {
+.question-content h3 {
+  font-size: 18px;
+}
+
+.question-content p {
+  margin: 12px 0;
+  line-height: 1.6;
+  color: #606266;
+}
+
+.question-content ul,
+.question-content ol {
+  margin: 12px 0;
+  padding-left: 24px;
+}
+
+.question-content li {
+  margin: 6px 0;
+  line-height: 1.5;
+  color: #606266;
+}
+
+.question-content code {
+  background: #f5f7fa;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
   font-size: 14px;
-  color: #909399;
-  display: flex;
-  gap: 16px;
+  color: #e6a23c;
 }
+
+.question-content pre {
+  background: #f5f7fa;
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+  overflow-x: auto;
+  margin: 16px 0;
+}
+
+.question-content pre code {
+  background: none;
+  padding: 0;
+  color: #303133;
+}
+
+.question-content strong {
+  font-weight: 600;
+  color: #303133;
+}
+
+.question-content blockquote {
+  margin: 16px 0;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-left: 4px solid #409eff;
+  color: #606266;
+}
+
 </style>

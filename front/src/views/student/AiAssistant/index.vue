@@ -205,14 +205,15 @@ watch(messages, () => {
 
 const getChapterList = async (courseId: number) => {
   try {
-    const response = await axios.post(`${store.ip}/api/getChapterList`, { id: courseId }, {
+    const formData = new FormData();
+    formData.append('id', courseId.toString());
+    const response = await axios.post(`${store.ip}/api/getChapterList`, formData, {
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        'Content-Type': 'multipart/form-data'
       }
     });
-    if (response.data.ret === 0 && response.data.chapterList?.chapter) {
-      chapters.value = Array.isArray(response.data.chapterList.chapter) ? response.data.chapterList.chapter : [response.data.chapterList.chapter];
+    if (response.data.ret === 0 && response.data.chapterList) {
+      chapters.value = Array.isArray(response.data.chapterList) ? response.data.chapterList : [response.data.chapterList];
       if (chapters.value.length > 0) {
         activeChapter.value = chapters.value[0].id;
       }
@@ -238,18 +239,77 @@ const getChatHistory = async (chapterId: number) => {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
     });
-    if (response.data.ret === 0 && response.data.sessions?.session) {
-      const history = Array.isArray(response.data.sessions.session) ? response.data.sessions.session : [response.data.sessions.session];
-      messages.value = history.flatMap((s: any) => [
-        { id: s.session_id * 2 - 1, text: s.question, sender: 'user', timestamp: Date.now() },
-        { id: s.session_id * 2, text: s.answer, sender: 'bot', timestamp: Date.now() }
-      ]);
+
+    console.log(response)
+
+    if (response.data.ret === 0 && response.data.sessions) {
+      const sessions = Array.isArray(response.data.sessions) ? response.data.sessions : [response.data.sessions];
+      
+      // 构建对话列表，按session_id分组
+      const conversationMap = new Map<number, Conversation>();
+      const questionsMap = new Map<number, string>(); // 存储每个session的第一个问题
+      
+      sessions.forEach((s: any) => {
+        if (!conversationMap.has(s.session_id)) {
+          // 查找该session的第一个问题作为标题
+          const firstQuestion = sessions.find((item: any) => item.session_id === s.session_id && item.type === 'Q');
+          const title = firstQuestion ? 
+            (firstQuestion.content.length > 20 ? firstQuestion.content.substring(0, 20) + '...' : firstQuestion.content) :
+            s.session_name || '默认对话';
+            
+          conversationMap.set(s.session_id, {
+            id: s.session_id,
+            title: title,
+            time: new Date(s.time).getTime(), // 使用API返回的时间
+            chapterId: chapterId
+          });
+        }
+      });
+      
+      // 更新对话列表，按时间倒序排列
+      conversationList.value = Array.from(conversationMap.values()).sort((a, b) => b.time - a.time);
+      
+      // 如果当前没有选择对话，则不显示任何消息
+      if (activeConversation.value === null) {
+        messages.value = [];
+      } else {
+        // 如果选择了对话，显示该对话的消息
+        const selectedSessions = sessions.filter((s: any) => s.session_id === activeConversation.value);
+        
+        // 按时间排序并构建消息列表
+        const sortedSessions = selectedSessions.sort((a: any, b: any) => new Date(a.time).getTime() - new Date(b.time).getTime());
+        
+        const messageList: Message[] = [];
+        let messageId = 1;
+        
+        sortedSessions.forEach((s: any) => {
+          if (s.type === 'Q') {
+            messageList.push({
+              id: messageId++,
+              text: s.content,
+              sender: 'user',
+              timestamp: new Date(s.time).getTime()
+            });
+          } else if (s.type === 'A') {
+            messageList.push({
+              id: messageId++,
+              text: s.content,
+              sender: 'bot',
+              timestamp: new Date(s.time).getTime()
+            });
+          }
+        });
+        
+        messages.value = messageList;
+      }
     } else {
+      conversationList.value = [];
       messages.value = [];
     }
   } catch (error) {
     console.error('获取聊天记录失败', error);
     ElMessage.error('获取聊天记录失败');
+    conversationList.value = [];
     messages.value = [];
   }
 };
@@ -258,18 +318,12 @@ const getChatHistory = async (chapterId: number) => {
  * 加载对话历史列表
  */
 const loadConversationHistory = (chapterId: number) => {
-  // 模拟对话历史数据，实际项目中应该从后端获取
-  const stored = localStorage.getItem(`conversations_${chapterId}`);
-  if (stored) {
-    conversationList.value = JSON.parse(stored);
-  } else {
-    conversationList.value = [];
-  }
+  // 重新获取历史对话列表
+  getChatHistory(chapterId);
   
-  // 如果有对话历史，选择最新的一个
-  if (conversationList.value.length > 0) {
-    activeConversation.value = conversationList.value[0].id;
-  }
+  // 默认不选择任何对话，进入新对话模式
+  activeConversation.value = null;
+  messages.value = [];
 };
 
 /**
@@ -325,19 +379,9 @@ const startNewConversation = () => {
     return;
   }
   
-  const newConversation: Conversation = {
-    id: Date.now(),
-    title: '新对话',
-    time: Date.now(),
-    chapterId: activeChapter.value
-  };
-  
-  conversationList.value.unshift(newConversation);
-  activeConversation.value = newConversation.id;
+  // 清空当前选择，进入新对话模式
+  activeConversation.value = null;
   messages.value = [];
-  
-  // 保存到本地存储
-  localStorage.setItem(`conversations_${activeChapter.value}`, JSON.stringify(conversationList.value));
 };
 
 /**
@@ -345,8 +389,7 @@ const startNewConversation = () => {
  */
 const selectConversation = (conversation: Conversation) => {
   activeConversation.value = conversation.id;
-  // 这里可以加载特定对话的消息历史
-  // 目前简化处理，直接加载当前章节的所有消息
+  // 重新获取聊天历史，这会触发getChatHistory中的逻辑来显示选中对话的消息
   getChatHistory(conversation.chapterId);
 };
 
@@ -366,20 +409,21 @@ const sendMessage = async () => {
 
   const question = newMessage.value;
   newMessage.value = '';
-
-  // 如果是新对话的第一条消息，更新对话标题
-  if (activeConversation.value && conversationList.value.length > 0) {
-    const conversation = conversationList.value.find(c => c.id === activeConversation.value);
-    if (conversation && conversation.title === '新对话') {
-      conversation.title = question.length > 20 ? question.substring(0, 20) + '...' : question;
-      localStorage.setItem(`conversations_${activeChapter.value}`, JSON.stringify(conversationList.value));
-    }
-  }
+  
+  // 记录是否为新对话
+  const isNewConversation = activeConversation.value === null;
 
   try {
     const formData = new FormData();
-    formData.append('ChapterNo', activeChapter.value.toString());
-    formData.append('question', question);
+    formData.append('chapter_id', activeChapter.value.toString());
+    formData.append('content', question);
+    
+    // 如果未选择历史对话，使用session_id=-1表示新对话
+    if (activeConversation.value === null) {
+      formData.append('session_id', '-1');
+    } else {
+      formData.append('session_id', activeConversation.value.toString());
+    }
 
     const response = await axios.post(`${store.ip}/api/student/AIchat`, formData, {
       headers: {
@@ -387,16 +431,24 @@ const sendMessage = async () => {
       }
     });
 
+    console.log(response)
+
     if (response.data.ret === 0) {
       const botMessage: Message = {
         id: Date.now() + 1,
-        text: response.data.ans,
+        text: response.data.answer,
         sender: 'bot',
         timestamp: Date.now()
       };
       messages.value.push(botMessage);
+      
+      // 如果是新对话且成功，重新获取历史对话列表
+      if (isNewConversation && activeChapter.value) {
+        getChatHistory(activeChapter.value);
+      }
     } else {
       ElMessage.error(response.data.msg || 'AI助手出错了');
+      throw new Error(response.data.msg || 'AI助手出错了');
     }
   } catch (error) {
     console.error('发送消息失败', error);
@@ -418,7 +470,7 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 /* 主容器样式 */
 .ai-assistant-page {
   display: flex;
-  height: 100vh;
+  height: 100%;
   background-color: #fafafa;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }

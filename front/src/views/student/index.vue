@@ -31,7 +31,7 @@ onMounted(() => {
 <style scoped>
 .student-dashboard {
   width: 100%;
-  height: 100vh;
+  height: 100%;
   background-color: #f5f7fa;
   overflow: hidden;
 }

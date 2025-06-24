@@ -82,33 +82,7 @@ const searchQuery = ref('');
 const myCourses = ref<MyCourse[]>([]);
 const loading = ref(false);
 
-// 模拟数据作为后备
-const mockCourses: MyCourse[] = [
-  {
-    id: 1,
-    name: 'Vue.js 3.0 完整开发教程',
-    teacher_id: 1,
-    teacher_name: '张老师',
-    student_num: 1250,
-    image: '/src/assets/images/vue-course.jpg'
-  },
-  {
-    id: 2,
-    name: 'Python数据分析实战',
-    teacher_id: 2,
-    teacher_name: '李教授',
-    student_num: 890,
-    image: '/src/assets/images/python-course.jpg'
-  },
-  {
-    id: 3,
-    name: '机器学习基础',
-    teacher_id: 3,
-    teacher_name: '王博士',
-    student_num: 2100,
-    image: '/src/assets/images/ml-course.jpg'
-  }
-];
+
 
 /**
  * 获取学生已选课程列表
@@ -120,7 +94,6 @@ const fetchMyCourses = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
       ElMessage.warning('请先登录');
-      myCourses.value = mockCourses;
       return;
     }
 
@@ -133,25 +106,22 @@ const fetchMyCourses = async () => {
     });
 
     if (response.data.ret === 0) {
-      // 处理API返回的课程数据
-      myCourses.value = response.data.courseList.map((course: any) => ({
-        id: course.course_id,
-        name: course.course_name,
-        teacher_id: course.teacher_id,
-        teacher_name: course.teacher_name,
-        student_num: course.student_num || 0,
-      }));
+      // 处理API返回的课程数据，确保courseList是数组格式
+      const courseList = response.data.courseList;
+      if (courseList) {
+        myCourses.value = Array.isArray(courseList) ? courseList : [courseList];
+      } else {
+        myCourses.value = [];
+      }
       ElMessage.success('课程列表加载成功');
     } else {
-      // API返回错误时使用模拟数据
-      myCourses.value = mockCourses;
-      ElMessage.info('已切换到模拟数据模式');
+      myCourses.value = [];
+      ElMessage.error('获取课程列表失败：' + response.data.msg);
     }
   } catch (error) {
     console.error('获取我的课程失败:', error);
-    ElMessage.warning('网络请求失败，已切换到模拟数据模式');
-    // 使用模拟数据作为后备
-    myCourses.value = mockCourses;
+    ElMessage.error('网络请求失败，请稍后重试');
+    myCourses.value = [];
   } finally {
     loading.value = false;
   }
@@ -198,7 +168,7 @@ onMounted(() => {
 .my-courses {
   padding: 24px;
   background-color: #f5f7fa;
-  min-height: 100vh;
+  min-height: 100%;
 }
 
 /* 页面标题样式 */
