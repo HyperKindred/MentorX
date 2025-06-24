@@ -48,7 +48,7 @@ def ds_generate_teachcontent(Cno, chapter):
         content = result.get('response', '')  
         cleaned_content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()   
         sql = "INSERT INTO chapter(name, content, course_id) values(%s, %s, %s);"
-        cursor.execute(sql, (Cname, cleaned_content, Cno))
+        cursor.execute(sql, (chapter, cleaned_content, Cno))
         return True
     except:
         return False

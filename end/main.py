@@ -83,19 +83,19 @@ def getLearningStatsByPerson():
         data = {"ret": 0, "msg": "获取信息成功！", "students": students}
     return jsonify(data)
 
-@app.route('/api/getLearningStatsByChapter', methods=["POST"])
-def getLearningStatsByChapter():
-    chapter_id = request.form.get("id")
-    chapter_ids = get_learning_stats_by_chapter_db(chapter_id)
+@app.route('/api/getLearningStatsByCourse', methods=["POST"])
+def getLearningStatsByCourse():
+    course_id = request.form.get("id")
+    course_ids = get_learning_stats_by_course_db(course_id)
     
-    chapters = []
-    if chapter_ids is None:
-        data = {"ret": 1, "msg": "该章节不存在！"}
+    courses = []
+    if course_ids is None:
+        data = {"ret": 1, "msg": "该课程不存在！"}
     else:
-        for cid in chapter_ids:
-            chapter = f_getLearningStatsByChapter(cid)
-            chapters.append(chapter)
-        data = {"ret": 0, "msg": "获取信息成功！", "chapters": chapters}
+        for cid in course_ids:
+            course = f_getLearningStatsByCourse(cid)
+            courses.append(course)
+        data = {"ret": 0, "msg": "获取信息成功！", "courses": course}
     return jsonify(data)
 
 @app.route('/api/getChapterList', methods=["POST"])
@@ -318,6 +318,8 @@ def AIchat():
     session_id = request.form.get("session_id")
     student_id = int(get_jwt_identity())
     success, answer = ds_aichat(student_id, chapter_id, content, int(session_id))
+    if success:
+        increase_count("AIchat")
     return jsonify({"ret":0, "answer":answer} if success else {"ret": 1, "msg": answer})
 
 @app.route('/api/student/generate_exercises', methods=['POST'])
@@ -328,6 +330,8 @@ def generate_exercises():
     type = request.form.get("type")
     student_id = int(get_jwt_identity())
     success = ds_generate_tasks(ChapterNo, difficulty, type, student_id)
+    if success:
+        increase_count("generate_exercises")
     return jsonify({"ret": 0} if success else {"ret": 1, "msg": "习题生成失败！"})
     
 
@@ -337,6 +341,8 @@ def check_exercises():
     Eno = request.form.get("Eno")
     student_id = int(get_jwt_identity())
     success, info = ds_check_answer(Eno, student_id)
+    if success:
+        increase_count("check_exercises")
     return jsonify({"ret": 0} if success else {"ret": 1, "msg": info})
     
 
@@ -345,6 +351,8 @@ def generate_teachcontent():
     Cno = request.form.get("Cno")  
     chapter = request.form.get("chapter")
     success = ds_generate_teachcontent(Cno, chapter)
+    if success:
+        increase_count("generate_teachcontent")
     return jsonify({"ret": 0} if success else {"ret": 1, "msg": "课件生成失败！"})
 
 @app.route('/api/teacher/generate_tasks', methods=['POST'])
@@ -353,6 +361,8 @@ def generate_tasks():
     difficulty = request.form.get("difficulty")
     type = request.form.get("type")
     success = ds_generate_tasks(ChapterNo, difficulty, type)
+    if success:
+        increase_count("generate_tasks")
     return jsonify({"ret": 0} if success else {"ret": 1, "msg": "习题生成失败！"})
 
 @app.route('/api/teacher/check', methods=['POST'])
@@ -360,8 +370,17 @@ def check_answer():
     Eno = request.form.get("Eno")
     student_id = request.form.get("student_id")
     success, info = ds_check_answer(Eno, student_id)
+    if success:
+        increase_count("check")
     return jsonify({"ret": 0} if success else {"ret": 1, "msg": info})
 
+@app.route('/api/sumTime', methods=['POST'])
+@jwt_required()
+def sumTime():
+    time = request.form.get("time")
+    user_id = int(get_jwt_identity())
+    success, info = sum_time_db(user_id, sumTime)
+    return jsonify({"ret": 0} if success else {"ret": 1, "msg": info})
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", debug=True, port=5000)
