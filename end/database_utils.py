@@ -519,8 +519,8 @@ def delete_exercise_db(exercise_id):
 def increase_count(name):
     conn, cursor = connectSQL()
     try:
-        sql = "UPDATE system_stats SET `%s` = `%s` + 1;"
-        cursor.execute(sql, (name, name))
+        sql = f"UPDATE system_stats SET `{name}` = `{name}` + 1;"
+        cursor.execute(sql)
         return True
     finally:
         closeSQL(conn, cursor)
