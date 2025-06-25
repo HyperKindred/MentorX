@@ -28,7 +28,15 @@
       </el-tabs>
     </div>
     <div class="tab-content">
-      <component :is="getCurrentComponent()" />
+      <keep-alive>
+        <component 
+          v-for="tab in store.tabs" 
+          v-show="tab.name === store.activeTab"
+          :key="tab.name"
+          :is="tab.component" 
+          v-bind="tab.props || {}" 
+        />
+      </keep-alive>
     </div>
   </div>
 </template>
@@ -120,10 +128,7 @@ const getUserAvatar = () => {
   }
 };
 
-function getCurrentComponent() {
-  const tab = store.tabs.find(t => t.name === store.activeTab);
-  return tab ? tab.component : null;
-}
+
 
 function onTabClick(tab: any) {
   activeTab.value = tab.name;
