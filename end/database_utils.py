@@ -277,7 +277,7 @@ def get_ai_list_db(course_id, student_id):
 def get_ai_chat_db(student_id, chapter_id):
     conn, cursor = connectSQL()
     try:
-        sql = "SELECT session_id, session_name, type, content, time FROM communicate_history WHERE student_id = %s AND chapter_id = %s;"
+        sql = "SELECT session_id, session_name, type, content, REPLACE(REPLACE(time, ' GMT', ''), 'UTC', '') AS time FROM communicate_history WHERE student_id = %s AND chapter_id = %s;"
         cursor.execute(sql, (student_id, chapter_id))
         return cursor.fetchall()
     finally:
