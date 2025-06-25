@@ -1,5 +1,5 @@
 <template>
-  <div class="Main">
+  <div class="main">
     <div class="search-bar">
       <el-input
         v-model="searchQuery"
@@ -204,7 +204,7 @@ const handleCardClick = (id: number, name: string) => {
     letter-spacing: 0.1rem;
 }
 
-/* 搜索栏样式 */
+
 .search-bar {
   display: flex;
   justify-content: center;
