@@ -209,7 +209,7 @@ onMounted(() => {
 
 watch(activeChapter, (newChapterId) => {
   if (newChapterId !== null) {
-    getChatHistory(newChapterId);
+    // 只调用loadConversationHistory，避免重复调用getChatHistory
     loadConversationHistory(newChapterId);
   }
 });
@@ -257,8 +257,23 @@ const getChatHistory = async (chapterId: number) => {
       }
     });
 
+    console.log(response.data.sessions)
+
+
     if (response.data.ret === 0 && response.data.sessions) {
       const sessions = Array.isArray(response.data.sessions) ? response.data.sessions : [response.data.sessions];
+      
+      // 记录是否需要特殊处理activeConversation为-1的情况
+      const shouldUpdateActiveConversation = activeConversation.value === -1;
+      
+      // 如果activeConversation为-1，说明是新对话，需要设置为最新的session_id
+      if (shouldUpdateActiveConversation && sessions.length > 0) {
+        // 找到最新的session_id（时间最晚的）
+        const latestSession = sessions.reduce((latest: any, current: any) => {
+          return new Date(current.time).getTime() > new Date(latest.time).getTime() ? current : latest;
+        });
+        activeConversation.value = latestSession.session_id;
+      }
       
       // 构建对话列表，按session_id分组
       const conversationMap = new Map<number, Conversation>();
@@ -275,14 +290,21 @@ const getChatHistory = async (chapterId: number) => {
           conversationMap.set(s.session_id, {
             id: s.session_id,
             title: title,
-            time: new Date(s.time).getTime(), // 使用API返回的时间
+            time: new Date(s.time + ' +08:00').getTime(), // 后端返回北京时间，明确指定时区
             chapterId: chapterId
           });
+
         }
       });
       
       // 更新对话列表，按时间倒序排列
       conversationList.value = Array.from(conversationMap.values()).sort((a, b) => b.time - a.time);
+      
+      // 如果是从activeConversation为-1的状态更新过来的，只更新左侧列表，不更新右侧消息
+      if (shouldUpdateActiveConversation) {
+        // 只更新左侧对话列表，保持右侧当前消息不变
+        return;
+      }
       
       // 如果当前没有选择对话，则不显示任何消息
       if (activeConversation.value === null) {
@@ -303,14 +325,14 @@ const getChatHistory = async (chapterId: number) => {
               id: messageId++,
               text: s.content,
               sender: 'user',
-              timestamp: new Date(s.time).getTime()
+              timestamp: new Date(s.time + ' +08:00').getTime() // 后端返回北京时间，明确指定时区
             }));
           } else if (s.type === 'A') {
             messageList.push(reactive<Message>({
               id: messageId++,
               text: s.content,
               sender: 'bot',
-              timestamp: new Date(s.time).getTime()
+              timestamp: new Date(s.time + ' +08:00').getTime() // 后端返回北京时间，明确指定时区
             }));
           }
         });
@@ -336,9 +358,8 @@ const loadConversationHistory = (chapterId: number) => {
   // 重新获取历史对话列表
   getChatHistory(chapterId);
   
-  // 默认不选择任何对话，进入新对话模式
-  activeConversation.value = null;
-  messages.value = [];
+  // 注意：不再自动清空当前对话状态，保持用户当前的对话不变
+  // 只有在明确开始新对话时才清空
 };
 
 /**
@@ -460,6 +481,8 @@ const sendMessage = async () => {
       }
     });
 
+    console.log(response)
+
     if (response.data.ret === 0) {
       // 移除加载消息
       messages.value.pop();
@@ -478,8 +501,10 @@ const sendMessage = async () => {
       // 开始逐字显示效果
       typewriterEffect(botMessage, response.data.answer, 30);
       
-      // 如果是新对话且成功，重新获取历史对话列表
+      // 如果是新对话且成功，先设置临时ID并重新获取历史对话列表
       if (isNewConversation && activeChapter.value) {
+        // 设置临时ID为-1，表示需要在getChatHistory中设置为最新对话
+        activeConversation.value = -1;
         getChatHistory(activeChapter.value);
       }
     } else {

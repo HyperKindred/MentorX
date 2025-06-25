@@ -85,7 +85,6 @@ const activeTab = ref('courseware');
 const activeChapter = ref<number | null>(null);
 const courseInfo = ref<CourseInfo | null>(null);
 const chapters = ref<Chapter[]>([]);
-
 /**
  * Markdown渲染器实例
  */

@@ -1,45 +1,44 @@
 <template>
-  <div class="Main">
-    <div class="sidebar">
-      <el-button type="primary" @click="dialogVisible = true" class="add-btn">新建章节</el-button>
-      <div class="chapter-list">
-        <el-space direction="vertical" fill>
-          <div
-            class="chapter-item"
-            v-for="chapter in chapters"
-            :key="chapter.id"
-          >
-            <el-button
-              type="default"
-              class="chapter-btn"
-              @click="handleChapterClick(chapter)"
-            >
-              {{ chapter.name }}
-            </el-button>
-            <el-button type="text" @click.stop="renameChapter(chapter)">重命名</el-button>
-            <el-button type="text" style="color: red" @click.stop="deleteChapter(chapter.id)">删除</el-button>
+  <div class="main">
+    <div class="left-panel">
+      <div class="course-header">
+        <h2 class="course-name">{{ courseName }}</h2>
+      </div>
+      <div class="chapter-navigation">
+        <div class="chapter-head">
+        <h3 class="nav-title">课程章节</h3>
+        <el-button type="primary" @click="dialogVisible = true" class="add-btn">新建章节</el-button>
+        </div>
+
+        <div class="sidebar">
+          <div class="chapter-list">
+            <el-space direction="vertical" fill>
+              <div class="chapter-item" v-for="chapter in chapters" :key="chapter.id" @click="handleChapterClick(chapter)">
+                <span class="chapter-title">{{ chapter.name }}</span>
+                <el-button type="text" class='chapterBtn' @click.stop="renameChapter(chapter)">重命名</el-button>
+                <el-button type="text" class='chapterBtn' style="color: red" @click.stop="deleteChapter(chapter.id)">删除</el-button>
+              </div>
+            </el-space>
           </div>
-        </el-space>
+        </div>  
       </div>
     </div>
+    <div class="right-panel">
     <div class="content-area" v-if="selectedChapter">
       <div class="header">
-        <h3>{{ selectedChapter.name }}</h3>
-        <el-button type="primary" @click="showExercises">习题</el-button>
-        <el-button type="primary" @click="toggleEditContent">
-          {{ isEditing ? '保存' : '修改课件内容' }}
+        <h3 class="chapterTitle">{{ selectedChapter.name }}</h3>
+      </div>
+      <div class="header-btn">
+        <el-button type="primary" class='head-btn' @click="showExercises">习题</el-button>
+        <el-button type="primary" class='head-btn' @click="toggleEditContent">
+          {{ isEditing ? '保存' : '修改' }}
         </el-button>
-        <el-button type="primary" @click="exportToWord">导出为 Word</el-button>
+        <el-button type="primary" @click="exportToWord" class='head-btn'>导出为 Word</el-button>
       </div>
 
+
       <div class="chapter-content">
-        <el-input
-          v-if="isEditing"
-          type="textarea"
-          v-model="editedContent"
-          rows="20"
-          resize="none"
-        />
+        <el-input v-if="isEditing" type="textarea" class='edit-content' v-model="editedContent" rows="20" resize="none" />
         <el-scrollbar v-else class="read-only-content">
           <div v-html="renderedHtml"></div>
         </el-scrollbar>
@@ -47,6 +46,7 @@
     </div>
     <div class="content-area" v-else>
       <p style="text-align: center; margin-top: 100px; color: #999;">请先选择一个章节</p>
+    </div>
     </div>
 
     <el-dialog v-model="dialogVisible" title="新建章节" width="30%">
@@ -77,6 +77,7 @@ import { ElMessage } from 'element-plus';
 import T_Exercises from '../Exercises/index.vue'
 const store = mainStore();
 const courseId = ref('');
+const courseName = ref('');
 const chapters = ref([]);
 const dialogVisible = ref(false);
 const Cname = ref('');
@@ -127,7 +128,7 @@ const handleAddChapter = () => {
   }
   const formData = new FormData();
   formData.append('chapter', Cname.value)
-  formData.append('Cno', courseId.value)
+  formData.append('Cno', courseId)
   axios({
     method: 'post',
     url: `${store.ip}/api/teacher/generate_teachcontent`,
@@ -157,7 +158,6 @@ const handleAddChapter = () => {
 const getChapterList = () => {
   const formData = new FormData();
   formData.append('id', courseId.value);
-
   axios({
     method: 'post',
     url: `${store.ip}/api/getChapterList`,
@@ -172,12 +172,9 @@ const getChapterList = () => {
       console.log('响应数据:', responseData);
 
       if (responseData.ret === 0) {
-        if (Array.isArray(responseData.chapterList)) {
-          chapters.value = responseData.chapterList;
-        } else {
-          chapters.value = [];
-        }
+        chapters.value = Array.isArray(responseData.chapterList) ? responseData.chapterList : [responseData.chapterList];
       } else {
+        chapters.value = [];
         ElMessage({
           message: '获取章节列表失败：' + responseData.msg,
           type: 'error',
@@ -286,11 +283,12 @@ const showExercises = () => {
   localStorage.setItem('selectedChapter', JSON.stringify(selectedChapter.value));
 
   store.addTab('习题列表', T_Exercises);
-  
+
 }
 
 onMounted(() => {
-  courseId.value = localStorage.getItem('selectedCourseId');
+  courseId.value = localStorage.getItem('selectedCourseID');
+  courseName.value = localStorage.getItem('selectedCourseName');
   getChapterList();
 });
 
@@ -298,20 +296,70 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.main {
+  display: flex;
+  height: 100%;
+  background-color: transparent;
+}
+
+.left-panel {
+  width: 300px;
+  background: transparent;
+  border-right: 1px solid #e4e7ed;
+  display: flex;
+  flex-direction: column;
+}
+.course-header {
+  padding: 24px 20px;
+  border-bottom: 1.5px solid #e4e7ed;
+  background: transparent;
+  color: #f8f8f8;
+}
+
+.course-name {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  line-height: 1.4;
+}
 
 .sidebar {
-  width: 20%;
-  background-color: #fff;
-  border-right: 1px solid #ddd;
-  padding: 16px;
-  box-sizing: border-box;
+  flex: 1;
+  overflow-y: auto;
+}
+
+
+.chapter-navigation {
+  flex: 1;
   overflow-y: auto;
 }
 
 .chapter-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  padding: 12px 16px;
+  margin-bottom: 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.chapter-item:hover {
+  background-color: #f8f9fa;
+  border-color: #e4e7ed;
+}
+
+.chapter-item.active {
+  background-color: #e8f4fd;
+  border-color: #409eff;
+  color: #409eff;
+}
+
+.chapter-title {
+  font-size: 14px;
+  line-height: 1.4;
+  flex: 1;
 }
 
 .chapter-btn {
@@ -319,27 +367,73 @@ onMounted(() => {
   margin-right: 4px;
 }
 
+
+.chapterBtn {
+  width: 2rem;
+  height: 2rem;
+  margin-left: 1rem;
+  font-size: 11px;
+}
+.nav-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #f8f8f8;
+  margin-left: 5.5rem;
+  padding: 20px 20px 16px 20px;
+}
 .add-btn {
-  width: 100%;
-  margin-bottom: 16px;
+  width: 4rem;
+  height: 2rem;
+  margin-top: 1rem;
+  margin-left: 0.7rem;
+  font-size: 11px;
 }
 
-.content-area {
-  flex-grow: 1;
-  padding: 24px;
+.chapterTitle {
+  color:black;
+}
+
+.chapter-head {
+  display: flex;
+  flex-direction: row;
+}
+
+
+.right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: white;
+}
+
+.chapter-content {
+  flex: 1;
   overflow-y: auto;
-  background-color: #f9f9f9;
+  padding: 24px;
+  text-align: left;
+  min-height: 500px;
 }
 
 .header {
   display: flex;
-  justify-content: space-between;
+  flex-direction: row;
   align-items: center;
+  justify-content: center;
+  margin-top: 1.5rem;
 }
 
-.chapter-content {
-  margin-top: 16px;
+.header-btn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: end;
+  margin-right: 2rem;
 }
+
+.head-btn {
+  
+}
+
 
 .read-only-content {
   padding: 12px;
@@ -348,6 +442,10 @@ onMounted(() => {
   border-radius: 6px;
   white-space: pre-wrap;
   max-height: 70vh;
+  color: black;
 }
 
+.edit-content {
+
+}
 </style>

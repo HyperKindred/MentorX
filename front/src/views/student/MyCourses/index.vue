@@ -74,7 +74,6 @@ interface MyCourse {
   teacher_id: number;
   teacher_name: string;
   student_num: number;
-  image?: string;
 }
 
 // 响应式数据
@@ -261,24 +260,6 @@ onMounted(() => {
   background-color: #fafbfc;
 }
 
-/* 课程图片样式 */
-.course-image {
-  position: relative;
-  width: 120px;
-  height: 80px;
-  border-radius: 8px;
-  overflow: hidden;
-  margin-right: 20px;
-  flex-shrink: 0;
-}
-
-.course-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-
 
 /* 课程信息样式 */
 .course-info {
@@ -327,28 +308,6 @@ onMounted(() => {
 }
 
 
-
-/* 课程操作样式 */
-.course-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-left: 20px;
-}
-
-.course-menu {
-  margin-left: 8px;
-}
-
-.menu-btn {
-  padding: 8px;
-  color: #7f8c8d;
-}
-
-.menu-btn:hover {
-  color: #409eff;
-  background-color: #f0f9ff;
-}
 
 /* 响应式设计 */
 @media (max-width: 768px) {

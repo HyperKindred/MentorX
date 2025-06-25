@@ -1,10 +1,27 @@
 <template>
   <div class="Main">
-    <el-button type="primary" @click="dialogVisible = true">新建课程</el-button>
+    <div class="search-bar">
+      <el-input
+        v-model="searchQuery"
+        placeholder="搜索课程"
+        class="search-input"
+        size="large"
+        clearable
+      >
+        <template #prefix>
+          <el-icon><Search /></el-icon>
+        </template>
+      </el-input>
+    </div>
+    <div class="section-header">
+      <h2 class="section-title">课程列表</h2>
+      <el-button type="primary" @click="dialogVisible = true" class="addBtn">+</el-button>
+    </div>
     <el-dialog v-model="dialogVisible" title="新建课程" width="30%">
       <el-input
         v-model="Cname"
         placeholder="请输入课程名称"
+        class="add-input"
         clearable
       ></el-input>
       <template #footer>
@@ -14,50 +31,78 @@
         </span>
       </template>
     </el-dialog>
-    <el-row :gutter="20" class="course-row">
-      <el-col
-        v-for="item in courses"
-        :key="item.id"
-        :span="6"
-        class="course-col"
+    <div v-if="loading" class="loading-state">
+      <el-skeleton :rows="6" animated />
+    </div>
+
+    <!-- 课程卡片网格 -->
+    <div v-else-if="filteredCourses.length > 0" class="courses-grid">
+      <div 
+        v-for="course in filteredCourses" 
+        :key="course.id"
+        class="course-card"
+        @click="handleCardClick(course.id, course.name)"
       >
-          <el-card
-            :body-style="{ padding: '10px' }"
-            shadow="hover"
-            @click="handleCardClick(item.id, item.name)"
-            style="cursor: pointer;"
-          >
-          <div class="course-info">
-            <h3>{{ item.name }}</h3>
-            <p>教师：{{ item.teacher_name }}</p>
-            <p>学生人数：{{ item.student_num }}</p>
+        <div class="course-content">
+          <h3 class="course-title">{{ course.name }}</h3>
+          <p class="course-teacher">讲师：{{ course.teacher_name }}</p>
+          <div class="course-meta">
+            <span class="course-students">
+              <el-icon><User /></el-icon>
+              {{ course.student_num }}人学习
+            </span>
           </div>
-        </el-card>
-      </el-col>
-    </el-row>
+        </div>
+      </div>
+    </div>
+    <div v-else class="empty-state">
+      <el-empty description="暂无课程数据"></el-empty>
+    </div>
   </div>
 </template>
 
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { mainStore } from '../../store/index.ts';
 import { useRouter } from 'vue-router';
+import { User, Search } from '@element-plus/icons-vue';
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
 import T_chapter from './Chapter/index.vue';
 
 const store = mainStore();
 const router = useRouter();
-const courses = ref([]);
+const courses = ref<Course[]>([]);
 const Cname = ref('');
 const dialogVisible = ref(false);
+const loading = ref(false);
+const searchQuery = ref('');
+
+interface Course {
+  id: number;
+  name: string;
+  teacher_id: number;
+  teacher_name: string;
+  student_num: number;
+}
 onMounted(() => {
     getCourseList();
 });
 
+const filteredCourses = computed(() => {
+  if (!searchQuery.value.trim()) {
+    return courses.value;
+  }
+  return courses.value.filter(course => 
+    course.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    course.teacher_name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  );
+});
+
 
 const getCourseList = () => {
+  loading.value = true;
   axios({
     method: 'get',
     url: `${store.ip}/api/getCourseList`,
@@ -67,9 +112,9 @@ const getCourseList = () => {
   })
     .then((response) => {
       const responseData = response.data;
-      if (responseData.ret === 0 && Array.isArray(responseData.courseList)) {
+      if (responseData.ret === 0) {
         if (Array.isArray(responseData.courseList)){
-          courses.value = responseData.courseList;
+          courses.value = Array.isArray(responseData.courseList) ? responseData.courseList : [responseData.courseList];
         }
         else {
           courses.value = [];
@@ -83,6 +128,7 @@ const getCourseList = () => {
     })
     .catch((error) => {
       console.error('Error posting data:', error);
+      courses.value = [];
       ElMessage({
         message: '获取课程列表失败：网络错误，请稍后重试！',
         type: 'error',
@@ -90,6 +136,7 @@ const getCourseList = () => {
         grouping: true,
       });
     });
+    loading.value = false;
 };
 
 const handleAddCourse = () => {
@@ -125,8 +172,9 @@ const handleAddCourse = () => {
     });
 };
 
-const handleCardClick = (id: number, name:string) => {
-  localStorage.setItem('selectedCourseId', id.toString());
+const handleCardClick = (id: number, name: string) => {
+  localStorage.setItem('selectedCourseID', id);
+  localStorage.setItem('selectedCourseName', name);
   store.addTab(name, T_chapter);
 };
 
@@ -134,24 +182,163 @@ const handleCardClick = (id: number, name:string) => {
 </script>
 
 <style scoped>
+.main {
+  font-family: Arial, Helvetica, sans-serif;
+  padding: 20px;
+  background-color: transparent;
+  min-height: 100%;
+  color: white;
+}
 
-.course-row {
+.h2 {
+    margin: 0.2rem;
+    font-size: 1rem;
+    color: white;
+}
+
+.p {
+    font-size: 1rem;
+    line-height: 1.5rem;
+    font-weight: 100;
+    margin: 1.2rem 0;
+    letter-spacing: 0.1rem;
+}
+
+/* 搜索栏样式 */
+.search-bar {
   display: flex;
-  flex-wrap: wrap;
-}
-
-.course-col {
+  justify-content: center;
   margin-bottom: 20px;
+  padding: 20px 0;
+  
 }
 
-.course-img {
+.search-input {
+  max-width: 600px;
   width: 100%;
-  height: 150px;
-  object-fit: cover;
-  border-radius: 8px;
+  letter-spacing: 0.1rem;
 }
 
-.course-info {
-  margin-top: 10px;
+.search-input :deep(.el-input__wrapper) {
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: none;
+  letter-spacing: 0.1rem;
 }
+
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: left;
+  margin-bottom: 24px;
+  margin-left: 1rem;
+}
+
+.section-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+}
+
+.courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  padding: 0;
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+
+.addBtn {
+    background-color: #417dff;
+    color: white;
+    border: 1px solid #fff;
+    outline: none;
+    cursor: pointer;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    margin-left: 0.6rem;
+    padding: 0%;
+}
+
+.addBtn:hover {
+    background-color: #6998ff;
+}
+
+
+.course-card {
+  background: rgba(255, 255, 255, 0.835);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  color: #080808;
+  cursor: pointer;
+}
+
+.course-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+
+.add-input {
+  border: none;
+}
+
+
+.course-content {
+  color: #080808;
+  padding: 20px;
+}
+
+.course-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0 0 8px 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.course-teacher {
+  font-size: 14px;
+  color: #7f8c8d;
+  margin: 0 0 12px 0;
+}
+
+.course-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.course-students {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  color: #666;
+  flex: 1;
+}
+
+.course-students .el-icon {
+  font-size: 16px;
+}
+
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px; /* or any other height */
+}
+
 </style>
