@@ -58,7 +58,7 @@
             <div class="question-header">
               <h2>题目内容</h2>
               <div class="question-meta">
-                <el-tag type="warning">难度: {{ selectedExercise.difficulty }}</el-tag>
+                <span class="exercise-difficulty-1">难度: {{ selectedExercise.difficulty }}</span>
                 <el-tag type="info">{{ getExerciseTypeText(selectedExercise.type) }}</el-tag>
                 <el-tag v-if="selectedExercise.is_committed" type="success">已提交</el-tag>
                 <el-tag v-else type="danger">未提交</el-tag>
@@ -478,6 +478,12 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
 .exercise-difficulty {
   color: #909399;
   margin-right: 1rem;
+}
+
+.exercise-difficulty-1 {
+  color: #909399;
+  margin-right: 0.8rem;
+  font-size: 0.9rem;
 }
 
 .exercise-type {

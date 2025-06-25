@@ -562,7 +562,7 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 .chapter-header {
   padding: 16px;
   border-bottom: 1px solid #e5e7eb;
-  background: #ffffff;
+  background: #1c3976;
 }
 
 .current-chapter {
@@ -580,14 +580,20 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 
 .chapter-name {
   font-size: 14px;
+  color: white;
 }
 
 .chapter-selector {
   width: 100%;
+
 }
 
 .chapter-selector :deep(.el-select) {
   width: 100%;
+}
+
+.el-icon-document {
+  height: 1.8rem;
 }
 
 /* 对话历史样式 */
@@ -678,7 +684,7 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 .chat-header {
   padding: 16px 24px;
   border-bottom: 1px solid #e5e7eb;
-  background: #ffffff;
+  background: #1c3976;
 }
 
 .chat-title {
@@ -686,7 +692,7 @@ const handleShiftEnter = (event: KeyboardEvent) => {
   align-items: center;
   font-size: 16px;
   font-weight: 600;
-  color: #374151;
+  color: white;
 }
 
 .chat-title i {
@@ -766,10 +772,14 @@ const handleShiftEnter = (event: KeyboardEvent) => {
   color: white;
 }
 
-.message-content {
+.message-content-user {
   flex: 1;
   max-width: calc(100% - 80px);
+  margin-left: 80px;
+  margin-right: 80px;
 }
+
+
 
 .message-text {
   background: #f9fafb;
@@ -794,8 +804,14 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 }
 
 .message-item.user .message-text {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  padding: 20px;
+  text-align: left;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 17px;
+  line-height: 1.7;
+  color: #2c3e50;
 }
 
 .message-time {
@@ -1114,7 +1130,7 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 .chat-input-area {
   padding: 16px 24px;
   border-top: 1px solid #e5e7eb;
-  background: #ffffff;
+  background: #1c3976;
 }
 
 .input-container {

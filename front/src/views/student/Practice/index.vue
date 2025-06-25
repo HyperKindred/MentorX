@@ -75,8 +75,8 @@
             <div v-for="practice in practices" :key="practice.exercise_id" class="practice-item" @click="selectPractice(practice)">
               <div class="practice-content">{{ formatPracticeContent(practice.exercise_content, 80) }}</div>
               <div class="practice-meta">
-                <span class="practice-type">{{ getPracticeTypeText(practice.type) }}</span>
                 <span class="practice-difficulty">难度: {{ practice.difficulty }}</span>
+                <span class="practice-type">{{ getPracticeTypeText(practice.type) }}</span>
                 <span class="practice-status" :class="{ 'submitted': practice.is_committed === 1 }">
                   {{ practice.is_committed === 1 ? '已批改' : '未批改' }}
                 </span>
@@ -92,7 +92,7 @@
             <div class="question-header">
               <h2>题目内容</h2>
               <div class="question-meta">
-                <el-tag type="warning">难度: {{ selectedPractice.difficulty }}</el-tag>
+                <span class="practice-difficulty-1">难度: {{ selectedPractice.difficulty }}</span>
                 <el-tag type="info">{{ getPracticeTypeText(selectedPractice.type) }}</el-tag>
                 <el-tag v-if="selectedPractice.is_committed" type="success">已批改</el-tag>
                 <el-tag v-else type="danger">未批改</el-tag>
@@ -1161,5 +1161,11 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 .practice-difficulty {
   color: #909399;
   margin-right: 1rem;
+}
+
+.practice-difficulty-1 {
+  color: #909399;
+  margin-right: 0.8rem;
+  font-size: 0.9rem;
 }
 </style>
