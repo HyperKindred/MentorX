@@ -15,7 +15,7 @@
             <el-space direction="vertical" fill>
               <div class="chapter-item" v-for="chapter in chapters" :key="chapter.id" @click="handleChapterClick(chapter)">
                 <span class="chapter-title">{{ chapter.name }}</span>
-                <el-button type="text" class='chapterBtn' @click.stop="renameChapter(chapter)">重命名</el-button>
+                <el-button type="text" class='chapterBtn' style="color: white;" @click.stop="renameChapter(chapter)">重命名</el-button>
                 <el-button type="text" class='chapterBtn' style="color: red" @click.stop="deleteChapter(chapter.id)">删除</el-button>
               </div>
             </el-space>
@@ -343,11 +343,12 @@ onMounted(() => {
   cursor: pointer;
   transition: all 0.2s ease;
   border: 1px solid transparent;
+  background-color: #208bf6ab;
 }
 
 .chapter-item:hover {
-  background-color: #f8f9fa;
-  border-color: #e4e7ed;
+  background-color: #65b2ffa9;
+  color: #f8f8f8;
 }
 
 .chapter-item.active {
@@ -373,6 +374,9 @@ onMounted(() => {
   height: 2rem;
   margin-left: 1rem;
   font-size: 11px;
+}
+
+.chapterBtn:hover {
 }
 .nav-title {
   font-size: 16px;
