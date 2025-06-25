@@ -152,7 +152,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, onActivated } from 'vue';
 import { ElMessage } from 'element-plus';
 import { mainStore } from '../../../store/index.ts';
 import axios from 'axios';
@@ -187,6 +187,21 @@ interface GenerateForm {
   difficulty: number | null;
 }
 
+/**
+ * 组件Props定义
+ */
+interface Props {
+  courseData?: CourseInfo;
+  chapterData?: Chapter[];
+  activeChapterId?: number | null;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  courseData: undefined,
+  chapterData: () => [],
+  activeChapterId: null
+});
+
 const store = mainStore();
 const courseInfo = ref<CourseInfo | null>(null);
 const chapters = ref<Chapter[]>([]);
@@ -204,17 +219,105 @@ const generateForm = ref<GenerateForm>({
 
 
 
-onMounted(() => {
-  const storedCourse = localStorage.getItem('currentCourse');
-  if (storedCourse) {
-    courseInfo.value = JSON.parse(storedCourse);
-    if (courseInfo.value) {
-      getChapterList(courseInfo.value.id);
+/**
+ * 初始化课程数据
+ * 优先使用props传递的课程数据，然后回退到localStorage
+ */
+const initCourseData = () => {
+  let newCourseInfo: CourseInfo | null = null;
+  
+  // 优先使用props传递的课程数据
+  if (props.courseData) {
+    newCourseInfo = props.courseData;
+  } else {
+    // 回退到localStorage
+    const storedCourse = localStorage.getItem('currentCourse');
+    if (storedCourse) {
+      newCourseInfo = JSON.parse(storedCourse);
+    }
+  }
+  
+  if (newCourseInfo) {
+    // 检查是否需要更新课程数据
+    if (!courseInfo.value || courseInfo.value.id !== newCourseInfo.id) {
+      courseInfo.value = newCourseInfo;
+      
+      // 如果有传递章节数据，直接使用
+      if (props.chapterData && props.chapterData.length > 0) {
+        chapters.value = props.chapterData;
+        // 设置激活的章节
+        if (props.activeChapterId) {
+          activeChapter.value = props.activeChapterId;
+        } else if (chapters.value.length > 0) {
+          activeChapter.value = chapters.value[0].id;
+        }
+      } else {
+        // 没有章节数据时，重新获取
+        getChapterList(newCourseInfo.id);
+      }
     }
   } else {
     ElMessage.error('无法加载课程信息');
   }
+};
+
+/**
+ * 组件首次挂载时初始化课程数据
+ */
+onMounted(() => {
+  initCourseData();
 });
+
+/**
+ * keep-alive组件激活时检查并更新课程数据
+ */
+onActivated(() => {
+  initCourseData();
+});
+
+/**
+ * 监听courseData props变化，当传入新的课程数据时更新组件状态
+ */
+watch(
+  () => props.courseData,
+  (newCourseData) => {
+    if (newCourseData && (!courseInfo.value || courseInfo.value.id !== newCourseData.id)) {
+      initCourseData();
+    }
+  },
+  { immediate: false }
+);
+
+/**
+ * 监听chapterData props变化
+ */
+watch(
+  () => props.chapterData,
+  (newChapterData) => {
+    if (newChapterData && newChapterData.length > 0) {
+      chapters.value = newChapterData;
+      if (props.activeChapterId) {
+        activeChapter.value = props.activeChapterId;
+      } else if (chapters.value.length > 0) {
+        activeChapter.value = chapters.value[0].id;
+      }
+    }
+  },
+  { immediate: false }
+);
+
+/**
+ * 监听activeChapterId props变化
+ */
+watch(
+  () => props.activeChapterId,
+  (newActiveChapterId) => {
+    if (newActiveChapterId && newActiveChapterId !== activeChapter.value) {
+      activeChapter.value = newActiveChapterId;
+    }
+  },
+  { immediate: false }
+);
 
 watch(activeChapter, (newChapterId) => {
   if (newChapterId !== null) {

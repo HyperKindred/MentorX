@@ -28,19 +28,47 @@
     
     <!-- 右侧面板 -->
     <div class="right-panel">
-      <!-- 横向导航栏 -->
-      <div class="top-navigation">
-        <el-tabs v-model="activeTab" @tab-click="handleTabClick">
-          <el-tab-pane label="课件" name="courseware"></el-tab-pane>
-          <el-tab-pane label="习题" name="exercises"></el-tab-pane>
-          <el-tab-pane label="个人练习" name="practice"></el-tab-pane>
-          <el-tab-pane label="AI助手" name="ai-assistant"></el-tab-pane>
-        </el-tabs>
+      <!-- 功能按钮组 -->
+      <div class="function-buttons">
+        <div class="button-group">
+          <el-button 
+             type="primary" 
+             :icon="Document" 
+             class="function-btn active"
+             disabled
+           >
+             课件学习
+           </el-button>
+           <el-button 
+             type="default" 
+             :icon="Edit" 
+             class="function-btn"
+             @click="openExercises"
+           >
+             章节习题
+           </el-button>
+           <el-button 
+             type="default" 
+             :icon="Notebook" 
+             class="function-btn"
+             @click="openPractice"
+           >
+             个人练习
+           </el-button>
+           <el-button 
+             type="default" 
+             :icon="ChatDotRound" 
+             class="function-btn"
+             @click="openAiAssistant"
+           >
+             AI助手
+           </el-button>
+        </div>
       </div>
       
       <!-- 内容展示区域 -->
       <div class="content-area">
-        <div v-if="activeTab === 'courseware'" class="courseware-content">
+        <div class="courseware-content">
           <div v-if="currentCourseware" class="courseware-display">
             <h3 class="content-title">{{ currentCourseware.title }}</h3>
             <div class="courseware-body" v-html="currentCourseware.content"></div>
@@ -49,24 +77,32 @@
             <el-empty description="暂无课件内容" />
           </div>
         </div>
-        
-        <div v-else class="placeholder-content">
-          <el-empty :description="getPlaceholderText()" />
-        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onActivated, watch } from 'vue';
 import { ElMessage } from 'element-plus';
+import { Document, Edit, Notebook, ChatDotRound } from '@element-plus/icons-vue';
 import { mainStore } from '../../../store/index.ts';
 import axios from 'axios';
 import { marked } from 'marked';
 import Exercises from '../Exercises/index.vue';
 import Practice from '../Practice/index.vue';
 import AiAssistant from '../AiAssistant/index.vue';
+
+/**
+ * 组件Props定义
+ */
+interface Props {
+  courseData?: CourseInfo;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  courseData: undefined
+});
 
 interface Chapter {
   id: number;
@@ -81,7 +117,6 @@ interface CourseInfo {
 }
 
 const store = mainStore();
-const activeTab = ref('courseware');
 const activeChapter = ref<number | null>(null);
 const courseInfo = ref<CourseInfo | null>(null);
 const chapters = ref<Chapter[]>([]);
@@ -118,69 +153,103 @@ const currentCourseware = computed(() => {
   };
 });
 
-// 选择章节
+/**
+ * 选择章节
+ * @param chapter 章节对象
+ */
 const selectChapter = (chapter: Chapter) => {
   activeChapter.value = chapter.id;
-  // 切换章节时自动回到课件标签
-  activeTab.value = 'courseware';
 };
 
-// 处理标签页点击
-const handleTabClick = (tab: any) => {
-  const tabName = tab.props.name;
-  
-  if (tabName !== 'courseware') {
-    let tabTitle = '';
-    let component: any = null;
-
-    switch (tabName) {
-      case 'exercises':
-        tabTitle = '习题';
-        component = Exercises;
-        break;
-      case 'practice':
-        tabTitle = '个人练习';
-        component = Practice;
-        break;
-      case 'ai-assistant':
-        tabTitle = 'AI助手';
-        component = AiAssistant;
-        break;
-    }
-    
-    if (tabTitle && component) {
-      store.addTab(tabTitle, component);
-      // 切换回课件，避免在当前页面显示空内容
-      activeTab.value = 'courseware';
-    }
+/**
+ * 打开习题页面
+ */
+const openExercises = () => {
+  if (courseInfo.value) {
+    store.addTab('章节习题', Exercises, {
+      courseData: courseInfo.value,
+      chapterData: chapters.value,
+      activeChapterId: activeChapter.value
+    });
   }
 };
 
-// 获取占位符文本
-const getPlaceholderText = () => {
-  switch (activeTab.value) {
-    case 'exercises':
-      return '习题功能开发中...';
-    case 'practice':
-      return '个人练习功能开发中...';
-    case 'ai-assistant':
-      return 'AI助手功能开发中...';
-    default:
-      return '内容加载中...';
+/**
+ * 打开个人练习页面
+ */
+const openPractice = () => {
+  if (courseInfo.value) {
+    store.addTab('个人练习', Practice, {
+      courseData: courseInfo.value
+    });
   }
 };
 
+/**
+ * 打开AI助手页面
+ */
+const openAiAssistant = () => {
+  if (courseInfo.value) {
+    store.addTab('AI助手', AiAssistant, {
+      courseData: courseInfo.value,
+      chapterData: chapters.value,
+      activeChapterId: activeChapter.value
+    });
+  }
+};
+
+
+
+/**
+  * 初始化课程数据
+  * 优先使用props传递的课程数据，然后回退到localStorage
+  */
+ const initCourseData = () => {
+   let newCourseInfo: CourseInfo | null = null;
+   
+   // 优先使用props传递的课程数据
+   if (props.courseData) {
+     newCourseInfo = props.courseData;
+   }
+   
+   if (newCourseInfo) {
+     // 检查是否需要更新课程数据
+     if (!courseInfo.value || courseInfo.value.id !== newCourseInfo.id) {
+       courseInfo.value = newCourseInfo;
+       getChapterList(newCourseInfo.id);
+     }
+   } else {
+     ElMessage.error('无法加载课程信息');
+   }
+ };
+
+/**
+ * 组件首次挂载时初始化课程数据
+ */
 onMounted(() => {
-  const storedCourse = localStorage.getItem('currentCourse');
-  if (storedCourse) {
-    courseInfo.value = JSON.parse(storedCourse);
-    if (courseInfo.value) {
-      getChapterList(courseInfo.value.id);
-    }
-  } else {
-    ElMessage.error('无法加载课程信息');
-  }
+  initCourseData();
 });
+
+/**
+  * keep-alive组件激活时检查并更新课程数据
+  */
+ onActivated(() => {
+   initCourseData();
+ });
+
+/**
+ * 监听courseData props变化，当传入新的课程数据时更新组件状态
+ */
+watch(
+  () => props.courseData,
+  (newCourseData) => {
+    if (newCourseData && (!courseInfo.value || courseInfo.value.id !== newCourseData.id)) {
+      courseInfo.value = newCourseData;
+      getChapterList(newCourseData.id);
+    }
+  },
+  { immediate: false }
+);
 
 /**
  * 获取课程章节列表
@@ -326,17 +395,41 @@ const getChapterList = async (courseId: number) => {
   background: white;
 }
 
-.top-navigation {
+/* 功能按钮组样式 */
+.function-buttons {
   border-bottom: 1px solid #e4e7ed;
-  padding: 0 24px;
+  padding: 20px 24px;
+  background: #fafbfc;
 }
 
-.top-navigation :deep(.el-tabs__header) {
-  margin: 0;
+.button-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
-.top-navigation :deep(.el-tabs__nav-wrap::after) {
-  display: none;
+.function-btn {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 12px 20px;
+  transition: all 0.3s ease;
+  border: 1px solid #d9d9d9;
+}
+
+.function-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+}
+
+.function-btn.active {
+  background: linear-gradient(135deg, #409eff 0%, #66b3ff 100%);
+  border-color: #409eff;
+  color: white;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.4);
+}
+
+.function-btn :deep(.el-icon) {
+  margin-right: 6px;
 }
 
 .content-area {
@@ -623,8 +716,7 @@ const getChapterList = async (courseId: number) => {
   margin-bottom: 0;
 }
 
-.empty-content,
-.placeholder-content {
+.empty-content {
   display: flex;
   align-items: center;
   justify-content: center;
