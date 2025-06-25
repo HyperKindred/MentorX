@@ -148,8 +148,7 @@ const store = mainStore();
  * @param course 课程对象
  */
 const openCourse = (course: MyCourse) => {
-  localStorage.setItem('currentCourse', JSON.stringify(course));
-  store.addTab(`${course.name}`, Course);
+  store.addTab(`${course.name}`, Course, { courseData: course });
 };
 
 
