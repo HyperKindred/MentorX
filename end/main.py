@@ -3,11 +3,12 @@ from flask_cors import CORS
 from flask_jwt_extended import  JWTManager, create_access_token, get_jwt_identity, jwt_required
 from database_utils import *
 from deepseek_model import *
-
+from datetime import timedelta
 
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = "secret key"
 jwt = JWTManager(app)
+expires = timedelta(hours=2)
 
 # 网络跨域问题
 app.config.from_object(__name__)
@@ -26,7 +27,7 @@ def signIn():
     elif password != result[0]:
         data = {"ret": 1, "msg": "密码错误！"}
     else:
-        access_token = create_access_token(identity=str(result[1]))
+        access_token = create_access_token(identity=str(result[1]), expires_delta=expires)
         data = {"ret": 0, 
                 "msg": "登录成功", 
                 "jwt": access_token,
@@ -94,7 +95,7 @@ def getLearningStatsByCourse():
         for cid in course_ids:
             course = f_getLearningStatsByCourse(cid)
             courses.append(course)
-        data = {"ret": 0, "msg": "获取信息成功！", "courses": course}
+        data = {"ret": 0, "msg": "获取信息成功！", "courses": courses}
     return jsonify(data)
 
 @app.route('/api/getChapterList', methods=["POST"])
