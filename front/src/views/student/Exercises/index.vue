@@ -41,8 +41,8 @@
             <div v-for="exercise in exercises" :key="exercise.exercise_id" class="exercise-item" @click="selectExercise(exercise)">
               <div class="exercise-content">{{ formatExerciseContent(exercise.exercise_content, 80) }}</div>
               <div class="exercise-meta">
-                <span class="exercise-type">{{ getExerciseTypeText(exercise.type) }}</span>
                 <span class="exercise-difficulty">难度: {{ exercise.difficulty }}</span>
+                <span class="exercise-type">{{ getExerciseTypeText(exercise.type) }}</span>
                 <span class="exercise-status" :class="{ 'submitted': exercise.is_committed === 1 }">
                   {{ exercise.is_committed === 1 ? '已提交' : '未提交' }}
                 </span>
@@ -58,8 +58,8 @@
             <div class="question-header">
               <h2>题目内容</h2>
               <div class="question-meta">
+                <span class="exercise-difficulty-1">难度: {{ selectedExercise.difficulty }}</span>
                 <el-tag type="info">{{ getExerciseTypeText(selectedExercise.type) }}</el-tag>
-                <el-tag type="warning">难度: {{ selectedExercise.difficulty }}</el-tag>
                 <el-tag v-if="selectedExercise.is_committed" type="success">已提交</el-tag>
                 <el-tag v-else type="danger">未提交</el-tag>
               </div>
@@ -394,23 +394,24 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
 .course-page {
   display: flex;
   height: 100%;
-  background-color: #f5f7fa;
+  background-color: transparent;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 .left-panel {
   width: 300px;
   min-width: 300px;
   flex-shrink: 0;
-  background: white;
-  border-right: 1px solid #e4e7ed;
+  background: transparent;
+  border-right: 1.5px solid #f8f8f8;
   display: flex;
   flex-direction: column;
 }
 
 .course-header {
   padding: 24px 20px;
-  border-bottom: 1px solid #e4e7ed;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-bottom: 1.5px solid #f8f8f8;
+  background: transparent;
   color: white;
 }
 
@@ -437,7 +438,7 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   padding: 16px;
   margin-bottom: 12px;
   border-radius: 8px;
-  border: 1px solid #e4e7ed;
+  border: 1px solid #f8f8f8;
   cursor: pointer;
   transition: all 0.2s ease;
   min-height: 80px;
@@ -469,21 +470,32 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   font-size: 12px;
   color: #606266;
   display: flex;
-  justify-content: space-between;
+  justify-content: end;
   align-items: center;
   flex-shrink: 0;
 }
 
+.exercise-difficulty {
+  color: #909399;
+  margin-right: 1rem;
+}
+
+.exercise-difficulty-1 {
+  color: #909399;
+  margin-right: 0.8rem;
+  font-size: 0.9rem;
+}
+
 .exercise-type {
-  background-color: #f0f2f5;
+  background-color: #417dff;
+  color: white;
   padding: 2px 8px;
+  margin-right: 1rem;
   border-radius: 4px;
   font-weight: 500;
 }
 
-.exercise-difficulty {
-  color: #909399;
-}
+
 
 .exercise-status {
   padding: 2px 8px;
@@ -494,7 +506,7 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
 }
 
 .exercise-status.submitted {
-  background-color: #67c23a;
+  background-color: #74dc3f;
   color: white;
 }
 
@@ -663,13 +675,14 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
 .nav-title {
   font-size: 16px;
   font-weight: 600;
-  color: #2c3e50;
+  color: #ffffff;
   margin: 0;
   padding: 20px 20px 16px 20px;
 }
 
 .chapter-list {
   padding: 0 12px 20px 12px;
+  border-top: 1px solid transparent;
 }
 
 .chapter-item {
@@ -677,21 +690,25 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   align-items: center;
   padding: 12px 16px;
   margin-bottom: 4px;
-  border-radius: 6px;
+  border-top: none;
+  border-left: none;
+  border-right: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+  background-color: transparent;
+  color: #a5a5a5;
 }
 
 .chapter-item:hover {
-  background-color: #f8f9fa;
-  border-color: #e4e7ed;
+  background-color: transparent;
+  border-color: #f8f8f8;
 }
 
 .chapter-item.active {
-  background-color: #e8f4fd;
-  border-color: #409eff;
-  color: #409eff;
+  background-color: transparent;
+  border-color: #f8f8f8;
+  color: #f8f8f8;
 }
 
 .chapter-number {
@@ -723,7 +740,7 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: white;
+  background: transparent;
 }
 
 .content-area {

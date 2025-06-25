@@ -75,8 +75,8 @@
             <div v-for="practice in practices" :key="practice.exercise_id" class="practice-item" @click="selectPractice(practice)">
               <div class="practice-content">{{ formatPracticeContent(practice.exercise_content, 80) }}</div>
               <div class="practice-meta">
-                <span class="practice-type">{{ getPracticeTypeText(practice.type) }}</span>
                 <span class="practice-difficulty">难度: {{ practice.difficulty }}</span>
+                <span class="practice-type">{{ getPracticeTypeText(practice.type) }}</span>
                 <span class="practice-status" :class="{ 'submitted': practice.is_committed === 1 }">
                   {{ practice.is_committed === 1 ? '已批改' : '未批改' }}
                 </span>
@@ -92,8 +92,8 @@
             <div class="question-header">
               <h2>题目内容</h2>
               <div class="question-meta">
+                <span class="practice-difficulty-1">难度: {{ selectedPractice.difficulty }}</span>
                 <el-tag type="info">{{ getPracticeTypeText(selectedPractice.type) }}</el-tag>
-                <el-tag type="warning">难度: {{ selectedPractice.difficulty }}</el-tag>
                 <el-tag v-if="selectedPractice.is_committed" type="success">已批改</el-tag>
                 <el-tag v-else type="danger">未批改</el-tag>
               </div>
@@ -509,23 +509,22 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 .course-page {
   display: flex;
   height: 100%;
-  background-color: #f5f7fa;
-  color: #303133;
+  background-color: transparent;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 .left-panel {
   width: 300px;
-  background: white;
-  border-right: 1px solid #e4e7ed;
+  background: transparent;
+  border-right: 1.5px solid #e4e7ed;
   display: flex;
   flex-direction: column;
-  color: #303133;
 }
 
 .course-header {
   padding: 24px 20px;
-  border-bottom: 1px solid #e4e7ed;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-bottom: 1.5px solid #e4e7ed;
+  background: transparent;
   color: white;
 }
 
@@ -588,7 +587,7 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 .nav-title {
   font-size: 16px;
   font-weight: 600;
-  color: #2c3e50;
+  color: #ffffff;
   margin: 0;
   padding: 20px 20px 16px 20px;
 }
@@ -602,21 +601,22 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   align-items: center;
   padding: 12px 16px;
   margin-bottom: 4px;
-  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid transparent;
+  border-bottom: 1px solid #f8f8f8;
+  color: #aaaaaa;
 }
 
 .chapter-item:hover {
-  background-color: #f8f9fa;
+  background-color: transparent;
+    color: #f8f8f8;
   border-color: #e4e7ed;
 }
 
 .chapter-item.active {
-  background-color: #e8f4fd;
-  border-color: #409eff;
-  color: #409eff;
+  background-color: transparent;
+  border-color: #f8f8f8;
+  color: #f8f8f8;
 }
 
 .chapter-number {
@@ -638,26 +638,19 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   color: white;
 }
 
-.chapter-title {
-  font-size: 14px;
-  line-height: 1.4;
-  flex: 1;
-  color: #303133;
-}
+
 
 .right-panel {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: white;
-  color: #303133;
+  background: transparent;
 }
 
 .content-area {
   flex: 1;
   overflow-y: auto;
   padding: 24px;
-  color: #303133;
 }
 
 .practice-list {
@@ -688,7 +681,9 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   font-size: 14px;
   color: #909399;
   display: flex;
-  gap: 16px;
+  justify-content: end;
+  align-items: center;
+  gap: 4px;
 }
 
 /* 生成习题区域样式 */
@@ -708,7 +703,7 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 .form-item label {
   display: block;
   font-size: 14px;
-  color: #606266;
+  color: #f8f8f8;
   margin-bottom: 8px;
   font-weight: 500;
 }
@@ -1142,19 +1137,35 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 }
 
 .practice-status {
+  padding: 2px 8px;
+  border-radius: 4px;
   font-weight: 500;
+  background-color: #f56c6c;
+  color: white;
 }
 
 .practice-status.submitted {
-  color: #67c23a;
+  background-color: #74dc3f;
+  color: white;
 }
 
 .practice-type {
-  color: #409eff;
+  background-color: #417dff;
+  color: white;
+  padding: 2px 8px;
+  margin-right: 1rem;
+  border-radius: 4px;
   font-weight: 500;
 }
 
 .practice-difficulty {
-  color: #e6a23c;
+  color: #909399;
+  margin-right: 1rem;
+}
+
+.practice-difficulty-1 {
+  color: #909399;
+  margin-right: 0.8rem;
+  font-size: 0.9rem;
 }
 </style>
