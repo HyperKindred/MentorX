@@ -12,7 +12,6 @@ import axios from 'axios';
 import { ElMessage } from 'element-plus';
 import RecommendedCourses from './RecommendedCourses/index.vue';
 import MyCourses from './MyCourses/index.vue';
-
 const store = mainStore();
 const router = useRouter();
 const message = ref('');
@@ -24,7 +23,6 @@ const activeTab = ref('recommended');
  * 组件挂载时的初始化操作
  */
 onMounted(() => {
-  console.log('学生仪表板已加载');
 });
 </script>
 
@@ -32,7 +30,7 @@ onMounted(() => {
 .student-dashboard {
   width: 100%;
   height: 100%;
-  background-color: #f5f7fa;
+  background-color: transparent;
   overflow: hidden;
 }
 
@@ -50,7 +48,7 @@ onMounted(() => {
 
 .dashboard-tabs :deep(.el-tabs__header) {
   margin: 0;
-  background: white;
+  background: rgb(186, 186, 186);
   padding: 0 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   z-index: 10;

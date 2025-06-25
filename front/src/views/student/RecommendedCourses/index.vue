@@ -42,12 +42,21 @@
               {{ course.student_num }}人学习
             </span>
             <el-button 
-              type="primary" 
+              v-if="!isCourseEnrolled(course.id)"
+              class="join" 
               size="small" 
               :loading="joinLoading[course.id]"
               @click.stop="joinCourse(course)"
             >
               加入课程
+            </el-button>
+            <el-button 
+              v-else
+              class="joined" 
+              size="small" 
+              disabled
+            >
+              已加入
             </el-button>
           </div>
         </div>
@@ -80,6 +89,7 @@ interface RecommendedCourse {
 // 响应式数据
 const searchQuery = ref('');
 const courses = ref<RecommendedCourse[]>([]);
+const enrolledCourses = ref<RecommendedCourse[]>([]);
 const loading = ref(false);
 const joinLoading = ref<Record<number, boolean>>({});
 const store = mainStore();
@@ -98,6 +108,36 @@ const filteredCourses = computed(() => {
     course.teacher_name.toLowerCase().includes(searchQuery.value.toLowerCase())
   );
 });
+
+/**
+ * 获取已选课程列表
+ */
+const fetchEnrolledCourses = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return;
+    }
+
+    const response = await axios.get(`${store.ip}/api/student/getCourseList`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      timeout: 5000
+    });
+
+    if (response.data.ret === 0) {
+      const courseList = response.data.courseList;
+      if (courseList) {
+        enrolledCourses.value = Array.isArray(courseList) ? courseList : [courseList];
+      } else {
+        enrolledCourses.value = [];
+      }
+    }
+  } catch (error) {
+    console.error('获取已选课程列表失败:', error);
+  }
+};
 
 /**
  * 获取课程列表
@@ -165,6 +205,14 @@ const joinCourse = async (course: RecommendedCourse) => {
       ElMessage.success('成功加入课程');
       // 更新学生人数
       course.student_num += 1;
+      // 将课程添加到已选课程列表中
+      enrolledCourses.value.push({
+        id: course.id,
+        name: course.name,
+        teacher_id: course.teacher_id,
+        teacher_name: course.teacher_name,
+        student_num: course.student_num
+      });
     } else {
       ElMessage.error(response.data.msg || '加入课程失败');
     }
@@ -185,40 +233,65 @@ const viewCourse = (course: RecommendedCourse) => {
 };
 
 /**
+ * 检查课程是否已选
+ */
+const isCourseEnrolled = (courseId: number): boolean => {
+  return enrolledCourses.value.some(course => course.id === courseId || course.course_id === courseId);
+};
+
+/**
  * 组件挂载时的初始化操作
  */
-onMounted(() => {
-  fetchCourses();
+onMounted(async () => {
+  await fetchEnrolledCourses();
+  await fetchCourses();
   console.log('推荐课程组件已加载');
 });
 </script>
 
 <style scoped>
 .recommended-courses {
+  font-family: Arial, Helvetica, sans-serif;
   padding: 20px;
-  background-color: #f5f7fa;
+  background-color: transparent;
   min-height: 100%;
+  color: white;
+}
+
+.h2 {
+    margin: 0.2rem;
+    font-size: 1rem;
+    color: white;
+}
+
+.p {
+    font-size: 1rem;
+    line-height: 1.5rem;
+    font-weight: 100;
+    margin: 1.2rem 0;
+    letter-spacing: 0.1rem;
 }
 
 /* 搜索栏样式 */
 .search-bar {
   display: flex;
   justify-content: center;
-  margin-bottom: 40px;
+  margin-bottom: 20px;
   padding: 20px 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px;
+  
 }
 
 .search-input {
   max-width: 600px;
   width: 100%;
+  letter-spacing: 0.1rem;
 }
 
 .search-input :deep(.el-input__wrapper) {
-  border-radius: 25px;
+  border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border: none;
+  letter-spacing: 0.1rem;
 }
 
 /* 章节标题样式 */
@@ -227,23 +300,53 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  margin-left: 1rem;
 }
 
 .section-title {
   font-size: 24px;
   font-weight: 600;
-  color: #2c3e50;
+  color: #ffffff;
   margin: 0;
 }
 
-.more-btn {
-  color: #409eff;
-  font-size: 14px;
-  padding: 0;
+.join {
+    padding: 0.4rem 1rem;
+    background-color: #417dff;
+    color: white;
+    border: 1px solid #fff;
+    outline: none;
+    cursor: pointer;
+    width: 5rem;
+    border-radius: 8px;
+    transition: all 100ms ease-in;
+    margin: 0.6rem 0;
+    font-size: 0.6rem;
+    padding: 0.5rem 0;
 }
 
-.more-btn:hover {
-  color: #66b1ff;
+.join:hover {
+  background-color: #417dffd8;
+}
+
+.joined {
+    padding: 0.4rem 1rem;
+    background-color: #233f7b91;
+    color: white;
+    border: 1px solid #fff;
+    outline: none;
+    cursor: pointer;
+    width: 5rem;
+    border-radius: 8px;
+    transition: all 100ms ease-in;
+    margin: 0.6rem 0;
+    font-size: 0.6rem;
+    padding: 0.5rem 0;
+}
+
+.joined:hover {
+    background-color: #233f7b91;
+    color: white;
 }
 
 /* 课程网格布局 */
@@ -252,16 +355,18 @@ onMounted(() => {
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 24px;
   padding: 0;
+  margin-left: 1rem;
+  margin-right: 1rem;
 }
 
 /* 课程卡片样式 */
 .course-card {
-  background: white;
+  background: rgba(255, 255, 255, 0.835);
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
-  cursor: pointer;
+  color: #080808;
 }
 
 .course-card:hover {
@@ -269,36 +374,10 @@ onMounted(() => {
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
-.course-image {
-  position: relative;
-  height: 160px;
-  overflow: hidden;
-}
 
-.course-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.course-card:hover .course-image img {
-  transform: scale(1.05);
-}
-
-.course-tag {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: rgba(64, 158, 255, 0.9);
-  color: white;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-}
 
 .course-content {
+  color: #080808;
   padding: 20px;
 }
 

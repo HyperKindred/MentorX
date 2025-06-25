@@ -79,7 +79,19 @@
               <div v-else class="bot-avatar">AI</div>
             </div>
             <div class="message-content">
-              <div class="message-text">{{ message.text }}</div>
+              <div class="message-text" v-if="message.sender === 'user'">{{ message.text }}</div>
+              <div 
+                class="message-text" 
+                v-else-if="message.isTyping"
+              >
+                <span class="typing-text">{{ message.displayText }}</span>
+                <span class="typing-cursor">|</span>
+              </div>
+              <div 
+                class="message-text markdown-content" 
+                v-else
+                v-html="marked(message.displayText || message.text)"
+              ></div>
               <div class="message-time">{{ formatMessageTime(message.timestamp) }}</div>
             </div>
           </div>
@@ -102,10 +114,11 @@
           <el-button 
             type="primary" 
             @click="sendMessage"
-            :disabled="!newMessage.trim()"
+            :disabled="!newMessage.trim() || isLoading"
+            :loading="isLoading"
             class="send-button"
           >
-            <i class="el-icon-position"></i>
+            <i class="el-icon-position" v-if="!isLoading"></i>
           </el-button>
         </div>
         <div class="input-hint">
@@ -117,10 +130,11 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, watch, computed, nextTick } from 'vue';
+import { ref, reactive, onMounted, watch, computed, nextTick } from 'vue';
 import { ElMessage, ElSelect, ElOption } from 'element-plus';
 import { mainStore } from '../../../store/index.ts';
 import axios from 'axios';
+import { marked } from 'marked';
 
 /**
  * 章节接口定义
@@ -147,6 +161,8 @@ interface Message {
   text: string;
   sender: 'user' | 'bot';
   timestamp?: number;
+  isTyping?: boolean;
+  displayText?: string;
 }
 
 /**
@@ -168,6 +184,7 @@ const newMessage = ref('');
 const conversationList = ref<Conversation[]>([]);
 const activeConversation = ref<number | null>(null);
 const messageList = ref<HTMLElement>();
+const isLoading = ref(false);
 
 /**
  * 当前章节名称计算属性
@@ -240,8 +257,6 @@ const getChatHistory = async (chapterId: number) => {
       }
     });
 
-    console.log(response)
-
     if (response.data.ret === 0 && response.data.sessions) {
       const sessions = Array.isArray(response.data.sessions) ? response.data.sessions : [response.data.sessions];
       
@@ -284,19 +299,19 @@ const getChatHistory = async (chapterId: number) => {
         
         sortedSessions.forEach((s: any) => {
           if (s.type === 'Q') {
-            messageList.push({
+            messageList.push(reactive<Message>({
               id: messageId++,
               text: s.content,
               sender: 'user',
               timestamp: new Date(s.time).getTime()
-            });
+            }));
           } else if (s.type === 'A') {
-            messageList.push({
+            messageList.push(reactive<Message>({
               id: messageId++,
               text: s.content,
               sender: 'bot',
               timestamp: new Date(s.time).getTime()
-            });
+            }));
           }
         });
         
@@ -397,14 +412,14 @@ const selectConversation = (conversation: Conversation) => {
  * 发送消息
  */
 const sendMessage = async () => {
-  if (!newMessage.value.trim() || activeChapter.value === null) return;
+  if (!newMessage.value.trim() || activeChapter.value === null || isLoading.value) return;
 
-  const userMessage: Message = {
+  const userMessage = reactive<Message>({
     id: Date.now(),
     text: newMessage.value,
     sender: 'user',
     timestamp: Date.now()
-  };
+  });
   messages.value.push(userMessage);
 
   const question = newMessage.value;
@@ -412,6 +427,20 @@ const sendMessage = async () => {
   
   // 记录是否为新对话
   const isNewConversation = activeConversation.value === null;
+  
+  // 设置加载状态
+  isLoading.value = true;
+  
+  // 添加加载消息
+  const loadingMessage = reactive<Message>({
+    id: Date.now() + 1,
+    text: '',
+    sender: 'bot',
+    timestamp: Date.now(),
+    isTyping: true,
+    displayText: 'AI正在思考中...'
+  });
+  messages.value.push(loadingMessage);
 
   try {
     const formData = new FormData();
@@ -431,29 +460,73 @@ const sendMessage = async () => {
       }
     });
 
-    console.log(response)
-
     if (response.data.ret === 0) {
-      const botMessage: Message = {
-        id: Date.now() + 1,
+      // 移除加载消息
+      messages.value.pop();
+      
+      // 创建AI回复消息（使用reactive确保响应式）
+      const botMessage = reactive<Message>({
+        id: Date.now() + 2,
         text: response.data.answer,
         sender: 'bot',
-        timestamp: Date.now()
-      };
+        timestamp: Date.now(),
+        isTyping: true,
+        displayText: ''
+      });
       messages.value.push(botMessage);
+      
+      // 开始逐字显示效果
+      typewriterEffect(botMessage, response.data.answer, 30);
       
       // 如果是新对话且成功，重新获取历史对话列表
       if (isNewConversation && activeChapter.value) {
         getChatHistory(activeChapter.value);
       }
     } else {
+      // 移除加载消息
+      messages.value.pop();
       ElMessage.error(response.data.msg || 'AI助手出错了');
       throw new Error(response.data.msg || 'AI助手出错了');
     }
   } catch (error) {
+    // 移除加载消息
+    if (messages.value.length > 0 && messages.value[messages.value.length - 1].isTyping) {
+      messages.value.pop();
+    }
     console.error('发送消息失败', error);
     ElMessage.error('发送消息失败');
+  } finally {
+    isLoading.value = false;
   }
+};
+
+/**
+ * 逐字显示文本效果
+ * @param message - 要显示的消息对象
+ * @param fullText - 完整的文本内容
+ * @param speed - 显示速度（毫秒）
+ */
+const typewriterEffect = (message: Message, fullText: string, speed: number = 30) => {
+  let index = 0;
+  
+  // 确保响应式更新
+  message.displayText = '';
+  message.isTyping = true;
+  message.text = fullText; // 先设置完整文本
+  
+  const timer = setInterval(() => {
+    if (index < fullText.length) {
+      message.displayText = fullText.substring(0, index + 1);
+      index++;
+      // 自动滚动到底部
+      nextTick(() => {
+        scrollToBottom();
+      });
+    } else {
+      message.isTyping = false;
+      clearInterval(timer);
+    }
+  }, speed);
 };
 
 /**
@@ -708,6 +781,18 @@ const handleShiftEnter = (event: KeyboardEvent) => {
   white-space: pre-wrap;
 }
 
+/* AI消息的Markdown内容样式优化 */
+.message-text.markdown-content {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  padding: 20px;
+  text-align: left;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #2c3e50;
+}
+
 .message-item.user .message-text {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
@@ -722,6 +807,307 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 
 .message-item.user .message-time {
   text-align: left;
+}
+
+/* 打字效果样式 */
+.typing-text {
+  display: inline;
+}
+
+.typing-cursor {
+  display: inline-block;
+  animation: blink 1s infinite;
+  color: #6366f1;
+  font-weight: bold;
+}
+
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
+/* Markdown内容样式 - Typora风格 */
+.markdown-content {
+  line-height: 1.7;
+}
+
+/* 标题样式 */
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  margin: 24px 0 16px 0;
+  font-weight: 600;
+  color: #2c3e50;
+  line-height: 1.4;
+}
+
+.markdown-content h1 {
+  font-size: 2em;
+  border-bottom: 2px solid #eaecef;
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+}
+
+.markdown-content h2 {
+  font-size: 1.6em;
+  border-bottom: 1px solid #eaecef;
+  padding-bottom: 8px;
+}
+
+.markdown-content h3 {
+  font-size: 1.3em;
+}
+
+.markdown-content h4 {
+  font-size: 1.1em;
+}
+
+.markdown-content h5 {
+  font-size: 1em;
+}
+
+.markdown-content h6 {
+  font-size: 0.9em;
+  color: #6a737d;
+}
+
+/* 段落样式 */
+.markdown-content p {
+  margin: 16px 0;
+  text-align: justify;
+  text-justify: inter-ideograph;
+}
+
+/* 列表样式 */
+.markdown-content ul,
+.markdown-content ol {
+  margin: 16px 0;
+  padding-left: 24px;
+}
+
+.markdown-content li {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.markdown-content ul li {
+  list-style-type: disc;
+}
+
+.markdown-content ol li {
+  list-style-type: decimal;
+}
+
+/* 嵌套列表 */
+.markdown-content ul ul,
+.markdown-content ol ol,
+.markdown-content ul ol,
+.markdown-content ol ul {
+  margin: 4px 0;
+}
+
+/* 行内代码样式 */
+.markdown-content code {
+  background-color: #f6f8fa;
+  border: 1px solid #e1e4e8;
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', 'Courier', monospace;
+  font-size: 0.85em;
+  color: #d73a49;
+}
+
+/* 代码块样式 */
+.markdown-content pre {
+  background-color: #f6f8fa;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  padding: 16px;
+  margin: 16px 0;
+  overflow-x: auto;
+  font-size: 0.85em;
+  line-height: 1.45;
+}
+
+.markdown-content pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #24292e;
+  font-size: inherit;
+}
+
+/* 引用样式 */
+.markdown-content blockquote {
+  border-left: 4px solid #dfe2e5;
+  margin: 16px 0;
+  padding: 0 16px;
+  color: #6a737d;
+  background-color: #f8f9fa;
+  border-radius: 0 3px 3px 0;
+}
+
+.markdown-content blockquote p {
+  margin: 12px 0;
+}
+
+/* 表格样式 */
+.markdown-content table {
+  border-collapse: collapse;
+  margin: 20px 0;
+  width: 100%;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid #d0d7de;
+  padding: 12px 16px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.markdown-content th {
+  background-color: #f6f8fa;
+  font-weight: 600;
+  color: #24292e;
+}
+
+.markdown-content tr:nth-child(even) {
+  background-color: #f6f8fa;
+}
+
+.markdown-content tr:hover {
+  background-color: #f1f8ff;
+}
+
+/* 链接样式 */
+.markdown-content a {
+  color: #0969da;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.markdown-content a:hover {
+  color: #0550ae;
+  border-bottom-color: #0969da;
+}
+
+.markdown-content a:visited {
+  color: #8250df;
+}
+
+/* 强调样式 */
+.markdown-content strong {
+  font-weight: 600;
+  color: #24292e;
+}
+
+.markdown-content em {
+  font-style: italic;
+  color: #656d76;
+}
+
+/* 分隔线样式 */
+.markdown-content hr {
+  border: none;
+  height: 2px;
+  background-color: #d0d7de;
+  margin: 24px 0;
+  border-radius: 1px;
+}
+
+/* 删除线样式 */
+.markdown-content del {
+  text-decoration: line-through;
+  color: #656d76;
+}
+
+/* 高亮样式 */
+.markdown-content mark {
+  background-color: #fff8c5;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+/* 图片样式 */
+.markdown-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 16px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 任务列表样式 */
+.markdown-content input[type="checkbox"] {
+  margin-right: 8px;
+  transform: scale(1.1);
+}
+
+.markdown-content .task-list-item {
+  list-style: none;
+  margin-left: -20px;
+}
+
+/* 键盘按键样式 */
+.markdown-content kbd {
+  background-color: #f6f8fa;
+  border: 1px solid #d0d7de;
+  border-bottom-color: #afb8c1;
+  border-radius: 6px;
+  box-shadow: inset 0 -1px 0 #afb8c1;
+  color: #24292e;
+  display: inline-block;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 11px;
+  line-height: 10px;
+  padding: 3px 5px;
+  vertical-align: middle;
+}
+
+/* 脚注样式 */
+.markdown-content .footnote {
+  font-size: 0.8em;
+  color: #656d76;
+  vertical-align: super;
+}
+
+/* 数学公式样式 */
+.markdown-content .math {
+  font-family: "Times New Roman", serif;
+  font-size: 1.1em;
+}
+
+/* 首行缩进优化 */
+.markdown-content p:first-child {
+  margin-top: 0;
+}
+
+.markdown-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* 代码语言标签 */
+.markdown-content pre[class*="language-"]::before {
+  content: attr(class);
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 0.75em;
+  color: #656d76;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* 输入区域样式 */

@@ -1,6 +1,6 @@
 <template>
   <div class="background">
-    <Birds/>
+    <Birds />
   </div>
   <div class="main">
     <h1>Welcome to MENTOR X</h1>
@@ -23,11 +23,10 @@
         <el-carousel-item :key="4" class="slide-content-item">
           <h1>4</h1>
         </el-carousel-item>
-        
       </el-carousel>
     </div>
   </div>
-  <LogIn v-model:visible="showLogIn" @close-login="closeLogIn"/>
+  <LogIn v-model:visible="showLogIn" @close-login="closeLogIn" />
 </template>
 
 <script lang="ts" setup>
@@ -54,7 +53,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   height: 100%;
@@ -68,66 +68,67 @@ html, body {
   height: 100%;
   width: 100%;
 }
+
 .main {
-    font-family: Arial, Helvetica, sans-serif;
-    background-color: #1c3976ac;
-    background-attachment: fixed;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    min-width: 100vw;
-    margin: 0 auto;
-    color: #f8f8f8;
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: #1c3976ac;
+  background-attachment: fixed;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  min-width: 100vw;
+  margin: 0 auto;
+  color: #f8f8f8;
 }
 
 .h1 {
-    margin: 0.4rem;
-    font-size: 1.2rem;
+  margin: 0.4rem;
+  font-size: 1.2rem;
 }
 
 .p {
-    font-size: 1rem;
-    line-height: 1.5rem;
-    font-weight: 100;
-    margin: 1.2rem 0;
-    letter-spacing: 0.1rem;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 100;
+  margin: 1.2rem 0;
+  letter-spacing: 0.1rem;
+}
+
+
+.feature-display {
+  width: 100%;
+  height: 100%;
+  margin-top: 3rem;
 }
 
 .logIn {
-  margin-top: 4rem;
+  margin-top: 3rem;
 }
 
 .logIn button {
   background-color: #417dff;
   color: #f8f8f8;
   padding: 0.4rem 1rem;
-    border: 2px solid #fff;
-    outline: none;
-    cursor: pointer;
-    width: 10rem;
-    height: 3rem;
-    border-radius: 8px;
-    transition: all 100ms ease-in;
-    margin: 0.6rem 0;
-    font-size: 1.5rem;
-    padding: 0.5rem 0;
+  border: 2px solid #fff;
+  outline: none;
+  cursor: pointer;
+  width: 10rem;
+  height: 3rem;
+  border-radius: 8px;
+  transition: all 100ms ease-in;
+  margin: 0.6rem 0;
+  font-size: 1.5rem;
+  padding: 0.5rem 0;
 }
 
-.logIn button:hover{
+.logIn button:hover {
   background-color: #417dffd8;
 
 }
 
-.logIn button:active{
+.logIn button:active {
   transform: scale(0.95 0.95);
 }
-
-.feature-display {
-  width: 100%;
-  height: 100%;
-  margin-top: 5rem;
-}
-
 </style>
