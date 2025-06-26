@@ -58,6 +58,8 @@
     
     <!-- 右侧聊天面板 -->
     <div class="right-panel">
+
+      
       <!-- 聊天头部 -->
       <div class="chat-header">
         <div class="chat-title">
@@ -132,6 +134,7 @@
 <script lang="ts" setup>
 import { ref, reactive, onMounted, watch, computed, nextTick, onActivated } from 'vue';
 import { ElMessage, ElSelect, ElOption } from 'element-plus';
+import { ChatDotRound } from '@element-plus/icons-vue';
 import { mainStore } from '../../../store/index.ts';
 import axios from 'axios';
 import { marked } from 'marked';
@@ -506,6 +509,8 @@ const onChapterChange = (chapterId: number) => {
   activeChapter.value = chapterId;
 };
 
+
+
 /**
  * 开始新对话
  */
@@ -802,8 +807,10 @@ const handleShiftEnter = (event: KeyboardEvent) => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
+  background: transparent;
 }
+
+
 
 /* 聊天头部样式 */
 .chat-header {

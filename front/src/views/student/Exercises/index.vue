@@ -28,6 +28,44 @@
     
     <!-- 右侧面板 -->
     <div class="right-panel">
+      <!-- 功能按钮组 -->
+      <div class="function-buttons">
+        <div class="button-group">
+          <el-button 
+             type="default" 
+             :icon="Document" 
+             class="function-btn"
+             @click="openCourseware"
+           >
+             课件学习
+           </el-button>
+           <el-button 
+             type="primary" 
+             :icon="Edit" 
+             class="function-btn active"
+             disabled
+           >
+             章节习题
+           </el-button>
+           <el-button 
+             type="default" 
+             :icon="Notebook" 
+             class="function-btn"
+             @click="openPractice"
+           >
+             个人练习
+           </el-button>
+           <el-button 
+             type="default" 
+             :icon="ChatDotRound" 
+             class="function-btn"
+             @click="openAiAssistant"
+           >
+             AI助手
+           </el-button>
+        </div>
+      </div>
+      
       <!-- 内容展示区域 -->
       <div class="content-area">
         <div v-if="loading" class="loading-state">
@@ -41,7 +79,7 @@
             <div v-for="exercise in exercises" :key="exercise.exercise_id" class="exercise-item" @click="selectExercise(exercise)">
               <div class="exercise-content">{{ formatExerciseContent(exercise.exercise_content, 80) }}</div>
               <div class="exercise-meta">
-                <span class="exercise-difficulty">难度: {{ exercise.difficulty }}</span>
+                <span class="exercise-difficulty">难度: {{ getExerciseDifficultyText(exercise.difficulty) }}</span>
                 <span class="exercise-type">{{ getExerciseTypeText(exercise.type) }}</span>
                 <span class="exercise-status" :class="{ 'submitted': exercise.is_committed === 1 }">
                   {{ exercise.is_committed === 1 ? '已提交' : '未提交' }}
@@ -58,7 +96,7 @@
             <div class="question-header">
               <h2>题目内容</h2>
               <div class="question-meta">
-                <span class="exercise-difficulty-1">难度: {{ selectedExercise.difficulty }}</span>
+                <span class="exercise-difficulty-1">难度: {{ getExerciseDifficultyText(selectedExercise.difficulty) }}</span>
                 <el-tag type="info">{{ getExerciseTypeText(selectedExercise.type) }}</el-tag>
                 <el-tag v-if="selectedExercise.is_committed" type="success">已提交</el-tag>
                 <el-tag v-else type="danger">未提交</el-tag>
@@ -83,6 +121,38 @@
               </div>
               <div class="answer-actions">
                 <el-button @click="editAnswer" type="primary" plain disabled>已提交，不可重新作答</el-button>
+              </div>
+            </div>
+            
+            <!-- 批改结果区域 -->
+            <div v-if="selectedExercise.is_committed && (selectedExercise.check !== undefined || selectedExercise.analyse)" class="grading-section">
+              <div class="grading-header">
+                <h3>批改结果</h3>
+              </div>
+              
+              <!-- 批改分数 -->
+              <div v-if="selectedExercise.check !== undefined" class="grading-score">
+                <div class="score-label">得分：</div>
+                <div class="score-value" :class="getScoreClass(selectedExercise.check)">
+                  {{ selectedExercise.check }}分
+                </div>
+              </div>
+              
+              <!-- 批改分析 -->
+              <div v-if="selectedExercise.analyse" class="grading-analysis">
+                <div class="analysis-label">批改分析：</div>
+                <div class="analysis-content" v-html="marked.parse(selectedExercise.analyse)"></div>
+              </div>
+              
+              <!-- 未批改提示 -->
+              <div v-if="selectedExercise.check === undefined && !selectedExercise.analyse" class="grading-pending">
+                <el-alert
+                  title="批改中"
+                  description="您的答案已提交，正在批改中，请稍后查看结果"
+                  type="info"
+                  :closable="false"
+                  show-icon>
+                </el-alert>
               </div>
             </div>
             
@@ -114,9 +184,13 @@
 <script lang="ts" setup>
 import { ref, onMounted, watch, onActivated } from 'vue';
 import { ElMessage } from 'element-plus';
+import { Document, Edit, Notebook, ChatDotRound } from '@element-plus/icons-vue';
 import { mainStore } from '../../../store/index.ts';
 import axios from 'axios';
 import { marked } from 'marked';
+import Course from '../Course/index.vue';
+import Practice from '../Practice/index.vue';
+import AiAssistant from '../AiAssistant/index.vue';
 
 interface Chapter {
   id: number;
@@ -138,6 +212,8 @@ interface Exercise {
   is_committed: number;
   student_answer?: string;
   submitted_at?: string;
+  check?: number;
+  analyse?: string;
 }
 
 /**
@@ -416,12 +492,16 @@ const getExerciseHistory = async (exerciseId: number) => {
       },
       timeout: 5000
     });
+
+    console.log(response)
     
     if (response.data.ret === 0) {
       // 习题已作答且批改
       if (selectedExercise.value) {
         selectedExercise.value.student_answer = response.data.student_answer;
         selectedExercise.value.submitted_at = response.data.answer_time;
+        selectedExercise.value.check = response.data.check;
+        selectedExercise.value.analyse = response.data.analyse;
       }
     } else if (response.data.ret === 2) {
       // 习题未作答
@@ -433,6 +513,9 @@ const getExerciseHistory = async (exerciseId: number) => {
       if (selectedExercise.value) {
         selectedExercise.value.student_answer = response.data.student_answer;
         selectedExercise.value.submitted_at = response.data.answer_time;
+        // 未批改状态，清空批改结果
+        selectedExercise.value.check = undefined;
+        selectedExercise.value.analyse = undefined;
       }
     }
   } catch (error) {
@@ -441,9 +524,9 @@ const getExerciseHistory = async (exerciseId: number) => {
 };
 
 /**
- * 将英文习题类型转换为中文显示
+ * 获取习题类型的中文显示文本
  * @param {string} type - 习题类型
- * @returns {string} 中文类型名称
+ * @returns {string} 中文显示文本
  */
 const getExerciseTypeText = (type: string): string => {
   const typeMap: Record<string, string> = {
@@ -457,6 +540,33 @@ const getExerciseTypeText = (type: string): string => {
 };
 
 /**
+ * 获取习题难度的中文显示文本
+ * @param {number} difficulty - 难度等级数字
+ * @returns {string} 中文显示文本
+ */
+const getExerciseDifficultyText = (difficulty: number): string => {
+  const difficultyMap: Record<number, string> = {
+    1: '容易',
+    2: '中等',
+    3: '困难',
+    4: '极难'
+  };
+  return difficultyMap[difficulty] || `难度${difficulty}`;
+};
+
+/**
+ * 根据分数获取样式类名
+ * @param {number} score - 分数
+ * @returns {string} 样式类名
+ */
+const getScoreClass = (score: number): string => {
+  if (score >= 90) return 'score-excellent';
+  if (score >= 80) return 'score-good';
+  if (score >= 60) return 'score-pass';
+  return 'score-fail';
+};
+
+/**
  * Markdown 渲染器实例
  */
 /**
@@ -467,6 +577,51 @@ marked.setOptions({
   breaks: true,
   sanitize: false
 });
+
+/**
+ * 导航到课件学习页面
+ */
+const openCourseware = () => {
+  if (courseInfo.value && chapters.value.length > 0) {
+    store.addTab('课件学习', Course, {
+      courseData: courseInfo.value,
+      chapterData: chapters.value,
+      activeChapterId: activeChapter.value
+    });
+  } else {
+    ElMessage.warning('课程信息不完整，无法跳转');
+  }
+};
+
+/**
+ * 导航到个人练习页面
+ */
+const openPractice = () => {
+  if (courseInfo.value && chapters.value.length > 0) {
+    store.addTab('个人练习', Practice, {
+      courseData: courseInfo.value,
+      chapterData: chapters.value,
+      activeChapterId: activeChapter.value
+    });
+  } else {
+    ElMessage.warning('课程信息不完整，无法跳转');
+  }
+};
+
+/**
+ * 导航到AI助手页面
+ */
+const openAiAssistant = () => {
+  if (courseInfo.value && chapters.value.length > 0) {
+    store.addTab('AI助手', AiAssistant, {
+      courseData: courseInfo.value,
+      chapterData: chapters.value,
+      activeChapterId: activeChapter.value
+    });
+  } else {
+    ElMessage.warning('课程信息不完整，无法跳转');
+  }
+};
 
 /**
  * 将 Markdown 内容转换为纯文本并截取指定长度
@@ -560,7 +715,6 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   margin-bottom: 8px;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
   line-height: 1.4;
   flex: 1;
   width: 100%;
@@ -615,6 +769,8 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
 
 .exercise-detail {
   padding: 24px;
+  display: flex;
+  flex-direction: column;
 }
 
 .question-section {
@@ -714,6 +870,138 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   justify-content: flex-end;
 }
 
+.answer-actions .el-button {
+  min-width: 120px;
+}
+
+/* 批改结果样式 */
+.grading-section {
+  margin-top: 30px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #67c23a;
+}
+
+.grading-header {
+  margin-bottom: 20px;
+}
+
+.grading-header h3 {
+  margin: 0;
+  color: #303133;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.grading-score {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+}
+
+.score-label {
+  font-size: 16px;
+  font-weight: 500;
+  color: #606266;
+  margin-right: 12px;
+}
+
+.score-value {
+  font-size: 20px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 4px;
+}
+
+.score-excellent {
+  color: #67c23a;
+  background-color: #f0f9ff;
+  border: 1px solid #67c23a;
+}
+
+.score-good {
+  color: #409eff;
+  background-color: #ecf5ff;
+  border: 1px solid #409eff;
+}
+
+.score-pass {
+  color: #e6a23c;
+  background-color: #fdf6ec;
+  border: 1px solid #e6a23c;
+}
+
+.score-fail {
+  color: #f56c6c;
+  background-color: #fef0f0;
+  border: 1px solid #f56c6c;
+}
+
+.grading-analysis {
+  margin-bottom: 16px;
+}
+
+.analysis-label {
+  font-size: 16px;
+  font-weight: 500;
+  color: #606266;
+  margin-bottom: 8px;
+}
+
+.analysis-content {
+  background: white;
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+  line-height: 1.6;
+  color: #303133;
+}
+
+.analysis-content h1,
+.analysis-content h2,
+.analysis-content h3,
+.analysis-content h4,
+.analysis-content h5,
+.analysis-content h6 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: #303133;
+}
+
+.analysis-content p {
+  margin-bottom: 12px;
+}
+
+.analysis-content ul,
+.analysis-content ol {
+  margin-bottom: 12px;
+  padding-left: 20px;
+}
+
+.analysis-content code {
+  background-color: #f5f5f5;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+}
+
+.analysis-content pre {
+  background-color: #f5f5f5;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-family: 'Courier New', monospace;
+}
+
+.grading-pending {
+  margin-top: 16px;
+}
+
 .re-answer {
   margin-top: 20px;
   padding-top: 20px;
@@ -721,6 +1009,7 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
 
 .back-button {
   margin-bottom: 20px;
+  align-self: flex-end;
 }
 
 .exercise-detail h3 {
@@ -785,7 +1074,6 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
 
 .chapter-list {
   padding: 0 12px 20px 12px;
-  border-top: 1px solid transparent;
 }
 
 .chapter-item {
@@ -844,6 +1132,43 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   display: flex;
   flex-direction: column;
   background: transparent;
+}
+
+/* 功能按钮组样式 */
+.function-buttons {
+  border-bottom: 1.5px solid #e4e7ed;
+  padding: 20px 24px;
+  background: transparent;
+}
+
+.button-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.function-btn {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 12px 20px;
+  transition: all 0.3s ease;
+  border: 1px solid #d9d9d9;
+}
+
+.function-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+}
+
+.function-btn.active {
+  background: linear-gradient(135deg, #409eff 0%, #66b3ff 100%);
+  border-color: #409eff;
+  color: white;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.4);
+}
+
+.function-btn :deep(.el-icon) {
+  margin-right: 6px;
 }
 
 .content-area {
@@ -1151,6 +1476,69 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   background: #f8f9fa;
   border-left: 4px solid #409eff;
   color: #606266;
+}
+
+/* 滚动条样式 */
+.chapter-navigation::-webkit-scrollbar,
+.content-area::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chapter-navigation::-webkit-scrollbar-track,
+.content-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chapter-navigation::-webkit-scrollbar-thumb,
+.content-area::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 2px;
+}
+
+.chapter-navigation::-webkit-scrollbar-thumb:hover,
+.content-area::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* 响应式设计 */
+/* 骨架屏自定义样式 - 适配深蓝色背景 */
+.loading-state :deep(.el-skeleton__item) {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+.loading-state :deep(.el-skeleton__p) {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .left-panel {
+    width: 240px;
+  }
+  
+  .chapter-list {
+    padding: 0 8px 20px 8px;
+  }
+  
+  .content-area {
+    padding: 16px;
+  }
+  
+  .function-buttons {
+    padding: 16px 20px;
+  }
 }
 
 </style>

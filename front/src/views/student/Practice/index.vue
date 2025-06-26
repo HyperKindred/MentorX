@@ -62,6 +62,44 @@
     
     <!-- 右侧面板 -->
     <div class="right-panel">
+      <!-- 功能按钮组 -->
+      <div class="function-buttons">
+        <div class="button-group">
+          <el-button 
+             type="default" 
+             :icon="Document" 
+             class="function-btn"
+             @click="openCourseware"
+           >
+             课件学习
+           </el-button>
+           <el-button 
+             type="default" 
+             :icon="Edit" 
+             class="function-btn"
+             @click="openExercises"
+           >
+             章节习题
+           </el-button>
+           <el-button 
+             type="primary" 
+             :icon="Notebook" 
+             class="function-btn active"
+             disabled
+           >
+             个人练习
+           </el-button>
+           <el-button 
+             type="default" 
+             :icon="ChatDotRound" 
+             class="function-btn"
+             @click="openAiAssistant"
+           >
+             AI助手
+           </el-button>
+        </div>
+      </div>
+      
       <!-- 内容展示区域 -->
       <div class="content-area">
         <div v-if="loading" class="loading-state">
@@ -75,7 +113,7 @@
             <div v-for="practice in practices" :key="practice.exercise_id" class="practice-item" @click="selectPractice(practice)">
               <div class="practice-content">{{ formatPracticeContent(practice.exercise_content, 80) }}</div>
               <div class="practice-meta">
-                <span class="practice-difficulty">难度: {{ practice.difficulty }}</span>
+                <span class="practice-difficulty">难度: {{ getPracticeDifficultyText(practice.difficulty) }}</span>
                 <span class="practice-type">{{ getPracticeTypeText(practice.type) }}</span>
                 <span class="practice-status" :class="{ 'submitted': practice.is_committed === 1 }">
                   {{ practice.is_committed === 1 ? '已批改' : '未批改' }}
@@ -92,7 +130,7 @@
             <div class="question-header">
               <h2>题目内容</h2>
               <div class="question-meta">
-                <span class="practice-difficulty-1">难度: {{ selectedPractice.difficulty }}</span>
+                <span class="practice-difficulty-1">难度: {{ getPracticeDifficultyText(selectedPractice.difficulty) }}</span>
                 <el-tag type="info">{{ getPracticeTypeText(selectedPractice.type) }}</el-tag>
                 <el-tag v-if="selectedPractice.is_committed" type="success">已批改</el-tag>
                 <el-tag v-else type="danger">未批改</el-tag>
@@ -154,9 +192,13 @@
 <script lang="ts" setup>
 import { ref, onMounted, watch, onActivated } from 'vue';
 import { ElMessage } from 'element-plus';
+import { Document, Edit, Notebook, ChatDotRound } from '@element-plus/icons-vue';
 import { mainStore } from '../../../store/index.ts';
 import axios from 'axios';
 import { marked } from 'marked';
+import Course from '../Course/index.vue';
+import Exercises from '../Exercises/index.vue';
+import AiAssistant from '../AiAssistant/index.vue';
 
 interface Chapter {
   id: number;
@@ -549,6 +591,51 @@ const getPracticeHistory = async (exerciseId: number) => {
 };
 
 /**
+ * 导航到课件学习页面
+ */
+const openCourseware = () => {
+  if (courseInfo.value && chapters.value.length > 0) {
+    store.addTab('课件学习', Course, {
+      courseData: courseInfo.value,
+      chapterData: chapters.value,
+      activeChapterId: activeChapter.value
+    });
+  } else {
+    ElMessage.warning('课程信息不完整，无法跳转');
+  }
+};
+
+/**
+ * 导航到章节习题页面
+ */
+const openExercises = () => {
+  if (courseInfo.value && chapters.value.length > 0) {
+    store.addTab('章节习题', Exercises, {
+      courseData: courseInfo.value,
+      chapterData: chapters.value,
+      activeChapterId: activeChapter.value
+    });
+  } else {
+    ElMessage.warning('课程信息不完整，无法跳转');
+  }
+};
+
+/**
+ * 导航到AI助手页面
+ */
+const openAiAssistant = () => {
+  if (courseInfo.value && chapters.value.length > 0) {
+    store.addTab('AI助手', AiAssistant, {
+      courseData: courseInfo.value,
+      chapterData: chapters.value,
+      activeChapterId: activeChapter.value
+    });
+  } else {
+    ElMessage.warning('课程信息不完整，无法跳转');
+  }
+};
+
+/**
  * 将英文练习类型转换为中文显示
  */
 const getPracticeTypeText = (type: string): string => {
@@ -561,6 +648,21 @@ const getPracticeTypeText = (type: string): string => {
     'true_false': '判断题'
   };
   return typeMap[type] || type;
+};
+
+/**
+ * 获取练习难度的中文显示文本
+ * @param {number} difficulty - 难度等级数字
+ * @returns {string} 中文显示文本
+ */
+const getPracticeDifficultyText = (difficulty: number): string => {
+  const difficultyMap: Record<number, string> = {
+    1: '容易',
+    2: '中等',
+    3: '困难',
+    4: '极难'
+  };
+  return difficultyMap[difficulty] || `难度${difficulty}`;
 };
 
 /**
@@ -654,9 +756,13 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   padding: 16px;
   margin-bottom: 12px;
   border-radius: 8px;
-  border: 1px solid #e4e7ed;
+  border: 1px solid #f8f8f8;
   cursor: pointer;
   transition: all 0.2s ease;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .practice-item:hover {
@@ -675,16 +781,15 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   color: #606266;
 }
 
-.practice-meta span {
-  margin-right: 16px;
-}
-
 .practice-detail {
   padding: 24px;
+  display: flex;
+  flex-direction: column;
 }
 
 .back-button {
   margin-bottom: 20px;
+  align-self: flex-end;
 }
 
 .nav-title {
@@ -736,6 +841,12 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   flex-shrink: 0;
 }
 
+.chapter-title {
+  font-size: 14px;
+  line-height: 1.4;
+  flex: 1;
+}
+
 .chapter-item.active .chapter-number {
   background-color: #409eff;
   color: white;
@@ -748,6 +859,43 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   display: flex;
   flex-direction: column;
   background: transparent;
+}
+
+/* 功能按钮组样式 */
+.function-buttons {
+  border-bottom: 1.5px solid #e4e7ed;
+  padding: 20px 24px;
+  background: transparent;
+}
+
+.button-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.function-btn {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 12px 20px;
+  transition: all 0.3s ease;
+  border: 1px solid #d9d9d9;
+}
+
+.function-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+}
+
+.function-btn.active {
+  background: linear-gradient(135deg, #409eff 0%, #66b3ff 100%);
+  border-color: #409eff;
+  color: white;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.4);
+}
+
+.function-btn :deep(.el-icon) {
+  margin-right: 6px;
 }
 
 .content-area {
@@ -763,30 +911,44 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 }
 
 .practice-item {
-  background: #fff;
-  border: 1px solid #e4e7ed;
-  border-radius: 8px;
+  background: white;
   padding: 16px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  border: 1px solid #f8f8f8;
   cursor: pointer;
-  transition: box-shadow 0.3s;
+  transition: all 0.2s ease;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .practice-item:hover {
-  box-shadow: 0 2px 12px 0 rgba(0,0,0,.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transform: translateY(-2px);
 }
 
 .practice-content {
   font-size: 16px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+  flex: 1;
+  width: 100%;
+  max-width: 100%;
+  color: #303133;
+  font-weight: 500;
 }
 
 .practice-meta {
-  font-size: 14px;
-  color: #909399;
+  font-size: 12px;
+  color: #606266;
   display: flex;
   justify-content: end;
   align-items: center;
-  gap: 4px;
+  flex-shrink: 0;
 }
 
 /* 生成习题区域样式 */
@@ -818,23 +980,25 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 
 /* 题目区域样式 */
 .question-section {
+  margin-bottom: 30px;
+  padding: 20px;
   background: #f8f9fa;
   border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 24px;
+  border-left: 4px solid #409eff;
 }
 
 .question-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .question-header h2 {
   margin: 0;
-  font-size: 18px;
-  color: #2c3e50;
+  color: #303133;
+  font-size: 20px;
+  font-weight: 600;
 }
 
 .question-meta {
@@ -940,47 +1104,37 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 
 /* 行内代码样式 */
 .question-content code {
-  background-color: #f6f8fa;
-  border: 1px solid #e1e4e8;
-  border-radius: 3px;
+  background: #f5f7fa;
   padding: 2px 6px;
-  font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', 'Courier', monospace;
-  font-size: 0.85em;
-  color: #d73a49;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  color: #e6a23c;
 }
 
 /* 代码块样式 */
 .question-content pre {
-  background-color: #f6f8fa;
-  border: 1px solid #e1e4e8;
-  border-radius: 6px;
+  background: #f5f7fa;
   padding: 16px;
-  margin: 16px 0;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
   overflow-x: auto;
-  font-size: 0.85em;
-  line-height: 1.45;
+  margin: 16px 0;
 }
 
 .question-content pre code {
   background: none;
-  border: none;
   padding: 0;
-  color: #24292e;
-  font-size: inherit;
+  color: #303133;
 }
 
 /* 引用样式 */
 .question-content blockquote {
-  border-left: 4px solid #dfe2e5;
   margin: 16px 0;
-  padding: 0 16px;
-  color: #6a737d;
-  background-color: #f8f9fa;
-  border-radius: 0 3px 3px 0;
-}
-
-.question-content blockquote p {
-  margin: 12px 0;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-left: 4px solid #409eff;
+  color: #606266;
 }
 
 /* 表格样式 */
@@ -1035,7 +1189,7 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 /* 强调样式 */
 .question-content strong {
   font-weight: 600;
-  color: #24292e;
+  color: #303133;
 }
 
 .question-content em {
@@ -1110,24 +1264,7 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   margin-bottom: 0;
 }
 
-.question-content pre code {
-  background: none;
-  padding: 0;
-  color: #2c3e50;
-}
 
-.question-content strong {
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.question-content blockquote {
-  border-left: 4px solid #409eff;
-  padding-left: 16px;
-  margin: 16px 0;
-  color: #606266;
-  font-style: italic;
-}
 
 /* 作答区域样式 */
 .answer-section {
@@ -1270,5 +1407,68 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   color: #909399;
   margin-right: 0.8rem;
   font-size: 0.9rem;
+}
+
+/* 滚动条样式 */
+.chapter-navigation::-webkit-scrollbar,
+.content-area::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chapter-navigation::-webkit-scrollbar-track,
+.content-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chapter-navigation::-webkit-scrollbar-thumb,
+.content-area::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 2px;
+}
+
+.chapter-navigation::-webkit-scrollbar-thumb:hover,
+.content-area::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* 骨架屏自定义样式 - 适配深蓝色背景 */
+.loading-state :deep(.el-skeleton__item) {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+.loading-state :deep(.el-skeleton__p) {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .left-panel {
+    width: 240px;
+  }
+  
+  .chapter-list {
+    padding: 0 8px 20px 8px;
+  }
+  
+  .content-area {
+    padding: 16px;
+  }
+  
+  .function-buttons {
+    padding: 16px 20px;
+  }
 }
 </style>

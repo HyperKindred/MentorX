@@ -112,6 +112,7 @@ const fetchMyCourses = async () => {
       } else {
         myCourses.value = [];
       }
+      ElMessage.success('课程列表加载成功');
     } else {
       myCourses.value = [];
       ElMessage.error('获取课程列表失败：' + response.data.msg);
@@ -156,7 +157,6 @@ const openCourse = (course: MyCourse) => {
  * 组件挂载时的初始化操作
  */
 onMounted(() => {
-  console.log('我的课程组件已加载');
   fetchMyCourses();
 });
 </script>
@@ -336,6 +336,28 @@ onMounted(() => {
   
   .course-meta {
     gap: 12px;
+  }
+}
+
+/* 骨架屏自定义样式 - 适配深蓝色背景 */
+.loading-state :deep(.el-skeleton__item) {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+.loading-state :deep(.el-skeleton__p) {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
   }
 }
 
