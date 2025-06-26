@@ -1,67 +1,115 @@
 <template>
-  <div class="Main">
+  <div class="main">
     <div class="students-list">
-      <h2>学生列表</h2>
+      <div class="left-title">
+        <h2>学生列表</h2>
+      </div>
       <div class="user-item" v-for="item in students" :key="item.id">
-            <strong>姓名：</strong>
+            <div class="info-name">
             <template v-if="item.editName">
+              <div class="name">
+              <strong>姓名：</strong>
               <el-input v-model="item.name" size="small" class="inline-input" />
+              </div>
+              <div class="name_btn">
               <el-button size="small" @click="cancelEditName(item)" class="edit-btn">取消</el-button>
               <el-button size="small" type="success" @click="saveInfo('name', item)" class="edit-btn">保存</el-button>
+              </div>
             </template>
             <template v-else>
+              <div class="name">
+              <strong>姓名：</strong>
               <span>{{ item.name }}</span>
+              </div>
               <el-button size="small" @click="startEditName(item)" class="edit-btn">修改</el-button>
             </template>
-            <div class="user-account">手机号：{{ item.phone_number }}</div>
-            <strong>性别：</strong>
+            </div>
+
+            <div class="info_account"><strong>账号：</strong>{{ item.phone_number }}</div>
+
+          <div class="info-gender">
             <template v-if="item.editGender">
-              <el-select v-model="item.gender" placeholder="请选择" size="small" class="genderSelect">
-                <el-option label="男" value="male" />
-                <el-option label="女" value="female" />
-                <el-option label="保密" value="unknow" />
-              </el-select>
+              <div class="gender">
+                <strong>性别：</strong>
+                <el-select v-model="item.gender" placeholder="请选择" size="small" class="genderSelect">
+                  <el-option label="男" value="male" />
+                  <el-option label="女" value="female" />
+                  <el-option label="保密" value="unknow" />
+                </el-select>
+              </div>
+              <div class="gender_btn">
               <el-button size="small" @click="cancelEditGender(item)" class="edit-btn">取消</el-button>
               <el-button size="small" type="success" @click="saveInfo('gender', item)" class="edit-btn">保存</el-button>
+              </div>
+
             </template>
             <template v-else>
+              <div class="gender">
+                <strong>性别：</strong>
               <span>{{ getGenderLabel(item.gender) }}</span>
+              </div>              
               <el-button size="small" @click="startEditGender(item)" class="edit-btn">修改</el-button>
             </template>
-            <div class="user-time">登录时长：{{ formatDuration(item.sum_time) }}</div>
-        <el-button @click="deleteStudent(item.id)">删除</el-button>
+          </div>
+
+            <div class="info_time"><strong>在线时长：</strong>{{ formatDuration(item.sum_time) }}</div>
+        <el-button @click="deleteStudent(item.id)" class="delete-btn">删除</el-button>
       </div>
     </div>
     <div class="teacher-list">
+      <div class="right-title">
       <h2>教师列表</h2>
+      </div>
       <div class="user-item" v-for="item in teachers" :key="item.id">
-            <strong>姓名：</strong>
+            <div class="info-name">
             <template v-if="item.editName">
+              <div class="name">
+              <strong>姓名：</strong>
               <el-input v-model="item.name" size="small" class="inline-input" />
+              </div>
+              <div class="name_btn">
               <el-button size="small" @click="cancelEditName(item)" class="edit-btn">取消</el-button>
-              <el-button size="small" type="success" @click="saveInfo('name', item.id)" class="edit-btn">保存</el-button>
+              <el-button size="small" type="success" @click="saveInfo('name', item)" class="edit-btn">保存</el-button>
+              </div>
             </template>
             <template v-else>
+              <div class="name">
+              <strong>姓名：</strong>
               <span>{{ item.name }}</span>
+              </div>
               <el-button size="small" @click="startEditName(item)" class="edit-btn">修改</el-button>
             </template>
-            <div class="user-account">手机号：{{ item.phone_number }}</div>
-            <strong>性别：</strong>
+            </div>
+
+            <div class="info_account"><strong>账号：</strong>{{ item.phone_number }}</div>
+
+          <div class="info-gender">
             <template v-if="item.editGender">
-              <el-select v-model="item.gender" placeholder="请选择" size="small" class="genderSelect">
-                <el-option label="男" value="male" />
-                <el-option label="女" value="female" />
-                <el-option label="保密" value="unknow" />
-              </el-select>
+              <div class="gender">
+                <strong>性别：</strong>
+                <el-select v-model="item.gender" placeholder="请选择" size="small" class="genderSelect">
+                  <el-option label="男" value="male" />
+                  <el-option label="女" value="female" />
+                  <el-option label="保密" value="unknow" />
+                </el-select>
+              </div>
+              <div class="gender_btn">
               <el-button size="small" @click="cancelEditGender(item)" class="edit-btn">取消</el-button>
               <el-button size="small" type="success" @click="saveInfo('gender', item)" class="edit-btn">保存</el-button>
+              </div>
+
             </template>
             <template v-else>
+              <div class="gender">
+                <strong>性别：</strong>
               <span>{{ getGenderLabel(item.gender) }}</span>
+              </div>              
               <el-button size="small" @click="startEditGender(item)" class="edit-btn">修改</el-button>
             </template>
-            <div class="user-time">登录时长：{{ formatDuration(item.sum_time) }}</div>
-        <el-button @click="deleteTeacher(item.id)">删除</el-button>
+          </div>
+
+            <div class="info_time"><strong>在线时长：</strong>{{ formatDuration(item.sum_time) }}</div>
+        <el-button @click="deleteStudent(item.id)" class="delete-btn">删除</el-button>
       </div>
     </div>
   </div>
@@ -315,6 +363,111 @@ item.gender = originalGender.value;
 </script>
 
 <style scoped>
+.main {
+  display: flex;
+  height: 100%;
+  background-color: transparent;
+  font-family: Arial, Helvetica, sans-serif;
+}
 
+.students-list {
+  width: 50%;
+  background-color: transparent;
+  display: flex;
+  flex-direction: column;
+  padding-right: 1rem;
+}
+
+.teacher-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: transparent;
+}
+.left-title {
+  color: #f8f8f8;
+  margin-bottom: 1rem;
+  margin-top: 1rem;
+}
+.right-title {
+  color: #f8f8f8;
+  margin-bottom: 1rem;
+  margin-top: 1rem;
+}
+
+.user-item {
+  color: black;
+  margin-bottom: 0.7rem;
+  padding: 1rem;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  border-radius: 10px;
+
+}
+
+.info-account {
+  font-size: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: row;
+  justify-content: left;
+}
+
+.info-name {
+  font-size: 16px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.info-gender {
+  font-size: 16px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.info-time {
+  font-size: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: row;
+  justify-content: left;
+}
+
+.edit-btn {
+  margin-left: 10px;
+  background-color: #417dff;
+  color: #f8f8f8;
+  outline: none;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.edit-btn:hover {
+  background-color: #719eff;
+}
+
+
+.genderSelect {
+  width: 4rem;
+}
+
+.inline-input {
+  max-width: 5rem;
+  height: 1.5rem;
+  width: auto;
+  overflow-x: hidden;
+}
+
+.delete-btn {
+  border-color: red;
+  color: red;
+}
+
+.delete-btn:hover {
+  background-color: rgba(255, 163, 163, 0.271);
+}
 
 </style>

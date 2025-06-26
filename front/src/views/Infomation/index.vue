@@ -1,5 +1,5 @@
 <template>
-  <div class="Main">
+  <div class="main">
     <el-card class="info-card">
       <el-row :gutter="20">
         <el-col :span="12">
@@ -306,6 +306,8 @@ const cancelEditGender = () => {
   border: none;
 }
 
-
+.main {
+  font-family: Arial, Helvetica, sans-serif;
+}
 
 </style>

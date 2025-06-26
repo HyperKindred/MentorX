@@ -68,10 +68,10 @@
     <span v-else-if="selectedStudent?.check === 2">⭕半对半错</span> 
     <span v-else>❓未批改</span>
   </p>
-  <p v-if="selectedStudent?.check != null && selectedStudent?.analyse">
+  <div v-if="selectedStudent?.check != null && selectedStudent?.analyse">
     <strong>分析：</strong>
     <div class="analysis-content" v-html="marked.parse(selectedStudent.analyse)"></div>
-  </p>
+  </div>
 
 </el-dialog>
 

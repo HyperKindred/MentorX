@@ -151,6 +151,9 @@ onMounted(() => {
   width: 100vw;
   height: 98.5vh;
   overflow: hidden;
+  right: 0px;
+  bottom: 0px;
+
 }
 
 .tab-header {

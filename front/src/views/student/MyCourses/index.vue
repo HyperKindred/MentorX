@@ -112,7 +112,6 @@ const fetchMyCourses = async () => {
       } else {
         myCourses.value = [];
       }
-      ElMessage.success('课程列表加载成功');
     } else {
       myCourses.value = [];
       ElMessage.error('获取课程列表失败：' + response.data.msg);
