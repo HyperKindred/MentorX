@@ -108,6 +108,8 @@ def f_getLearningStatsByChapter(chapter_id, student_id = None):
         right = cursor.fetchone()[0]
         
         chapter["correctness"] = right / total if total > 0 else 0
+        chapter["sum_exercises"] = total 
+        chapter["right_exercises"] = right
     else:
         sql = "SELECT COUNT(*) FROM communicate_history WHERE chapter_id = %s;"
         cursor.execute(sql, (chapter_id,))
@@ -122,6 +124,8 @@ def f_getLearningStatsByChapter(chapter_id, student_id = None):
         right = cursor.fetchone()[0]
         
         chapter["correctness"] = right / total if total > 0 else 0
+        chapter["sum_exercises"] = total 
+        chapter["right_exercises"] = right
     
     closeSQL(conn, cursor)
     return chapter
