@@ -26,13 +26,11 @@
             :name="student.id"
           >
             <template #title>
-              <div class="student-title">姓名：{{ student.name }}</div>
+              <div class="student-title">{{ student.name }}</div>
             </template>
-          <div class="student-summary">
-            <div class="summary-title">课程汇总数据</div>
+          <div class="student-summary" v-if="student.courses?.length">
             <div class="chart-container">
               <div class="chart-box">
-                <div class="chart-title">各课程AI使用总次数</div>
                 <div 
                   class="chart" 
                   :id="`student-summary-ai-chart-${student.id}`"
@@ -40,7 +38,6 @@
                 ></div>
               </div>
               <div class="chart-box">
-                <div class="chart-title">各课程答题总次数</div>
                 <div 
                   class="chart" 
                   :id="`student-summary-exercise-chart-${student.id}`"
@@ -48,7 +45,6 @@
                 ></div>
               </div>
               <div class="chart-box">
-                <div class="chart-title">各课程平均正确率</div>
                 <div 
                   class="chart" 
                   :id="`student-summary-correctness-chart-${student.id}`"
@@ -57,6 +53,9 @@
               </div>
             </div>
           </div>
+          <div v-else class="no-course">
+            无课程内容
+          </div>
             
             <el-collapse v-model="activeStudentCourses[student.id]">
               <el-collapse-item 
@@ -64,13 +63,20 @@
                 :key="course.id" 
                 :name="course.id"
               >
-                <template #title>
-                  <div class="course-title">{{ course.name }}</div>
-                </template>
+              <template #title>
+                <div class="course-title">
+                  <span>{{ course.name }}</span>
+                  <el-button 
+                    size="small" 
+                    @click.stop="showCourseDetails(course)"
+                  >
+                    查看详细数据
+                  </el-button>
+                </div>
+              </template>
                 
                 <div class="chart-container">
                   <div class="chart-box">
-                    <div class="chart-title">各章节AI使用次数分布</div>
                     <div 
                       class="chart" 
                       :id="`student-ai-chart-${student.id}-${course.id}`"
@@ -78,7 +84,6 @@
                     ></div>
                   </div>
                   <div class="chart-box">
-                    <div class="chart-title">各章节答题次数分布</div>
                     <div 
                       class="chart" 
                       :id="`student-exercise-chart-${student.id}-${course.id}`"
@@ -86,7 +91,6 @@
                     ></div>
                   </div>
                   <div class="chart-box">
-                    <div class="chart-title">各章节答题准确率</div>
                     <div 
                       class="chart" 
                       :id="`student-correctness-chart-${student.id}-${course.id}`"
@@ -107,13 +111,20 @@
             :key="course.id" 
             :name="course.id"
           >
-            <template #title>
-              <div class="course-title">{{ course.name }}</div>
-            </template>
+          <template #title>
+            <div class="course-title">
+              <span>{{ course.name }}</span>
+              <el-button 
+                size="small" 
+                @click.stop="showCourseDetails(course)"
+              >
+                查看详细数据
+              </el-button>
+            </div>
+          </template>
             
             <div class="chart-container">
               <div class="chart-box">
-                <div class="chart-title">各章节AI使用次数分布</div>
                 <div 
                   class="chart" 
                   :id="`course-ai-chart-${course.id}`"
@@ -121,7 +132,6 @@
                 ></div>
               </div>
                   <div class="chart-box">
-                    <div class="chart-title">各章节答题次数分布</div>
                     <div 
                       class="chart" 
                       :id="`course-exercise-chart-${course.id}`"
@@ -129,7 +139,6 @@
                     ></div>
                   </div>
               <div class="chart-box">
-                <div class="chart-title">各章节答题准确率</div>
                 <div 
                   class="chart" 
                   :id="`course-correctness-chart-${course.id}`"
@@ -142,6 +151,41 @@
       </div>
     </div>
   </div>
+  <el-dialog 
+    v-model="dialogVisible" 
+    :title="selectedCourse?.name + ' - 章节详情'" 
+    width="80%"
+  >
+    <el-collapse v-model="activeChapterNames">
+      <el-collapse-item 
+        v-for="chapter in selectedCourse?.chapters || []" 
+        :key="chapter.id" 
+        :name="chapter.id"
+      >
+        <template #title>
+          <div class="chapter-title">{{ chapter.name }}</div>
+        </template>
+        <div class="chapter-details">
+          <div class="detail-item">
+            <span class="detail-label">AI使用次数：</span>
+            <span>{{ chapter.AiFrequence || 0 }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">答题次数：</span>
+            <span>{{ chapter.sum_exercises || 0 }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">正确答题次数：</span>
+            <span>{{ chapter.right_exercises || 0 }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">正确率：</span>
+            <span>{{ calculateCorrectness(chapter) }}%</span>
+          </div>
+        </div>
+      </el-collapse-item>
+    </el-collapse>
+  </el-dialog>
 </template>
 
 
@@ -160,6 +204,9 @@ const activeStudentNames = ref([]);
 const activeStudentCourses = ref({});
 const activeCourseNames = ref([]);
 const chartInstances = new Map();
+const dialogVisible = ref(false);
+const selectedCourse = ref<any>(null);
+const activeChapterNames = ref<string[]>([]);
 
 onMounted(() => {
     getStudentsList();
@@ -194,6 +241,17 @@ watch(activeTab, () => {
   });
 });
 
+
+const showCourseDetails = (course: any) => {
+  selectedCourse.value = course;
+  dialogVisible.value = true;
+};
+
+const calculateCorrectness = (chapter: any) => {
+  if (!chapter.sum_exercises || chapter.sum_exercises === 0) return 0;
+  return Math.round((chapter.right_exercises / chapter.sum_exercises) * 100);
+};
+
 const renderAllCharts = () => {
   // Clear all existing charts first
   chartInstances.forEach((chart) => {
@@ -203,8 +261,9 @@ const renderAllCharts = () => {
 
   // Render student charts
   students.value.forEach(student => {
+    if (student.courses?.length) {
+    renderStudentSummaryCharts(student);
     student.courses?.forEach(course => {
-      renderStudentSummaryCharts(student);
       if (activeStudentCourses.value[student.id]?.includes(course.id)) {
         renderAIChart(
           `student-ai-chart-${student.id}-${course.id}`,
@@ -222,9 +281,9 @@ const renderAllCharts = () => {
         );
       }
     });
+    }
   });
 
-  // Render course charts
   courses.value.forEach(course => {
     if (activeCourseNames.value === course.id) {
       renderAIChart(
@@ -728,13 +787,7 @@ const getCoursesList = () => {
 .course-title {
   font-weight: bold;
   font-size: 16px;
-}
-
-.chart-title {
-  font-weight: bold;
-  margin-bottom: 10px;
-  text-align: center;
-  font-size: 15px;
+  padding-left: 1rem;
 }
 
 .el-collapse {
@@ -784,13 +837,46 @@ const getCoursesList = () => {
   border: 1px solid #ebeef5;
 }
 
-.summary-title {
-  font-weight: bold;
+.no-course {
+  padding: 20px;
+  text-align: center;
+  color: #909399;
+  font-style: italic;
+  background-color: #f8f9fa;
+  border-radius: 8px;
   margin-bottom: 15px;
-  font-size: 15px;
-  color: #409EFF;
 }
 
+
+.course-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding-right: 10px;
+}
+
+
+.chapter-title {
+  font-weight: bold;
+  padding-left: 1rem;
+}
+
+.chapter-details {
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.detail-item {
+  margin-bottom: 10px;
+  display: flex;
+}
+
+.detail-label {
+  font-weight: bold;
+  min-width: 120px;
+}
 
 @media (max-width: 1200px) {
   .chart-box {
