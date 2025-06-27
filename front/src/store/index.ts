@@ -30,8 +30,8 @@ export const mainStore = defineStore('main', {
     gender: 'unknown',
     type: 'U',
     name: '请登录',
-    token: ''
-
+    token: '',
+    theme: localStorage.getItem('theme') || 'dark',
   }),
   getters: {},
   actions: {
@@ -87,7 +87,6 @@ export const mainStore = defineStore('main', {
         closable: false,
         props: {}
       };
-    }
-
+    },
   },
 });

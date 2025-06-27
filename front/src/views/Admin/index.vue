@@ -93,9 +93,9 @@ const getCourseList = () => {
   })
     .then((response) => {
       const responseData = response.data;
-      if (responseData.ret === 0 && Array.isArray(responseData.courseList)) {
-        if (Array.isArray(responseData.courseList)) {
-          courses.value = responseData.courseList;
+      if (responseData.ret === 0) {
+        if (Array.isArray(responseData.courseList)){
+          courses.value = Array.isArray(responseData.courseList) ? responseData.courseList : [responseData.courseList];
         }
         else {
           courses.value = [];

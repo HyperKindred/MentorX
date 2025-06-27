@@ -255,13 +255,11 @@ onMounted(async () => {
   padding: 20px;
   background-color: transparent;
   min-height: 100%;
-  color: white;
 }
 
 .h2 {
     margin: 0.2rem;
     font-size: 1rem;
-    color: white;
 }
 
 .p {
@@ -304,9 +302,9 @@ onMounted(async () => {
 }
 
 .section-title {
-  font-size: 24px;
+  font-size: 30px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--titleColor);
   margin: 0;
 }
 
@@ -361,17 +359,17 @@ onMounted(async () => {
 
 /* 课程卡片样式 */
 .course-card {
-  background: rgba(255, 255, 255, 0.835);
+  background: #fdfffff0;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 12px var(--shadowColor);
   transition: all 0.3s ease;
   color: #080808;
 }
 
 .course-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 25px var(--shadowColor2);
 }
 
 
@@ -379,6 +377,7 @@ onMounted(async () => {
 .course-content {
   color: #080808;
   padding: 20px;
+  padding-bottom: 5px;
 }
 
 .course-title {

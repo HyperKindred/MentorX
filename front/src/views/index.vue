@@ -4,6 +4,7 @@
   </div>
   <div class="tab-container">
     <div class="tab-header-bar">
+      <div class="head-left">
       <el-dropdown trigger="click" @command="handleDropdownCommand">
         <el-avatar shape="square" :size="40" :src="getUserAvatar()" fit="cover" style="cursor: pointer" />
         <template #dropdown>
@@ -26,6 +27,19 @@
         <el-tab-pane v-for="tab in store.tabs" :key="tab.name" :label="tab.title" :name="tab.name"
           :closable="tab.closable !== false" />
       </el-tabs>
+      </div>
+      <div class="head-right">
+        <el-switch
+          v-model="isDarkTheme"
+          inline-prompt
+          :active-icon="Moon"
+          :inactive-icon="Sunny"
+          active-text="夜间"
+          inactive-text="日间"
+          @change="toggleTheme"
+          style="--el-switch-on-color: #417dff; --el-switch-off-color: #417dff; width: 4rem;"
+        />
+      </div>
     </div>
     <div class="tab-content">
       <keep-alive>
@@ -47,6 +61,7 @@ import { mainStore } from '../store/index.ts';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
+import { Sunny, Moon } from '@element-plus/icons-vue';
 import TeacherImg from '../assets/images/Teacher.jpg';
 import StudentImg from '../assets/images/Student.jpg';
 import ManagerImg from '../assets/images/Manager.jpg';
@@ -61,6 +76,7 @@ const store = mainStore();
 const router = useRouter();
 const activeTab = ref('home');
 const tabIndex = ref(1);
+const isDarkTheme = ref(localStorage.getItem('theme') === 'dark'); 
 const loginTime = parseInt(localStorage.getItem('loginTime') || '0', 10);
 const logoutTime = Date.now();
 const handleDropdownCommand = (command: string) => {
@@ -116,6 +132,12 @@ const handleDropdownCommand = (command: string) => {
   }
 };
 
+const toggleTheme = () => {
+  const theme = isDarkTheme.value ? 'dark' : 'light';
+  document.documentElement.setAttribute('theme', theme);
+  localStorage.setItem('theme', theme);
+};
+
 // 获取用户头像
 const getUserAvatar = () => {
   switch (store.type) {
@@ -136,6 +158,9 @@ function onTabClick(tab: any) {
 
 onMounted(() => {
   store.getUserInfo();
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  isDarkTheme.value = savedTheme === 'dark';
+  document.documentElement.setAttribute('theme', savedTheme);
 });
 
 
@@ -186,7 +211,7 @@ onMounted(() => {
   flex-grow: 1;
   overflow: auto;
   padding: 16px;
-  background-color: #1c3976ac;
+  background-color: var(--backgroundColor);
 }
 
 .username {
@@ -199,6 +224,7 @@ onMounted(() => {
 .tab-header-bar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 0 16px;
   height: 60px;
   background-color: #417dff;
@@ -218,5 +244,16 @@ onMounted(() => {
 .el-dropdown-menu :deep(.el-dropdown-menu__item:hover) {
   background-color: #729fff;
   color: white;
+}
+
+.head-left {
+  display: flex;
+  align-items: center;
+}
+
+.head-right {
+  display: flex;
+  align-items: center;
+  margin-right: 1rem;
 }
 </style>

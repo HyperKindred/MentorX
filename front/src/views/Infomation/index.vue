@@ -224,7 +224,7 @@ const cancelEditGender = () => {
 
 .info-card {
   font-family: Arial, Helvetica, sans-serif;
-  width: 80%;
+  width: 60%;
   margin: 50px auto;
   padding: 20px;
   display: flex;
@@ -232,17 +232,29 @@ const cancelEditGender = () => {
   justify-content: center;
   align-items: center;
 }
+
+.info-card .el-row {
+  display: flex;
+  flex-wrap: wrap;
+  max-width: 750px;
+}
+
+.info-card .el-col {
+  flex: 0 0 50%;
+  max-width: 400px;
+}
 .info-account {
   font-size: 16px;
   margin-bottom: 12px;
   display: flex;
   flex-direction: row;
   justify-content: left;
+  margin-right: 2rem;
 }
 
 .info-name {
   font-size: 16px;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -250,25 +262,27 @@ const cancelEditGender = () => {
 
 .info-gender {
   font-size: 16px;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  margin-right: 2rem;
 }
 
 .info-type {
   font-size: 16px;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
   display: flex;
   flex-direction: row;
   justify-content: left;
 }
 .info-password {
   font-size: 16px;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  margin-right: 2rem;
 }
 
 .genderSelect {
@@ -308,6 +322,26 @@ const cancelEditGender = () => {
 
 .main {
   font-family: Arial, Helvetica, sans-serif;
+}
+
+@media (max-width: 1068px) {
+  .info-card .el-col {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .info-gender {
+    margin-right: 0;
+  }
+
+  .info-password {
+    margin-right: 0;
+  }
 }
 
 </style>

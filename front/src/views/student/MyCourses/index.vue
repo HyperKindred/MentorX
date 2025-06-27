@@ -177,7 +177,7 @@ onMounted(() => {
 .page-title {
   font-size: 28px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--titleColor);
   margin: 0 0 8px 0;
 }
 
@@ -206,7 +206,7 @@ onMounted(() => {
   border-radius: 8px;
   padding: 0 24px;
   margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px var(--shadowColor);
 }
 
 .course-filters :deep(.el-tabs__header) {
@@ -221,7 +221,7 @@ onMounted(() => {
 .courses-container {
   background: transparent;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px var(--shadowColor);
   margin-left: 2rem;
   margin-right: 2rem;
 }
@@ -243,8 +243,8 @@ onMounted(() => {
   display: flex;
   align-items: center;
   padding: 24px;
-  margin-bottom: 0.5rem;
-  background-color: #f8f8f8;
+  margin-bottom: 1rem;
+  background-color: #f8f8f8f8;
   transition: background-color 0.2s ease;
   cursor: pointer;
   border-radius: 8px;
@@ -268,9 +268,9 @@ onMounted(() => {
 .course-title {
   font-size: 18px;
   font-weight: 600;
-  color: #2c3e50;
-  margin: 0 0 8px 0;
+  color: #213244;
   line-height: 1.4;
+  margin-bottom: 3px;
 }
 
 .course-instructor {

@@ -1,14 +1,18 @@
 :root[theme='light']{
-    --backgroundColor:rgba(243, 243, 240, 0.6);
-    --textColor:rgb(17, 16, 17);
-    --titleColor:rgb(25, 24, 28);
+    --backgroundColor:	#D2E9FFd0;
+    --textColor:#272727;
+    --titleColor:#080808;
+    --shadowColor:rgba(0, 0, 0, 0.08);
+    --shadowColor2:rgba(0, 0, 0, 0.15);
 
 
 }
 
 :root[theme='dark']{
-    --backgroundColor:rgba(44, 43, 43, 0.6);
-    --textColor: rgb(237, 237, 232);
-    --titleColor:beige;
+    --backgroundColor:#000079d0;
+    --textColor: #f0f0f0;
+    --titleColor:#fcfcfc;
+    --shadowColor:rgba(255, 255, 255, 0.08);
+    --shadowColor2:rgba(255, 255, 255, 0.4);
 
 }
