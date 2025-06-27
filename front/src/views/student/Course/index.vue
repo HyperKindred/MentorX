@@ -13,7 +13,6 @@
             :class="{ active: activeChapter === chapter.id }"
             @click="selectChapter(chapter)"
           >
-            <span class="chapter-number">{{ index + 1 }}</span>
             <span class="chapter-title">{{ chapter.name }}</span>
           </div>
         </div>
@@ -354,24 +353,6 @@ const getChapterList = async (courseId: number) => {
   font-weight: 540;
 }
 
-.chapter-number {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  background-color: white;
-  border-radius: 50%;
-  font-size: 12px;
-  font-weight: 600;
-  margin-right: 12px;
-  flex-shrink: 0;
-}
-
-.chapter-item.active .chapter-number {
-  background-color: #409eff;
-  color: white;
-}
 
 .chapter-title {
   font-size: 14px;
