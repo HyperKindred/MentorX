@@ -2,12 +2,6 @@
   <div class="course-page">
     <!-- 左侧面板 -->
     <div class="left-panel">
-      <!-- 课程信息 -->
-      <div class="course-header" v-if="courseInfo">
-        <h2 class="course-name">{{ courseInfo.name }}</h2>
-        <p class="course-teacher">讲师：{{ courseInfo.teacher_name }}</p>
-      </div>
-      
       <!-- 章节导航 -->
       <div class="chapter-navigation">
         <h3 class="nav-title">课程章节</h3>
@@ -19,7 +13,6 @@
             :class="{ active: activeChapter === chapter.id }"
             @click="selectChapter(chapter)"
           >
-            <span class="chapter-number">{{ index + 1 }}</span>
             <span class="chapter-title">{{ chapter.name }}</span>
           </div>
         </div>
@@ -168,7 +161,6 @@ import { marked } from 'marked';
 import Course from '../Course/index.vue';
 import Practice from '../Practice/index.vue';
 import AiAssistant from '../AiAssistant/index.vue';
-import '@/assets/style/markdown.css';
 
 interface Chapter {
   id: number;
@@ -672,33 +664,15 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
 
 .left-panel {
   width: 300px;
-  min-width: 300px;
-  flex-shrink: 0;
-  background: transparent;
-  border-right: 1.5px solid #f8f8f8;
+  background: var(--backgroundColor2);
+  border-right: 1.5px solid transparent;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
   display: flex;
   flex-direction: column;
 }
 
-.course-header {
-  padding: 24px 20px;
-  border-bottom: 1.5px solid #f8f8f8;
-  background: transparent;
-  color: white;
-}
 
-.course-name {
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0 0 8px 0;
-  line-height: 1.4;
-}
-
-.course-teacher {
-  font-size: 14px;
-  margin: 0;
-  opacity: 0.9;
-}
 
 .chapter-navigation {
   flex: 1;
@@ -976,13 +950,15 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
 .nav-title {
   font-size: 16px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--titleColor);
   margin: 0;
   padding: 20px 20px 16px 20px;
 }
 
 .chapter-list {
-  padding: 0 12px 20px 12px;
+  padding-bottom: 20px;
+  padding-left: 5px;
+  padding-right: 5px;
 }
 
 .chapter-item {
@@ -990,45 +966,27 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   align-items: center;
   padding: 12px 16px;
   margin-bottom: 4px;
-  border-top: none;
-  border-left: none;
-  border-right: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  border-bottom: 1px solid transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
   background-color: transparent;
-  color: #a5a5a5;
+  color: var(--textColor2);
 }
 
 .chapter-item:hover {
-  background-color: transparent;
-  border-color: #f8f8f8;
+  background-color: var(--backgroundColor2);
+  color: var(--titleColor);
 }
 
 .chapter-item.active {
   background-color: transparent;
-  border-color: #f8f8f8;
-  color: #f8f8f8;
+  color: var(--titleColor);
+  background-color: var(--backgroundColor2);
+  font-weight: 540;
 }
 
-.chapter-number {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  background-color: #f0f2f5;
-  border-radius: 50%;
-  font-size: 12px;
-  font-weight: 600;
-  margin-right: 12px;
-  flex-shrink: 0;
-}
 
-.chapter-item.active .chapter-number {
-  background-color: #409eff;
-  color: white;
-}
 
 .chapter-title {
   font-size: 14px;
@@ -1061,16 +1019,20 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   font-weight: 500;
   padding: 12px 20px;
   transition: all 0.3s ease;
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--textColor2);
+  background-color: var(--backgroundColor2);
+  color: var(--textColor2);
 }
 
 .function-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+  box-shadow: 0 4px 12px var(--shadowColor2);
+  color: var(--textColor);
+  border: 1.5px solid var(--textColor);
 }
 
 .function-btn.active {
-  background: linear-gradient(135deg, #409eff 0%, #66b3ff 100%);
+  background: #417dff;
   border-color: #409eff;
   color: white;
   box-shadow: 0 2px 8px rgba(64, 158, 255, 0.4);

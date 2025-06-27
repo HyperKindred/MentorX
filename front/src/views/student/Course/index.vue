@@ -64,7 +64,7 @@
         <div class="courseware-content">
           <div v-if="currentCourseware" class="courseware-display">
             <h3 class="content-title">{{ currentCourseware.title }}</h3>
-            <div class="courseware-body" v-html="currentCourseware.content"></div>
+            <div class="courseware-body markdown-content" v-html="currentCourseware.content"></div>
           </div>
           <div v-else class="empty-content">
             <el-empty description="暂无课件内容" />
@@ -85,6 +85,7 @@ import { marked } from 'marked';
 import Exercises from '../Exercises/index.vue';
 import Practice from '../Practice/index.vue';
 import AiAssistant from '../AiAssistant/index.vue';
+import '@/assets/style/markdown.css';
 
 /**
  * 组件Props定义
