@@ -58,18 +58,18 @@
     </div>
 
   </div>
-<el-dialog v-model="analysisDialogVisible" title="批改结果分析" width="700px" class="analysis" style="padding: 2rem; text-align: left;">
-  <p class="analysis-info"><strong>学生：</strong>{{ selectedStudent?.student_name }}</p>
-  <p class="analysis-info"><strong>作答内容：</strong>{{ selectedStudent?.student_answer }}</p>
+<el-dialog v-model="analysisDialogVisible" title="批改结果分析" width="700px" class="analysis" style="padding: 2rem; text-align: left;background-color: var(--titleColor2);">
+  <p class="analysis-info"><strong style="color: var(--titleColor);">学生：</strong>{{ selectedStudent?.student_name }}</p>
+  <p class="analysis-info"><strong style="color: var(--titleColor);">作答内容：</strong>{{ selectedStudent?.student_answer }}</p>
   <p class="analysis-info">
-    <strong>批改结果：</strong>
+    <strong style="color: var(--titleColor);">批改结果：</strong>
     <span v-if="selectedStudent?.check === 1">❌错误</span>
     <span v-else-if="selectedStudent?.check === 0">✔️正确</span>
     <span v-else-if="selectedStudent?.check === 2">⭕半对半错</span> 
     <span v-else>❓未批改</span>
   </p>
   <div v-if="selectedStudent?.check != null && selectedStudent?.analyse">
-    <strong>分析：</strong>
+    <strong style="color: var(--titleColor);">分析：</strong>
     <div class="analysis-content" v-html="marked.parse(selectedStudent.analyse)"></div>
   </div>
 
@@ -201,20 +201,31 @@ onMounted(() => {
 
 </script>
 
-<style scoped>
+<style>
 .main {
   display: flex;
   height: 100%;
   background-color: transparent;
+  font-family: Arial, Helvetica, sans-serif;
 }
+
+.exercise-title {
+  color: var(--titleColor);
+  margin-bottom: 1rem;
+}
+
+.student-title {
+  color: var(--titleColor);
+  margin-bottom: 1rem;
+}
+
 .exercise-section {
-  width: 900px;
+  width: 60%;
   background: transparent;
-  border-right: 1px solid #e4e7ed;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
-  border-right: 1rem;
-  padding-left: 1rem;
+  padding: 1rem;
 }
 
 
@@ -224,7 +235,7 @@ onMounted(() => {
   line-height: 1.6;
   flex: 1;
   width: 100%;
-  color: #303133;
+  color: var(--textColor);
   font-weight: 500;
   white-space: normal;
   overflow-y: auto;
@@ -234,35 +245,31 @@ onMounted(() => {
   padding-right: 3rem;
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;
-  background: #f8f8f8;
+  background: var(--backgroundColor3);
+  word-wrap: normal;  
 }
 
 .meta {
   font-size: 12px;
-  color: #606266;
   display: flex;
   justify-content: end;
   align-items: center;
   flex-shrink: 0;
   padding-top: 0.4rem;
   padding-left: 3rem;
-  padding-right: 3rem;
+  padding-right: 1rem;
   border-bottom-left-radius: 5px;
   border-bottom-right-radius: 5px;
-  background: #f8f8f8;
+  background: var(--backgroundColor3);
   padding-bottom: 0.5rem;
 }
 
 .exercise-difficulty {
-  color: #909399;
+  color: var(--textColor2);
   margin-right: 1rem;
 }
 
-.exercise-difficulty-1 {
-  color: #909399;
-  margin-right: 0.8rem;
-  font-size: 0.9rem;
-}
+
 
 .exercise-type {
   background-color: #417dff;
@@ -275,66 +282,67 @@ onMounted(() => {
 
 .answer {
   font-size: 15px;
-  color: #2c3e50;
+  color: var(--textColor);
   margin-top: 0.5rem;
   white-space: normal;
   text-align: left;
   padding-left: 3rem;
   padding-right: 3rem;
   border-radius: 5px;
-  background: #f8f8f8;
+  background: var(--backgroundColor3);
   padding-top: 1rem;
   padding-bottom: 1rem;
+  word-wrap: normal;  
 }
 
 .student-section {
-  flex: 1;
+  width: 40%;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
-  background: transparent;
-  padding-left: 2rem;
-  padding-right: 2rem
+  padding: 1rem;
+  background-color: var(--backgroundColor2);
+  margin-bottom: 1rem;
 }
 
 .student-item {
-  background: #fff;
+  background: var(--backgroundColor3);
   padding-top: 16px;
   padding-left: 16px;
   padding-right: 16px;
   padding-bottom: 5px;
-  border: 1px solid #ddd;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px var(--shadowColor);
   margin-bottom: 1rem;
   text-align: left;
 }
 
 .student-name {
   font-size: 16px;
-  color: black;
+  color: var(--textColor);
   margin-bottom: 0.5rem;
 
 }
 .student-answer {
   font-size: 14px;
-  color: #080808;
+  color: var(--textColor);
 }
 .answer-time {
   margin-bottom: 6px;
   font-size: 14px;
-  color: #909399;
+  color: var(--textColor2);
   left: 1rem;
 }
 
 .pagination {
-  margin-top: 20px;
+  margin-top: auto;
+  margin-bottom: 1rem;
   display: flex;
   justify-content: center;
 }
 
 .correction {
   font-weight: bold;
-  color: #333;
   margin-right: 0.5rem;
 }
 
@@ -354,13 +362,6 @@ onMounted(() => {
   padding-left: 1.2em;
 }
 
-.exercise-content code,
-.answer code {
-  background-color: #f2f2f2;
-  padding: 2px 4px;
-  border-radius: 4px;
-  font-family: monospace;
-}
 
 .student-buttom {
   display: flex;
@@ -368,12 +369,17 @@ onMounted(() => {
   justify-content: space-between;
 }
 
-
+.el-dialog__title {
+  color: var(--titleColor);
+  font-weight: bold;
+}
 .analysis-content {
   margin-left: 1rem;
+  color: var(--textColor);
 }
 .analysis-info {
   margin-bottom: 0.5rem;
+  color: var(--textColor);
 }
 
 .buttom-right {
@@ -381,4 +387,6 @@ onMounted(() => {
   flex-direction: row;
   justify-content: end;
 }
+
+
 </style>
