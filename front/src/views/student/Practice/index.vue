@@ -136,7 +136,7 @@
                 <el-tag v-else type="danger">未批改</el-tag>
               </div>
             </div>
-            <div class="question-content" v-html="marked.parse(selectedPractice.exercise_content)"></div>
+            <div class="question-content markdown-content" v-html="marked.parse(selectedPractice.exercise_content)"></div>
           </div>
           
           <!-- 作答区域 -->
@@ -156,11 +156,11 @@
                 <div v-if="selectedPractice.check_result" class="check-result">
                   <h4>批改结果：</h4>
                   <div class="check-score" :class="getScoreClass(selectedPractice.check_result)">
-                    评分: {{ selectedPractice.check_result }}
+                    <div class="markdown-content" v-html="marked.parse(selectedPractice.check_result)"></div>
                   </div>
                   <div v-if="selectedPractice.analyse" class="check-analyse">
                     <h4>详细分析：</h4>
-                    <div v-html="marked.parse(selectedPractice.analyse)"></div>
+                    <div class="markdown-content" v-html="marked.parse(selectedPractice.analyse)"></div>
                   </div>
                 </div>
               </div>
@@ -404,6 +404,7 @@ const getPracticeList = async (chapterId: number) => {
       },
       timeout: 5000
     });
+
     if (response.data.ret === 0 && response.data.exercisesList) {
       const allPractices = Array.isArray(response.data.exercisesList) ? response.data.exercisesList : [response.data.exercisesList];
       practices.value = allPractices.filter(ex => ex.is_official !== 1 && ex.is_official !== '1');
@@ -721,14 +722,14 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 .left-panel {
   width: 300px;
   background: transparent;
-  border-right: 1.5px solid #e4e7ed;
+  border-right: 1.5px solid #f8f8f8;
   display: flex;
   flex-direction: column;
 }
 
 .course-header {
   padding: 24px 20px;
-  border-bottom: 1.5px solid #e4e7ed;
+  border-bottom: 1.5px solid #f8f8f8;
   background: transparent;
   color: white;
 }
@@ -809,16 +810,19 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   align-items: center;
   padding: 12px 16px;
   margin-bottom: 4px;
+  border-top: none;
+  border-left: none;
+  border-right: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  border-bottom: 1px solid #f8f8f8;
-  color: #aaaaaa;
+  border-bottom: 1px solid transparent;
+  background-color: transparent;
+  color: #a5a5a5;
 }
 
 .chapter-item:hover {
   background-color: transparent;
-    color: #f8f8f8;
-  border-color: #e4e7ed;
+  border-color: #f8f8f8;
 }
 
 .chapter-item.active {
@@ -1016,261 +1020,11 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   text-align: left;
 }
 
-/* Markdown 内容样式 - Typora风格 */
-.question-content {
-  line-height: 1.7;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  font-size: 14px;
-  color: #2c3e50;
-}
-
-/* 标题样式 */
-.question-content h1,
-.question-content h2,
-.question-content h3,
-.question-content h4,
-.question-content h5,
-.question-content h6 {
-  margin: 24px 0 16px 0;
-  font-weight: 600;
-  color: #2c3e50;
-  line-height: 1.4;
-}
-
-.question-content h1 {
-  font-size: 2em;
-  border-bottom: 2px solid #eaecef;
-  padding-bottom: 12px;
-  margin-bottom: 20px;
-}
-
-.question-content h2 {
-  font-size: 1.6em;
-  border-bottom: 1px solid #eaecef;
-  padding-bottom: 8px;
-}
-
-.question-content h3 {
-  font-size: 1.3em;
-}
-
-.question-content h4 {
-  font-size: 1.1em;
-}
-
-.question-content h5 {
-  font-size: 1em;
-}
-
-.question-content h6 {
-  font-size: 0.9em;
-  color: #6a737d;
-}
-
-/* 段落样式 */
-.question-content p {
-  margin: 16px 0;
-  text-align: justify;
-  text-justify: inter-ideograph;
-}
-
-/* 列表样式 */
-.question-content ul,
-.question-content ol {
-  margin: 16px 0;
-  padding-left: 24px;
-}
-
-.question-content li {
-  margin: 8px 0;
-  line-height: 1.6;
-}
-
-.question-content ul li {
-  list-style-type: disc;
-}
-
-.question-content ol li {
-  list-style-type: decimal;
-}
-
-/* 嵌套列表 */
-.question-content ul ul,
-.question-content ol ol,
-.question-content ul ol,
-.question-content ol ul {
-  margin: 4px 0;
-}
-
-/* 行内代码样式 */
-.question-content code {
-  background: #f5f7fa;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-family: 'Courier New', monospace;
-  font-size: 14px;
-  color: #e6a23c;
-}
-
-/* 代码块样式 */
-.question-content pre {
-  background: #f5f7fa;
-  padding: 16px;
-  border-radius: 6px;
-  border: 1px solid #e4e7ed;
-  overflow-x: auto;
-  margin: 16px 0;
-}
-
-.question-content pre code {
-  background: none;
-  padding: 0;
-  color: #303133;
-}
-
-/* 引用样式 */
-.question-content blockquote {
-  margin: 16px 0;
-  padding: 12px 16px;
-  background: #f8f9fa;
-  border-left: 4px solid #409eff;
-  color: #606266;
-}
-
-/* 表格样式 */
-.question-content table {
-  border-collapse: collapse;
-  margin: 20px 0;
-  width: 100%;
-  border: 1px solid #d0d7de;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.question-content th,
-.question-content td {
-  border: 1px solid #d0d7de;
-  padding: 12px 16px;
-  text-align: left;
-  vertical-align: top;
-}
-
-.question-content th {
-  background-color: #f6f8fa;
-  font-weight: 600;
-  color: #24292e;
-}
-
-.question-content tr:nth-child(even) {
-  background-color: #f6f8fa;
-}
-
-.question-content tr:hover {
-  background-color: #f1f8ff;
-}
-
-/* 链接样式 */
-.question-content a {
-  color: #0969da;
-  text-decoration: none;
-  border-bottom: 1px solid transparent;
-  transition: all 0.2s ease;
-}
-
-.question-content a:hover {
-  color: #0550ae;
-  border-bottom-color: #0969da;
-}
-
-.question-content a:visited {
-  color: #8250df;
-}
-
-/* 强调样式 */
-.question-content strong {
-  font-weight: 600;
-  color: #303133;
-}
-
-.question-content em {
-  font-style: italic;
-  color: #656d76;
-}
-
-/* 分隔线样式 */
-.question-content hr {
-  border: none;
-  height: 2px;
-  background-color: #d0d7de;
-  margin: 24px 0;
-  border-radius: 1px;
-}
-
-/* 删除线样式 */
-.question-content del {
-  text-decoration: line-through;
-  color: #656d76;
-}
-
-/* 高亮样式 */
-.question-content mark {
-  background-color: #fff8c5;
-  padding: 2px 4px;
-  border-radius: 3px;
-}
-
-/* 图片样式 */
-.question-content img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 6px;
-  margin: 16px 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* 任务列表样式 */
-.question-content input[type="checkbox"] {
-  margin-right: 8px;
-  transform: scale(1.1);
-}
-
-.question-content .task-list-item {
-  list-style: none;
-  margin-left: -20px;
-}
-
-/* 键盘按键样式 */
-.question-content kbd {
-  background-color: #f6f8fa;
-  border: 1px solid #d0d7de;
-  border-bottom-color: #afb8c1;
-  border-radius: 6px;
-  box-shadow: inset 0 -1px 0 #afb8c1;
-  color: #24292e;
-  display: inline-block;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
-  font-size: 11px;
-  line-height: 10px;
-  padding: 3px 5px;
-  vertical-align: middle;
-}
-
-/* 首行缩进优化 */
-.question-content p:first-child {
-  margin-top: 0;
-}
-
-.question-content p:last-child {
-  margin-bottom: 0;
-}
-
-
-
 /* 作答区域样式 */
 .answer-section {
-  background: white;
-  border-radius: 8px;
   padding: 20px;
+  background: #ffffff;
+  border-radius: 8px;
   border: 1px solid #e4e7ed;
 }
 
@@ -1278,27 +1032,42 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f0f2f5;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e4e7ed;
 }
 
 .answer-header h3 {
   margin: 0;
-  font-size: 16px;
-  color: #2c3e50;
+  color: #303133;
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .submit-time {
-  font-size: 14px;
   color: #909399;
+  font-size: 14px;
 }
 
 .submitted-answer {
-  background: #f8f9fa;
-  border-radius: 6px;
-  padding: 16px;
   text-align: left;
+}
+
+.submitted-answer .answer-content {
+  background: #f5f7fa;
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+  margin-bottom: 15px;
+}
+
+.submitted-answer pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: 'Courier New', monospace;
+  color: #303133;
+  line-height: 1.5;
 }
 
 .answer-content h4 {
@@ -1328,14 +1097,17 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 }
 
 .check-score {
-  display: inline-block;
+  display: block;
+  width: 100%;
   padding: 6px 12px;
   border-radius: 4px;
-  font-weight: 600;
   margin-bottom: 12px;
+  background: white;
+  border: 1px solid #e4e7ed;
+  box-sizing: border-box;
 }
 
-.check-score.excellent {
+/* .check-score.excellent {
   background-color: #f0f9ff;
   color: #1890ff;
   border: 1px solid #b3d8ff;
@@ -1357,13 +1129,13 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   background-color: #fff2f0;
   color: #ff4d4f;
   border: 1px solid #ffb3b3;
-}
+} */
 
 .check-analyse {
   background: white;
   border: 1px solid #e4e7ed;
   border-radius: 4px;
-  padding: 16px;
+  padding: 12px;
   margin-top: 12px;
 }
 
@@ -1386,6 +1158,11 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 
 .practice-status.submitted {
   background-color: #74dc3f;
+  color: white;
+}
+
+.practice-status.graded {
+  background-color: #409eff;
   color: white;
 }
 
@@ -1471,4 +1248,151 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
     padding: 16px 20px;
   }
 }
+
+/* Markdown内容样式 - 基于 Notion 风格 */
+.markdown-content {
+  line-height: 1.4;
+  color: #37352f;
+  font-family: sans-serif;
+}
+
+.markdown-content :deep(h1) {
+  margin-top: 3rem;
+  margin-bottom: 1.5rem;
+  font-size: 1.875rem;
+  font-weight: bold;
+  color: #37352f;
+}
+
+.markdown-content :deep(h1:not(:first-child)) {
+  margin-top: 3rem;
+}
+
+.markdown-content :deep(h2) {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #37352f;
+}
+
+.markdown-content :deep(h3) {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #37352f;
+}
+
+.markdown-content :deep(h4),
+.markdown-content :deep(h5),
+.markdown-content :deep(h6) {
+  margin-top: 1rem;
+  margin-bottom: 0rem;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #37352f;
+}
+
+.markdown-content :deep(p) {
+  margin: 1rem 0;
+}
+
+.markdown-content :deep(ul),
+.markdown-content :deep(ol) {
+  padding-left: 0;
+  margin-left: 0;
+}
+
+.markdown-content :deep(ul li),
+.markdown-content :deep(ol li) {
+  padding-left: 0;
+  margin-left: 2rem;
+}
+
+.markdown-content :deep(li p) {
+  margin: 0;
+}
+
+.markdown-content :deep(blockquote) {
+  margin: 1rem 0;
+  padding-left: 2ch;
+  margin-left: 0.5ch;
+  position: relative;
+  overflow: hidden;
+  border-left: 0.1875rem solid #37352f;
+}
+
+.markdown-content :deep(code) {
+  font-family: "SFMono-Regular", monospace;
+  font-size: 85%;
+  line-height: normal;
+  color: #eb5757;
+  background-color: #ededeb;
+  padding: 0.15em 0.4em;
+  border-radius: 0.25rem;
+}
+
+.markdown-content :deep(pre) {
+  background-color: #f7f6f3;
+  padding: 2.5em 1.5em;
+  border-radius: 5px;
+  overflow-x: auto;
+  margin: 1rem 0;
+  font-family: "Cascadia Code Variable", SFMono-Regular, Menlo, Consolas, "PT Mono", "Liberation Mono";
+}
+
+.markdown-content :deep(pre code) {
+  background: none;
+  padding: 0;
+  color: #37352f;
+}
+
+.markdown-content :deep(table) {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  width: auto;
+  max-width: fit-content;
+  border-collapse: collapse;
+}
+
+.markdown-content :deep(th),
+.markdown-content :deep(td) {
+  min-width: 0.5rem;
+  max-width: 20rem;
+  width: auto;
+  word-wrap: break-word;
+  white-space: normal;
+  border: 0.0625px solid #e1e7e8;
+  padding: 0.5rem 1rem;
+}
+
+.markdown-content :deep(th) {
+  background-color: #f7f6f3;
+  font-weight: bold;
+}
+
+.markdown-content :deep(a) {
+  color: #73716d;
+  text-decoration: none;
+}
+
+.markdown-content :deep(a:hover) {
+  text-decoration: underline;
+}
+
+.markdown-content :deep(img) {
+  max-width: 100%;
+  height: auto;
+  margin: 0.5em 0;
+  border-radius: 10px;
+}
+
+.markdown-content :deep(hr) {
+  border: none;
+  border-bottom: 0.0625rem solid #e1e7e8;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
 </style>
