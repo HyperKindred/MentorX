@@ -165,12 +165,14 @@ const selectChapter = (chapter: Chapter) => {
  * 打开习题页面
  */
 const openExercises = () => {
-  if (courseInfo.value) {
+  if (courseInfo.value && chapters.value.length > 0) {
     store.addTab('章节习题', Exercises, {
       courseData: courseInfo.value,
       chapterData: chapters.value,
       activeChapterId: activeChapter.value
     });
+  } else {
+    ElMessage.warning('课程信息不完整，无法跳转');
   }
 };
 
@@ -178,10 +180,14 @@ const openExercises = () => {
  * 打开个人练习页面
  */
 const openPractice = () => {
-  if (courseInfo.value) {
+  if (courseInfo.value && chapters.value.length > 0) {
     store.addTab('个人练习', Practice, {
-      courseData: courseInfo.value
+      courseData: courseInfo.value,
+      chapterData: chapters.value,
+      activeChapterId: activeChapter.value
     });
+  } else {
+    ElMessage.warning('课程信息不完整，无法跳转');
   }
 };
 
@@ -189,12 +195,14 @@ const openPractice = () => {
  * 打开AI助手页面
  */
 const openAiAssistant = () => {
-  if (courseInfo.value) {
+  if (courseInfo.value && chapters.value.length > 0) {
     store.addTab('AI助手', AiAssistant, {
       courseData: courseInfo.value,
       chapterData: chapters.value,
       activeChapterId: activeChapter.value
     });
+  } else {
+    ElMessage.warning('课程信息不完整，无法跳转');
   }
 };
 
@@ -291,22 +299,23 @@ const getChapterList = async (courseId: number) => {
 .course-page {
   display: flex;
   height: 100%;
-  background-color: #f5f7fa;
+  background-color: transparent;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 /* 左侧面板 */
 .left-panel {
   width: 300px;
-  background: white;
-  border-right: 1px solid #e4e7ed;
+  background: transparent;
+  border-right: 1.5px solid #e4e7ed;
   display: flex;
   flex-direction: column;
 }
 
 .course-header {
   padding: 24px 20px;
-  border-bottom: 1px solid #e4e7ed;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-bottom: 1.5px solid #e4e7ed;
+  background: transparent;
   color: white;
 }
 
@@ -331,7 +340,7 @@ const getChapterList = async (courseId: number) => {
 .nav-title {
   font-size: 16px;
   font-weight: 600;
-  color: #2c3e50;
+  color: #ffffff;
   margin: 0;
   padding: 20px 20px 16px 20px;
 }
@@ -345,21 +354,22 @@ const getChapterList = async (courseId: number) => {
   align-items: center;
   padding: 12px 16px;
   margin-bottom: 4px;
-  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid transparent;
+  border-bottom: 1px solid #f8f8f8;
+  color: #aaaaaa;
 }
 
 .chapter-item:hover {
-  background-color: #f8f9fa;
+  background-color: transparent;
+  color: #f8f8f8;
   border-color: #e4e7ed;
 }
 
 .chapter-item.active {
-  background-color: #e8f4fd;
-  border-color: #409eff;
-  color: #409eff;
+  background-color: transparent;
+  border-color: #f8f8f8;
+  color: #f8f8f8;
 }
 
 .chapter-number {
@@ -392,14 +402,14 @@ const getChapterList = async (courseId: number) => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: white;
+  background: transparent;
 }
 
 /* 功能按钮组样式 */
 .function-buttons {
-  border-bottom: 1px solid #e4e7ed;
+  border-bottom: 1.5px solid #e4e7ed;
   padding: 20px 24px;
-  background: #fafbfc;
+  background: transparent;
 }
 
 .button-group {
@@ -432,88 +442,131 @@ const getChapterList = async (courseId: number) => {
   margin-right: 6px;
 }
 
+/* 内容区域样式优化 */
 .content-area {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
-  text-align: left;
+  padding: 32px;
+  background: transparent;
 }
 
 .courseware-content {
-  max-width: 800px;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
+/* 课件展示卡片样式 */
+.courseware-display {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.courseware-display:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+/* 课件标题样式 */
 .content-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 0 0 24px 0;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #e4e7ed;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  padding: 32px 32px 24px 32px;
+  background: #ffffff;
+  border-bottom: 2px solid #e2e8f0;
 }
 
+/* 课件内容容器 */
 .courseware-body {
-  line-height: 1.6;
-  color: #5a6c7d;
-  font-size: 14px;
+  padding: 32px;
+  line-height: 1.8;
+  color: #334155;
+  font-size: 15px;
+  background: #ffffff;
 }
 
-/* 课件内容 Markdown 样式 - Typora风格 */
+/* 课件内容 Markdown 样式 - 现代化设计 */
 .courseware-body {
-  line-height: 1.7;
+  line-height: 1.8;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  font-size: 14px;
-  color: #2c3e50;
+  font-size: 15px;
+  color: #334155;
+  text-align: left;
 }
 
-/* 标题样式 */
+/* 标题样式优化 */
 .courseware-body h1,
 .courseware-body h2,
 .courseware-body h3,
 .courseware-body h4,
 .courseware-body h5,
 .courseware-body h6 {
-  margin: 24px 0 16px 0;
-  font-weight: 600;
-  color: #2c3e50;
-  line-height: 1.4;
+  margin: 32px 0 20px 0;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.3;
+  letter-spacing: -0.025em;
 }
 
 .courseware-body h1 {
-  font-size: 2em;
-  border-bottom: 2px solid #eaecef;
-  padding-bottom: 12px;
-  margin-bottom: 20px;
+  font-size: 2.25em;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  border-bottom: 3px solid #e2e8f0;
+  padding-bottom: 16px;
+  margin-bottom: 28px;
 }
 
 .courseware-body h2 {
-  font-size: 1.6em;
-  border-bottom: 1px solid #eaecef;
-  padding-bottom: 8px;
+  font-size: 1.75em;
+  color: #475569;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 12px;
+  margin-bottom: 24px;
 }
 
 .courseware-body h3 {
-  font-size: 1.3em;
+  font-size: 1.5em;
+  color: #475569;
+  margin-bottom: 20px;
 }
 
 .courseware-body h4 {
-  font-size: 1.1em;
+  font-size: 1.25em;
+  color: #64748b;
+  margin-bottom: 18px;
 }
 
 .courseware-body h5 {
-  font-size: 1em;
+  font-size: 1.125em;
+  color: #64748b;
+  margin-bottom: 16px;
 }
 
 .courseware-body h6 {
-  font-size: 0.9em;
-  color: #6a737d;
+  font-size: 1em;
+  color: #94a3b8;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
 }
 
-/* 段落样式 */
+/* 段落样式优化 */
 .courseware-body p {
-  margin: 16px 0;
+  margin: 20px 0;
   text-align: justify;
   text-justify: inter-ideograph;
+  color: #475569;
+  font-size: 15px;
+  line-height: 1.8;
 }
 
 /* 列表样式 */
@@ -544,49 +597,80 @@ const getChapterList = async (courseId: number) => {
   margin: 4px 0;
 }
 
-/* 引用样式 */
+/* 引用样式优化 */
 .courseware-body blockquote {
-  border-left: 4px solid #dfe2e5;
-  margin: 16px 0;
-  padding: 0 16px;
-  color: #6a737d;
-  background-color: #f8f9fa;
-  border-radius: 0 3px 3px 0;
+  border-left: 4px solid #3b82f6;
+  margin: 24px 0;
+  padding: 20px 24px;
+  color: #475569;
+  background: #f8fafc;
+  border-radius: 0 12px 12px 0;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+  position: relative;
+  font-style: italic;
+}
+
+.courseware-body blockquote::before {
+  content: '"';
+  position: absolute;
+  top: 12px;
+  left: -8px;
+  font-size: 48px;
+  color: #3b82f6;
+  font-family: Georgia, serif;
+  line-height: 1;
 }
 
 .courseware-body blockquote p {
-  margin: 12px 0;
-}
-
-/* 行内代码样式 */
-.courseware-body code {
-  background-color: #f6f8fa;
-  border: 1px solid #e1e4e8;
-  border-radius: 3px;
-  padding: 2px 6px;
-  font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', 'Courier', monospace;
-  font-size: 0.85em;
-  color: #d73a49;
-}
-
-/* 代码块样式 */
-.courseware-body pre {
-  background-color: #f6f8fa;
-  border: 1px solid #e1e4e8;
-  border-radius: 6px;
-  padding: 16px;
   margin: 16px 0;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+/* 行内代码样式优化 */
+.courseware-body code {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-family: 'JetBrains Mono', 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', 'Courier', monospace;
+  font-size: 0.875em;
+  color: #7c3aed;
+  font-weight: 500;
+}
+
+/* 代码块样式优化 */
+.courseware-body pre {
+  background: #1e293b;
+  border: 1px solid #475569;
+  border-radius: 12px;
+  padding: 24px;
+  margin: 24px 0;
   overflow-x: auto;
-  font-size: 0.85em;
-  line-height: 1.45;
+  font-size: 0.875em;
+  line-height: 1.6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+
+.courseware-body pre::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px 12px 0 0;
 }
 
 .courseware-body pre code {
   background: none;
   border: none;
   padding: 0;
-  color: #24292e;
+  color: #e2e8f0;
   font-size: inherit;
+  font-weight: 400;
 }
 
 /* 表格样式 */
@@ -716,10 +800,74 @@ const getChapterList = async (courseId: number) => {
   margin-bottom: 0;
 }
 
+/* 空状态样式优化 */
 .empty-content {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 300px;
+  min-height: 400px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+  margin: 0 auto;
+  max-width: 900px;
+}
+
+.empty-content :deep(.el-empty) {
+  padding: 60px 40px;
+}
+
+.empty-content :deep(.el-empty__image) {
+  width: 120px;
+  height: 120px;
+}
+
+.empty-content :deep(.el-empty__description) {
+  color: #64748b;
+  font-size: 16px;
+  margin-top: 24px;
+  font-weight: 500;
+}
+
+/* 滚动条样式 */
+.chapter-navigation::-webkit-scrollbar,
+.content-area::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chapter-navigation::-webkit-scrollbar-track,
+.content-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chapter-navigation::-webkit-scrollbar-thumb,
+.content-area::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 2px;
+}
+
+.chapter-navigation::-webkit-scrollbar-thumb:hover,
+.content-area::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .left-panel {
+    width: 240px;
+  }
+  
+  .chapter-list {
+    padding: 0 8px 20px 8px;
+  }
+  
+  .content-area {
+    padding: 16px;
+  }
+  
+  .function-buttons {
+    padding: 16px 20px;
+  }
 }
 </style>
