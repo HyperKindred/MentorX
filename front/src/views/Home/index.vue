@@ -3,7 +3,7 @@
     <Birds />
   </div>
   <div class="main">
-    <h1>Welcome to MENTOR X</h1>
+    <h1 style="margin-top: 10%;">Welcome to MENTOR X</h1>
     <p>"Your AI Teaching Assistant for Practice and Evaluation."</p>
     <div class="logIn">
       <button class="logInBtn" @click="showLogIn = true">Sign in</button>
@@ -101,6 +101,8 @@ body {
   width: 100%;
   height: 100%;
   margin-top: 3rem;
+  padding-left: 10%;
+  padding-right: 10%;
 }
 
 .logIn {
