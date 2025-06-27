@@ -1,13 +1,7 @@
 <template>
   <div class="course-page">
     <!-- 左侧面板 -->
-    <div class="left-panel">
-      <!-- 课程信息 -->
-      <div class="course-header" v-if="courseInfo">
-        <h2 class="course-name">{{ courseInfo.name }}</h2>
-        <p class="course-teacher">讲师：{{ courseInfo.teacher_name }}</p>
-      </div>
-      
+    <div class="left-panel">   
       <!-- 章节导航 -->
       <div class="chapter-navigation">
         <h3 class="nav-title">课程章节</h3>
@@ -306,31 +300,15 @@ const getChapterList = async (courseId: number) => {
 /* 左侧面板 */
 .left-panel {
   width: 300px;
-  background: transparent;
-  border-right: 1.5px solid #e4e7ed;
+  background: var(--backgroundColor2);
+  border-right: 1.5px solid transparent;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
   display: flex;
   flex-direction: column;
 }
 
-.course-header {
-  padding: 24px 20px;
-  border-bottom: 1.5px solid #e4e7ed;
-  background: transparent;
-  color: white;
-}
 
-.course-name {
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0 0 8px 0;
-  line-height: 1.4;
-}
-
-.course-teacher {
-  font-size: 14px;
-  margin: 0;
-  opacity: 0.9;
-}
 
 .chapter-navigation {
   flex: 1;
@@ -340,13 +318,15 @@ const getChapterList = async (courseId: number) => {
 .nav-title {
   font-size: 16px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--titleColor);
   margin: 0;
   padding: 20px 20px 16px 20px;
 }
 
 .chapter-list {
-  padding: 0 12px 20px 12px;
+  padding-bottom: 20px;
+  padding-left: 5px;
+  padding-right: 5px;
 }
 
 .chapter-item {
@@ -356,20 +336,22 @@ const getChapterList = async (courseId: number) => {
   margin-bottom: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
-  border-bottom: 1px solid #f8f8f8;
-  color: #aaaaaa;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background-color: transparent;
+  color: var(--textColor2);
 }
 
 .chapter-item:hover {
-  background-color: transparent;
-  color: #f8f8f8;
-  border-color: #e4e7ed;
+  background-color: var(--backgroundColor2);
+  color: var(--titleColor);
 }
 
 .chapter-item.active {
   background-color: transparent;
-  border-color: #f8f8f8;
-  color: #f8f8f8;
+  color: var(--titleColor);
+  background-color: var(--backgroundColor2);
+  font-weight: 540;
 }
 
 .chapter-number {
@@ -378,7 +360,7 @@ const getChapterList = async (courseId: number) => {
   justify-content: center;
   width: 24px;
   height: 24px;
-  background-color: #f0f2f5;
+  background-color: white;
   border-radius: 50%;
   font-size: 12px;
   font-weight: 600;
@@ -407,7 +389,6 @@ const getChapterList = async (courseId: number) => {
 
 /* 功能按钮组样式 */
 .function-buttons {
-  border-bottom: 1.5px solid #e4e7ed;
   padding: 20px 24px;
   background: transparent;
 }
@@ -423,16 +404,20 @@ const getChapterList = async (courseId: number) => {
   font-weight: 500;
   padding: 12px 20px;
   transition: all 0.3s ease;
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--textColor2);
+  background-color: var(--backgroundColor2);
+  color: var(--textColor2);
 }
 
 .function-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+  box-shadow: 0 4px 12px var(--shadowColor2);
+  color: var(--textColor);
+  border: 1.5px solid var(--textColor);
 }
 
 .function-btn.active {
-  background: linear-gradient(135deg, #409eff 0%, #66b3ff 100%);
+  background: #417dff;
   border-color: #409eff;
   color: white;
   box-shadow: 0 2px 8px rgba(64, 158, 255, 0.4);
@@ -457,16 +442,15 @@ const getChapterList = async (courseId: number) => {
 
 /* 课件展示卡片样式 */
 .courseware-display {
-  background: #ffffff;
+  background-color: var(--backgroundColor3);
   border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px var(--shadowColor);
   overflow: hidden;
   transition: all 0.3s ease;
 }
 
 .courseware-display:hover {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 30px var(--shadowColor2);
   transform: translateY(-2px);
 }
 
@@ -474,20 +458,22 @@ const getChapterList = async (courseId: number) => {
 .content-title {
   font-size: 28px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--titleColor);
   margin: 0;
   padding: 32px 32px 24px 32px;
-  background: #ffffff;
-  border-bottom: 2px solid #e2e8f0;
+  background: var(--backgroundColor3);
 }
 
 /* 课件内容容器 */
 .courseware-body {
-  padding: 32px;
+  padding-left: 4rem;
+  padding-right: 4rem;
+  padding-top: 10px;
+  padding-bottom: 2rem;
   line-height: 1.8;
   color: #334155;
   font-size: 15px;
-  background: #ffffff;
+  background: var(--backgroundColor3);
 }
 
 /* 课件内容 Markdown 样式 - 现代化设计 */
@@ -495,7 +481,7 @@ const getChapterList = async (courseId: number) => {
   line-height: 1.8;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   font-size: 15px;
-  color: #334155;
+  color: var(--textColor);
   text-align: left;
 }
 
@@ -856,10 +842,6 @@ const getChapterList = async (courseId: number) => {
 @media (max-width: 768px) {
   .left-panel {
     width: 240px;
-  }
-  
-  .chapter-list {
-    padding: 0 8px 20px 8px;
   }
   
   .content-area {

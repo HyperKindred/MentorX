@@ -5,6 +5,7 @@
   <div class="tab-container">
     <div class="tab-header-bar">
       <div class="head-left">
+        <div class="head-left-info">
       <el-dropdown trigger="click" @command="handleDropdownCommand">
         <el-avatar shape="square" :size="40" :src="getUserAvatar()" fit="cover" style="cursor: pointer" />
         <template #dropdown>
@@ -18,10 +19,8 @@
           </el-dropdown-menu>
         </template>
       </el-dropdown>
-
-
       <div class="username">{{ store.name }}</div>
-
+      </div>
       <el-tabs v-model="store.activeTab" type="card" @tab-remove="store.removeTab" @tab-click="onTabClick"
         class="tab-header">
         <el-tab-pane v-for="tab in store.tabs" :key="tab.name" :label="tab.title" :name="tab.name"
@@ -183,7 +182,7 @@ onMounted(() => {
 
 .tab-header {
   flex: none;
-  margin-left: 2rem;
+  margin-left: 0.5rem;
   margin-top: 1.6rem;
   border: none;
 
@@ -255,5 +254,12 @@ onMounted(() => {
   display: flex;
   align-items: center;
   margin-right: 1rem;
+}
+
+.head-left-info {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding-top: 1rem;
 }
 </style>

@@ -1,18 +1,23 @@
 :root[theme='light']{
     --backgroundColor:	#D2E9FFd0;
     --textColor:#272727;
+    --textColor2:#686767;
     --titleColor:#080808;
     --shadowColor:rgba(0, 0, 0, 0.08);
     --shadowColor2:rgba(0, 0, 0, 0.15);
-
+    --backgroundColor2: #42a4ff24;
+    --backgroundColor3: #ffffff83;
 
 }
 
 :root[theme='dark']{
     --backgroundColor:#000079d0;
     --textColor: #f0f0f0;
+    --textColor2:rgb(173, 173, 173);
     --titleColor:#fcfcfc;
     --shadowColor:rgba(255, 255, 255, 0.08);
     --shadowColor2:rgba(255, 255, 255, 0.4);
+    --backgroundColor2: #d2e9ff34;
+    --backgroundColor3: #00000089;
 
 }

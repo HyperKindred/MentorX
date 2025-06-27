@@ -262,6 +262,9 @@ onMounted(() => {
   overflow-y: auto;
 }
 
+.chapter-list {
+}
+
 .chapter-item {
   display: flex;
   align-items: center;
