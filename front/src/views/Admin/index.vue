@@ -48,6 +48,7 @@
 </template>
 
 
+
 <script lang="ts" setup>
 import { ref, onMounted, computed } from 'vue';
 import { mainStore } from '../../store/index.ts';
@@ -161,13 +162,13 @@ const handleCardClick = (id: number, name: string) => {
   padding: 20px;
   background-color: transparent;
   min-height: 100%;
-  color: white;
+  display: flex;
+  flex-direction: column;
 }
 
 .h2 {
     margin: 0.2rem;
     font-size: 1rem;
-    color: white;
 }
 
 .p {
@@ -195,7 +196,7 @@ const handleCardClick = (id: number, name: string) => {
 
 .search-input :deep(.el-input__wrapper) {
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--shadowColor);
   border: none;
   letter-spacing: 0.1rem;
 }
@@ -212,7 +213,7 @@ const handleCardClick = (id: number, name: string) => {
 .section-title {
   font-size: 24px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--titleColor);
   margin: 0;
 }
 
@@ -225,30 +226,12 @@ const handleCardClick = (id: number, name: string) => {
   margin-right: 1rem;
 }
 
-.addBtn {
-    background-color: #417dff;
-    color: white;
-    border: 1px solid #fff;
-    outline: none;
-    cursor: pointer;
-    width: 1.5rem;
-    height: 1.5rem;
-    border-radius: 8px;
-    font-size: 1.2rem;
-    margin-left: 0.6rem;
-    padding: 0%;
-}
-
-.addBtn:hover {
-    background-color: #6998ff;
-}
-
 
 .course-card {
   background: rgba(255, 255, 255, 0.835);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 12px var(--shadowColor);
   transition: all 0.3s ease;
   color: #080808;
   cursor: pointer;
@@ -256,7 +239,7 @@ const handleCardClick = (id: number, name: string) => {
 
 .course-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 25px var(--shadowColor2);
 }
 
 
@@ -313,5 +296,25 @@ const handleCardClick = (id: number, name: string) => {
   justify-content: center;
   align-items: center;
   height: 400px; /* or any other height */
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .courses-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .course-card {
+    padding: 16px;
+  }
 }
 </style>

@@ -376,9 +376,8 @@ onMounted(() => {
   font-weight: 600;
   color: var(--titleColor);
   margin-left: auto;
-  margin-left: auto;
+  margin-right: auto;
   padding: 20px 20px 16px 20px;
-  padding-right: 2.5rem;
 }
 .add-btn {
   width: 4rem;

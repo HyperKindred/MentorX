@@ -221,16 +221,17 @@ const cancelEditGender = () => {
 </script>
 
 <style scoped>
+.main {
+  font-family: Arial, Helvetica, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
 .info-card {
-  font-family: Arial, Helvetica, sans-serif;
   width: 60%;
   margin: 50px auto;
   padding: 20px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
 }
 
 .info-card .el-row {

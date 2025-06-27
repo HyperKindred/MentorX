@@ -5,6 +5,7 @@
         type="primary" 
         :plain="activeTab !== 'students'"
         @click="activeTab = 'students'"
+        class="toggle-student"
       >
         学生视图
       </el-button>
@@ -12,6 +13,7 @@
         type="primary" 
         :plain="activeTab !== 'courses'"
         @click="activeTab = 'courses'"
+         class="toggle-course"
       >
         课程视图
       </el-button>
@@ -69,6 +71,7 @@
                   <el-button 
                     size="small" 
                     @click.stop="showCourseDetails(course)"
+                    class="detail-btn"
                   >
                     查看详细数据
                   </el-button>
@@ -117,6 +120,7 @@
               <el-button 
                 size="small" 
                 @click.stop="showCourseDetails(course)"
+                class="detail-btn"
               >
                 查看详细数据
               </el-button>
@@ -150,11 +154,11 @@
         </el-collapse>
       </div>
     </div>
-  </div>
-  <el-dialog 
+      <el-dialog 
     v-model="dialogVisible" 
     :title="selectedCourse?.name + ' - 章节详情'" 
     width="80%"
+    style="padding: 2rem; background-color: var(--titleColor2); border-radius: 8px;"
   >
     <el-collapse v-model="activeChapterNames">
       <el-collapse-item 
@@ -186,6 +190,7 @@
       </el-collapse-item>
     </el-collapse>
   </el-dialog>
+  </div>
 </template>
 
 
@@ -776,18 +781,58 @@ const getCoursesList = () => {
   gap: 10px;
 }
 
-.main-content {
-  background: white;
-  padding: 20px;
+
+.el-button--primary.is-plain {
   border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  font-weight: 500;
+  padding: 12px 20px;
+  transition: all 0.3s ease;
+  border: 1.5px solid transparent;
+  background-color: var(--backgroundColor2);
+  color: var(--textColor2);
 }
 
-.student-title,
-.course-title {
+.el-button--primary {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 12px 20px;
+  transition: all 0.3s ease;
+  background: #417dff;
+  border-color: #409eff;
+  color: white;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.4);
+}
+
+.el-button--primary.is-plain:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadowColor2);
+  color: var(--textColor);
+  border: 1.5px solid var(--textColor);
+}
+
+.main-content {
+  background: transparent;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 var(--shadowColor2);
+}
+
+.student-title {
   font-weight: bold;
   font-size: 16px;
   padding-left: 1rem;
+  color: #080808;
+  padding-top: 1rem;
+}
+.course-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding-right: 10px;
+  padding-left: 1rem;
+  color: #080808;
+  padding-top: 0rem;
 }
 
 .el-collapse {
@@ -799,6 +844,7 @@ const getCoursesList = () => {
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid #ebeef5;
+  background-color: transparent;
 }
 
 .el-collapse-item__header {
@@ -847,16 +893,6 @@ const getCoursesList = () => {
   margin-bottom: 15px;
 }
 
-
-.course-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  padding-right: 10px;
-}
-
-
 .chapter-title {
   font-weight: bold;
   padding-left: 1rem;
@@ -876,6 +912,16 @@ const getCoursesList = () => {
 .detail-label {
   font-weight: bold;
   min-width: 120px;
+}
+
+.detail-btn {
+  border-radius: 8px;
+  background-color: var(--backgroundColor3);
+  color: var(--textColor);
+}
+.detail-btn:hover {
+  background-color: var(--titleColor2);
+  color: var(--titleColor);
 }
 
 @media (max-width: 1200px) {

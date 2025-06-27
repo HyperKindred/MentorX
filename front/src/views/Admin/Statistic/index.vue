@@ -345,12 +345,12 @@ const getSystemState = () => {
                     T_stats.value.courseware = responseData.systemStats.T_courseware;
                     T_stats.value.exercises = responseData.systemStats.T_exercises;
                     T_stats.value.check = responseData.systemStats.T_check;
-                    exercise_num.value = responseData.systemStats.exercise_num;
-                    user_num.value = responseData.systemStats.user_num;
-                    male_num.value = responseData.systemStats.male_num;
-                    female_num.value = responseData.systemStats.female_num;
-                    course_num.value = responseData.systemStats.course_num;
-                    chapter_num.value = responseData.systemStats.chapter_num;
+                    exercise_num.value = responseData.systemInfo.exercise_num;
+                    user_num.value = responseData.systemInfo.user_num;
+                    male_num.value = responseData.systemInfo.male_num;
+                    female_num.value = responseData.systemInfo.female_num;
+                    course_num.value = responseData.systemInfo.course_num;
+                    chapter_num.value = responseData.systemInfo.chapter_num;
 
                 } else {
                     S_stats.value = [];
@@ -399,8 +399,13 @@ const getSystemState = () => {
     flex: 1;
     background: #fff;
     border-radius: 8px;
-    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 12px var(--shadowColor);
     padding: 15px;
+}
+
+.chart-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px var(--shadowColor2);
 }
 
 .chart {
@@ -420,8 +425,13 @@ const getSystemState = () => {
     align-items: center;
     background: #fff;
     border-radius: 8px;
-    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 12px var(--shadowColor);
     padding: 20px;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px var(--shadowColor2);
 }
 
 .stat-icon {
@@ -454,8 +464,12 @@ const getSystemState = () => {
 .gender-chart-container {
     background: #fff;
     border-radius: 8px;
-    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 12px var(--shadowColor);
     padding: 15px;
+}
+.gender-chart-container:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px var(--shadowColor2);
 }
 
 @media (max-width: 992px) {

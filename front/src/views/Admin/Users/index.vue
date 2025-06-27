@@ -385,18 +385,18 @@ item.gender = originalGender.value;
   background-color: transparent;
 }
 .left-title {
-  color: #f8f8f8;
+  color: var(--titleColor);
   margin-bottom: 1rem;
   margin-top: 1rem;
 }
 .right-title {
-  color: #f8f8f8;
+  color: var(--titleColor);
   margin-bottom: 1rem;
   margin-top: 1rem;
 }
 
 .user-item {
-  color: black;
+  color: #080808;
   margin-bottom: 0.7rem;
   padding: 1rem;
   text-align: left;
@@ -404,7 +404,14 @@ item.gender = originalGender.value;
   flex-direction: column;
   background-color: white;
   border-radius: 10px;
+  box-shadow: 0 2px 12px var(--shadowColor);
+  transition: all 0.3s ease;
 
+}
+
+.user-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px var(--shadowColor2);
 }
 
 .info-account {
@@ -462,7 +469,7 @@ item.gender = originalGender.value;
 }
 
 .delete-btn {
-  border-color: red;
+  border: 1.2px solid red;
   color: red;
 }
 

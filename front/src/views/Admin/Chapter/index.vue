@@ -1,9 +1,6 @@
 <template>
   <div class="main">
     <div class="left-panel">
-      <div class="course-header">
-        <h2 class="course-name">{{ courseName }}</h2>
-      </div>
       <div class="chapter-navigation">
         <div class="chapter-head">
         <h3 class="nav-title">课程章节</h3>
@@ -228,29 +225,18 @@ onMounted(() => {
   display: flex;
   height: 100%;
   background-color: transparent;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 .left-panel {
   width: 300px;
-  background: transparent;
-  border-right: 1px solid #e4e7ed;
+  background: var(--backgroundColor2);
+  border-right: 1.5px solid transparent;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
   display: flex;
   flex-direction: column;
 }
-.course-header {
-  padding: 24px 20px;
-  border-bottom: 1.5px solid #e4e7ed;
-  background: transparent;
-  color: #f8f8f8;
-}
-
-.course-name {
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0 0 8px 0;
-  line-height: 1.4;
-}
-
 .sidebar {
   flex: 1;
   overflow-y: auto;
@@ -263,6 +249,9 @@ onMounted(() => {
 }
 
 .chapter-list {
+  padding-bottom: 20px;
+  padding-left: 5px;
+  padding-right: 5px;
 }
 
 .chapter-item {
@@ -270,22 +259,24 @@ onMounted(() => {
   align-items: center;
   padding: 12px 16px;
   margin-bottom: 4px;
-  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
   border: 1px solid transparent;
-  background-color: #208bf6ab;
+  border-radius: 5px;
+  background-color: transparent;
+  color: var(--textColor2);
 }
 
 .chapter-item:hover {
-  background-color: #65b2ffa9;
-  color: #f8f8f8;
+  background-color: var(--backgroundColor2);
+  color: var(--titleColor);
 }
 
 .chapter-item.active {
-  background-color: #e8f4fd;
-  border-color: #409eff;
-  color: #409eff;
+  background-color: transparent;
+  color: var(--titleColor);
+  background-color: var(--backgroundColor2);
+  font-weight: 540;
 }
 
 .chapter-title {
@@ -312,16 +303,10 @@ onMounted(() => {
 .nav-title {
   font-size: 16px;
   font-weight: 600;
-  color: #f8f8f8;
-  margin-left: 5.5rem;
+  color: var(--titleColor);
+  margin-left: auto;
+  margin-right: auto;
   padding: 20px 20px 16px 20px;
-}
-.add-btn {
-  width: 4rem;
-  height: 2rem;
-  margin-top: 1rem;
-  margin-left: 0.7rem;
-  font-size: 11px;
 }
 
 .chapterTitle {

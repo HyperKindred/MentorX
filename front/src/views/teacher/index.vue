@@ -187,6 +187,8 @@ const handleCardClick = (id: number, name: string) => {
   padding: 20px;
   background-color: transparent;
   min-height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .h2 {
@@ -219,7 +221,7 @@ const handleCardClick = (id: number, name: string) => {
 
 .search-input :deep(.el-input__wrapper) {
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--shadowColor);
   border: none;
   letter-spacing: 0.1rem;
 }
@@ -234,7 +236,7 @@ const handleCardClick = (id: number, name: string) => {
 }
 
 .section-title {
-  font-size: 24px;
+  font-size: 30px;
   font-weight: 600;
   color: var(--titleColor);
   margin: 0;
@@ -339,6 +341,18 @@ const handleCardClick = (id: number, name: string) => {
   justify-content: center;
   align-items: center;
   height: 400px; /* or any other height */
+}
+
+.loading-state :deep(.el-skeleton__item) {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+.loading-state :deep(.el-skeleton__p) {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
 }
 
 @keyframes skeleton-loading {
