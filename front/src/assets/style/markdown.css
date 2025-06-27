@@ -178,6 +178,9 @@ html[theme="dark"] .markdown-content pre .number {
   background-color: var(--md-code-bg-color);
   padding: 0.15em 0.4em;
   border-radius: 0.25rem;
+  word-wrap: break-word;
+  word-break: break-all;
+  white-space: pre-wrap;
 }
 
 /* 代码块样式 */
