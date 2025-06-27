@@ -939,18 +939,18 @@ const handleShiftEnter = (event: KeyboardEvent) => {
   padding: 20px;
   text-align: left;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  font-size: 14px;
-  line-height: 1.7;
+  font-size: 16px;
+  line-height: 1.6;
   color: #2c3e50;
 }
 
 .message-item.user .message-text {
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  padding: 20px;
+  padding: 10px 20px;
   text-align: left;
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 17px;
+  font-size: 16px;
   line-height: 1.7;
   color: #2c3e50;
 }
