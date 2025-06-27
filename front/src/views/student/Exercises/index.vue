@@ -2,12 +2,6 @@
   <div class="course-page">
     <!-- 左侧面板 -->
     <div class="left-panel">
-      <!-- 课程信息 -->
-      <div class="course-header" v-if="courseInfo">
-        <h2 class="course-name">{{ courseInfo.name }}</h2>
-        <p class="course-teacher">讲师：{{ courseInfo.teacher_name }}</p>
-      </div>
-      
       <!-- 章节导航 -->
       <div class="chapter-navigation">
         <h3 class="nav-title">课程章节</h3>
@@ -19,7 +13,6 @@
             :class="{ active: activeChapter === chapter.id }"
             @click="selectChapter(chapter)"
           >
-            <span class="chapter-number">{{ index + 1 }}</span>
             <span class="chapter-title">{{ chapter.name }}</span>
           </div>
         </div>
@@ -671,33 +664,15 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
 
 .left-panel {
   width: 300px;
-  min-width: 300px;
-  flex-shrink: 0;
-  background: transparent;
-  border-right: 1.5px solid #f8f8f8;
+  background: var(--backgroundColor2);
+  border-right: 1.5px solid transparent;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
   display: flex;
   flex-direction: column;
 }
 
-.course-header {
-  padding: 24px 20px;
-  border-bottom: 1.5px solid #f8f8f8;
-  background: transparent;
-  color: white;
-}
 
-.course-name {
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0 0 8px 0;
-  line-height: 1.4;
-}
-
-.course-teacher {
-  font-size: 14px;
-  margin: 0;
-  opacity: 0.9;
-}
 
 .chapter-navigation {
   flex: 1;
@@ -975,13 +950,15 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
 .nav-title {
   font-size: 16px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--titleColor);
   margin: 0;
   padding: 20px 20px 16px 20px;
 }
 
 .chapter-list {
-  padding: 0 12px 20px 12px;
+  padding-bottom: 20px;
+  padding-left: 5px;
+  padding-right: 5px;
 }
 
 .chapter-item {
@@ -989,45 +966,27 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   align-items: center;
   padding: 12px 16px;
   margin-bottom: 4px;
-  border-top: none;
-  border-left: none;
-  border-right: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  border-bottom: 1px solid transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
   background-color: transparent;
-  color: #a5a5a5;
+  color: var(--textColor2);
 }
 
 .chapter-item:hover {
-  background-color: transparent;
-  border-color: #f8f8f8;
+  background-color: var(--backgroundColor2);
+  color: var(--titleColor);
 }
 
 .chapter-item.active {
   background-color: transparent;
-  border-color: #f8f8f8;
-  color: #f8f8f8;
+  color: var(--titleColor);
+  background-color: var(--backgroundColor2);
+  font-weight: 540;
 }
 
-.chapter-number {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  background-color: #f0f2f5;
-  border-radius: 50%;
-  font-size: 12px;
-  font-weight: 600;
-  margin-right: 12px;
-  flex-shrink: 0;
-}
 
-.chapter-item.active .chapter-number {
-  background-color: #409eff;
-  color: white;
-}
 
 .chapter-title {
   font-size: 14px;
@@ -1060,16 +1019,20 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   font-weight: 500;
   padding: 12px 20px;
   transition: all 0.3s ease;
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--textColor2);
+  background-color: var(--backgroundColor2);
+  color: var(--textColor2);
 }
 
 .function-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+  box-shadow: 0 4px 12px var(--shadowColor2);
+  color: var(--textColor);
+  border: 1.5px solid var(--textColor);
 }
 
 .function-btn.active {
-  background: linear-gradient(135deg, #409eff 0%, #66b3ff 100%);
+  background: #417dff;
   border-color: #409eff;
   color: white;
   box-shadow: 0 2px 8px rgba(64, 158, 255, 0.4);
@@ -1154,150 +1117,6 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   }
 }
 
-/* Markdown内容样式 - 基于 Notion 风格 */
-.markdown-content {
-  line-height: 1.4;
-  color: #37352f;
-  font-family: sans-serif;
-}
 
-.markdown-content :deep(h1) {
-  margin-top: 3rem;
-  margin-bottom: 1.5rem;
-  font-size: 1.875rem;
-  font-weight: bold;
-  color: #37352f;
-}
-
-.markdown-content :deep(h1:not(:first-child)) {
-  margin-top: 3rem;
-}
-
-.markdown-content :deep(h2) {
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #37352f;
-}
-
-.markdown-content :deep(h3) {
-  margin-top: 1.5rem;
-  margin-bottom: 1rem;
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: #37352f;
-}
-
-.markdown-content :deep(h4),
-.markdown-content :deep(h5),
-.markdown-content :deep(h6) {
-  margin-top: 1rem;
-  margin-bottom: 0rem;
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: #37352f;
-}
-
-.markdown-content :deep(p) {
-  margin: 1rem 0;
-}
-
-.markdown-content :deep(ul),
-.markdown-content :deep(ol) {
-  padding-left: 0;
-  margin-left: 0;
-}
-
-.markdown-content :deep(ul li),
-.markdown-content :deep(ol li) {
-  padding-left: 0;
-  margin-left: 2rem;
-}
-
-.markdown-content :deep(li p) {
-  margin: 0;
-}
-
-.markdown-content :deep(blockquote) {
-  margin: 1rem 0;
-  padding-left: 2ch;
-  margin-left: 0.5ch;
-  position: relative;
-  overflow: hidden;
-  border-left: 0.1875rem solid #37352f;
-}
-
-.markdown-content :deep(code) {
-  font-family: "SFMono-Regular", monospace;
-  font-size: 85%;
-  line-height: normal;
-  color: #eb5757;
-  background-color: #ededeb;
-  padding: 0.15em 0.4em;
-  border-radius: 0.25rem;
-}
-
-.markdown-content pre {
-  background-color: #f7f6f3;
-  padding: 2.5em 1.5em;
-  border-radius: 5px;
-  overflow-x: auto;
-  margin: 1rem 0;
-  font-family: "Cascadia Code Variable", SFMono-Regular, Menlo, Consolas, "PT Mono", "Liberation Mono";
-}
-
-.markdown-content :deep(pre code) {
-  background: none;
-  padding: 0;
-  color: #37352f;
-}
-
-.markdown-content :deep(table) {
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-  width: auto;
-  max-width: fit-content;
-  border-collapse: collapse;
-}
-
-.markdown-content :deep(th),
-.markdown-content :deep(td) {
-  min-width: 0.5rem;
-  max-width: 20rem;
-  width: auto;
-  word-wrap: break-word;
-  white-space: normal;
-  border: 0.0625px solid #e1e7e8;
-  padding: 0.5rem 1rem;
-}
-
-.markdown-content :deep(th) {
-  background-color: #f7f6f3;
-  font-weight: bold;
-}
-
-.markdown-content :deep(a) {
-  color: #73716d;
-  text-decoration: none;
-}
-
-.markdown-content :deep(a:hover) {
-  text-decoration: underline;
-}
-
-.markdown-content :deep(img) {
-  max-width: 100%;
-  height: auto;
-  margin: 0.5em 0;
-  border-radius: 10px;
-}
-
-.markdown-content :deep(hr) {
-  border: none;
-  border-bottom: 0.0625rem solid #e1e7e8;
-  margin-top: 2rem;
-  margin-bottom: 2rem;
-}
 
 </style>

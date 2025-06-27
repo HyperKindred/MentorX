@@ -1,0 +1,297 @@
+/*
+ * Markdown 内容样式 - 基于 Notion 风格
+ * 用于统一管理所有 Markdown 渲染内容的样式
+ * 
+ * @author MentorX Team
+ * @description 提供一致的 Markdown 样式，包括标题、段落、列表、代码块、表格等元素
+ * 支持明亮模式和黑夜模式
+ */
+
+/* CSS 变量定义 */
+:root {
+  /* 明亮模式颜色 */
+  --md-text-color: #37352f;
+  --md-bg-color: #ffffff;
+  --md-border-color: #e1e7e8;
+  --md-code-bg-color: #ededeb;
+  --md-code-color: #eb5757;
+  --md-pre-bg-color: #f7f6f3;
+  --md-table-header-bg: #f7f6f3;
+  --md-link-color: #73716d;
+  --md-accent-color: #9ca6a8;
+}
+
+/* 黑夜模式颜色 - 基于HTML属性 */
+html[theme="dark"] {
+  --md-text-color: #d4d4d4;
+  --md-bg-color: #191919;
+  --md-border-color: #3d3d3d;
+  --md-code-bg-color: #292927;
+  --md-code-color: #eb5757;
+  --md-pre-bg-color: #202020;
+  --md-table-header-bg: #2c2c2c;
+  --md-link-color: #9c9c9c;
+  --md-accent-color: #9ca6a8;
+}
+
+/* 保持媒体查询作为备用方案 */
+@media (prefers-color-scheme: dark) {
+  html:not([theme]) {
+    --md-text-color: #d4d4d4;
+    --md-bg-color: #191919;
+    --md-border-color: #3d3d3d;
+    --md-code-bg-color: #292927;
+    --md-code-color: #eb5757;
+    --md-pre-bg-color: #202020;
+    --md-table-header-bg: #2c2c2c;
+    --md-link-color: #9c9c9c;
+    --md-accent-color: #9ca6a8;
+  }
+}
+
+/* 黑夜模式下的代码块语法高亮 - 基于HTML属性 */
+html[theme="dark"] .markdown-content pre code {
+  color: #dcdcdc;
+}
+
+html[theme="dark"] .markdown-content pre .keyword {
+  color: #67a2cc;
+}
+
+html[theme="dark"] .markdown-content pre .string {
+  color: #bde051;
+}
+
+html[theme="dark"] .markdown-content pre .comment {
+  color: #998066;
+}
+
+html[theme="dark"] .markdown-content pre .number {
+  color: #e06c75;
+}
+
+/* 保持媒体查询作为备用方案 */
+@media (prefers-color-scheme: dark) {
+  html:not([theme]) .markdown-content pre code {
+    color: #dcdcdc;
+  }
+  
+  html:not([theme]) .markdown-content pre .keyword {
+    color: #67a2cc;
+  }
+  
+  html:not([theme]) .markdown-content pre .string {
+    color: #bde051;
+  }
+  
+  html:not([theme]) .markdown-content pre .comment {
+    color: #998066;
+  }
+  
+  html:not([theme]) .markdown-content pre .number {
+    color: #e06c75;
+  }
+}
+
+
+
+.markdown-content {
+  line-height: 1.4;
+  color: var(--md-text-color);
+  font-family: sans-serif;
+  background-color: var(--md-bg-color);
+}
+
+/* 标题样式 */
+.markdown-content h1 {
+  margin-top: 3rem;
+  margin-bottom: 1.5rem;
+  font-size: 1.875rem;
+  font-weight: bold;
+  color: var(--md-text-color);
+}
+
+.markdown-content h1:not(:first-child) {
+  margin-top: 3rem;
+}
+
+.markdown-content h2 {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--md-text-color);
+}
+
+.markdown-content h3 {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: var(--md-text-color);
+}
+
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  margin-top: 1rem;
+  margin-bottom: 0rem;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: var(--md-text-color);
+}
+
+/* 段落样式 */
+.markdown-content p {
+  margin: 1rem 0;
+}
+
+/* 列表样式 */
+.markdown-content ul,
+.markdown-content ol {
+  padding-left: 0;
+  margin-left: 0;
+}
+
+.markdown-content ul li,
+.markdown-content ol li {
+  padding-left: 0;
+  margin-left: 2rem;
+}
+
+/* 引用样式 */
+.markdown-content blockquote {
+  margin: 1rem 0;
+  padding-left: 2ch;
+  margin-left: 0.5ch;
+  position: relative;
+  overflow: hidden;
+  border-left: 0.1875rem solid var(--md-text-color);
+}
+
+/* 内联代码样式 */
+.markdown-content code {
+  font-family: "SFMono-Regular", monospace;
+  font-size: 85%;
+  line-height: normal;
+  color: var(--md-code-color);
+  background-color: var(--md-code-bg-color);
+  padding: 0.15em 0.4em;
+  border-radius: 0.25rem;
+  word-wrap: break-word;
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+
+/* 代码块样式 */
+.markdown-content pre {
+  background-color: var(--md-pre-bg-color);
+  padding: 2.5em 1.5em;
+  border-radius: 5px;
+  overflow-x: auto;
+  margin: 1rem 0;
+  font-family: "Cascadia Code Variable", SFMono-Regular, Menlo, Consolas, "PT Mono", "Liberation Mono";
+}
+
+.markdown-content pre code {
+  background: none;
+  padding: 0;
+  color: var(--md-text-color);
+}
+
+/* 表格样式 */
+.markdown-content table {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  width: auto;
+  max-width: fit-content;
+  border-collapse: collapse;
+}
+
+.markdown-content th,
+.markdown-content td {
+  min-width: 0.5rem;
+  max-width: 20rem;
+  width: auto;
+  word-wrap: break-word;
+  white-space: normal;
+  border: 0.0625px solid var(--md-border-color);
+  padding: 0.5rem 1rem;
+}
+
+.markdown-content th {
+  background-color: var(--md-table-header-bg);
+  font-weight: bold;
+}
+
+/* 链接样式 */
+.markdown-content a {
+  color: var(--md-link-color);
+  text-decoration: none;
+}
+
+.markdown-content a:hover {
+  text-decoration: underline;
+}
+
+/* 图片样式 */
+.markdown-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+  margin: 1rem 0;
+}
+
+/* 水平线样式 */
+.markdown-content hr {
+  border: none;
+  border-bottom: 0.0625rem solid var(--md-border-color);
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+/* 强调文本样式 */
+.markdown-content strong {
+  font-weight: bold;
+  color: var(--md-text-color);
+}
+
+.markdown-content em {
+  font-style: italic;
+  color: var(--md-text-color);
+}
+
+/* 删除线样式 */
+.markdown-content del {
+  text-decoration: line-through;
+  color: var(--md-link-color);
+}
+
+/* 任务列表样式 */
+.markdown-content input[type="checkbox"] {
+  margin-right: 0.5rem;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .markdown-content h1 {
+    font-size: 1.5rem;
+  }
+  
+  .markdown-content h2 {
+    font-size: 1.25rem;
+  }
+  
+  .markdown-content h3 {
+    font-size: 1.125rem;
+  }
+  
+  .markdown-content table {
+    font-size: 0.875rem;
+  }
+  
+  .markdown-content pre {
+    padding: 1.5em 1em;
+    font-size: 0.875rem;
+  }
+}
