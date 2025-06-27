@@ -81,8 +81,8 @@
               <div class="exercise-meta">
                 <span class="exercise-difficulty">难度: {{ getExerciseDifficultyText(exercise.difficulty) }}</span>
                 <span class="exercise-type">{{ getExerciseTypeText(exercise.type) }}</span>
-                <span class="exercise-status" :class="{ 'submitted': exercise.is_committed === 1 }">
-                  {{ exercise.is_committed === 1 ? '已提交' : '未提交' }}
+                <span class="exercise-status" :class="{ 'submitted': exercise.is_committed === 1, 'graded': exercise.is_committed === 1 && (exercise.check !== undefined || exercise.analyse) }">
+                  {{ exercise.is_committed === 1 ? (exercise.check !== undefined || exercise.analyse ? '已批改' : '已提交') : '未提交' }}
                 </span>
               </div>
             </div>
@@ -98,11 +98,12 @@
               <div class="question-meta">
                 <span class="exercise-difficulty-1">难度: {{ getExerciseDifficultyText(selectedExercise.difficulty) }}</span>
                 <el-tag type="info">{{ getExerciseTypeText(selectedExercise.type) }}</el-tag>
-                <el-tag v-if="selectedExercise.is_committed" type="success">已提交</el-tag>
+                <el-tag v-if="selectedExercise.is_committed && (selectedExercise.check !== undefined || selectedExercise.analyse)" type="success">已批改</el-tag>
+                <el-tag v-else-if="selectedExercise.is_committed" type="warning">已提交</el-tag>
                 <el-tag v-else type="danger">未提交</el-tag>
               </div>
             </div>
-            <div class="question-content" v-html="marked.parse(selectedExercise.exercise_content)"></div>
+            <div class="question-content markdown-content" v-html="marked.parse(selectedExercise.exercise_content)"></div>
           </div>
           
           <!-- 作答区域 -->
@@ -114,45 +115,21 @@
               </div>
             </div>
             
-            <!-- 已提交状态：显示历史答案 -->
+            <!-- 已提交状态：显示历史答案和批改结果 -->
             <div v-if="selectedExercise.is_committed" class="submitted-answer">
               <div class="answer-content">
+                <h4>学生答案：</h4>
                 <pre>{{ selectedExercise.student_answer }}</pre>
-              </div>
-              <div class="answer-actions">
-                <el-button @click="editAnswer" type="primary" plain disabled>已提交，不可重新作答</el-button>
-              </div>
-            </div>
-            
-            <!-- 批改结果区域 -->
-            <div v-if="selectedExercise.is_committed && (selectedExercise.check !== undefined || selectedExercise.analyse)" class="grading-section">
-              <div class="grading-header">
-                <h3>批改结果</h3>
-              </div>
-              
-              <!-- 批改分数 -->
-              <div v-if="selectedExercise.check !== undefined" class="grading-score">
-                <div class="score-label">得分：</div>
-                <div class="score-value" :class="getScoreClass(selectedExercise.check)">
-                  {{ selectedExercise.check }}分
+                <div v-if="selectedExercise.check !== undefined || selectedExercise.analyse" class="check-result">
+                  <h4>批改结果：</h4>
+                  <div v-if="selectedExercise.check !== undefined" class="check-score" :class="getScoreClass(selectedExercise.check)">
+                    <div class="markdown-content" v-html="marked.parse(selectedExercise.check)"></div>
+                  </div>
+                  <div v-if="selectedExercise.analyse" class="check-analyse">
+                    <h4>详细分析：</h4>
+                    <div class="markdown-content" v-html="marked.parse(selectedExercise.analyse)"></div>
+                  </div>
                 </div>
-              </div>
-              
-              <!-- 批改分析 -->
-              <div v-if="selectedExercise.analyse" class="grading-analysis">
-                <div class="analysis-label">批改分析：</div>
-                <div class="analysis-content" v-html="marked.parse(selectedExercise.analyse)"></div>
-              </div>
-              
-              <!-- 未批改提示 -->
-              <div v-if="selectedExercise.check === undefined && !selectedExercise.analyse" class="grading-pending">
-                <el-alert
-                  title="批改中"
-                  description="您的答案已提交，正在批改中，请稍后查看结果"
-                  type="info"
-                  :closable="false"
-                  show-icon>
-                </el-alert>
               </div>
             </div>
             
@@ -212,7 +189,7 @@ interface Exercise {
   is_committed: number;
   student_answer?: string;
   submitted_at?: string;
-  check?: number;
+  check?: string;
   analyse?: string;
 }
 
@@ -387,7 +364,45 @@ const getExercisesList = async (chapterId: number) => {
 
     if (response.data.ret === 0 && response.data.exercisesList) {
       const allExercises = Array.isArray(response.data.exercisesList) ? response.data.exercisesList : [response.data.exercisesList];
-      exercises.value = allExercises.filter(ex => ex.is_official === 1 || ex.is_official === '1');
+      const filteredExercises = allExercises.filter(ex => ex.is_official === 1 || ex.is_official === '1');
+      
+      // 为每个已提交的习题获取批改状态
+      const exercisesWithStatus = await Promise.all(
+        filteredExercises.map(async (exercise) => {
+          if (exercise.is_committed === 1) {
+            try {
+              const historyFormData = new FormData();
+              historyFormData.append('exercise_id', exercise.exercise_id.toString());
+              
+              const historyResponse = await axios.post(`${store.ip}/api/student/getExerciseHistory`, historyFormData, {
+                headers: {
+                  'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                timeout: 5000
+              });
+              
+              if (historyResponse.data.ret === 0) {
+                // 习题已作答且批改
+                exercise.student_answer = historyResponse.data.student_answer;
+                exercise.submitted_at = historyResponse.data.answer_time;
+                exercise.check = historyResponse.data.check;
+                exercise.analyse = historyResponse.data.analyse;
+              } else if (historyResponse.data.ret === 3) {
+                // 习题已作答但未批改
+                exercise.student_answer = historyResponse.data.student_answer;
+                exercise.submitted_at = historyResponse.data.answer_time;
+                exercise.check = undefined;
+                exercise.analyse = undefined;
+              }
+            } catch (error) {
+              console.error(`获取习题${exercise.exercise_id}历史记录失败:`, error);
+            }
+          }
+          return exercise;
+        })
+      );
+      
+      exercises.value = exercisesWithStatus;
     } else {
       exercises.value = [];
       ElMessage.error('获取习题列表失败：' + response.data.msg);
@@ -493,8 +508,6 @@ const getExerciseHistory = async (exerciseId: number) => {
       timeout: 5000
     });
 
-    console.log(response)
-    
     if (response.data.ret === 0) {
       // 习题已作答且批改
       if (selectedExercise.value) {
@@ -560,10 +573,10 @@ const getExerciseDifficultyText = (difficulty: number): string => {
  * @returns {string} 样式类名
  */
 const getScoreClass = (score: number): string => {
-  if (score >= 90) return 'score-excellent';
-  if (score >= 80) return 'score-good';
-  if (score >= 60) return 'score-pass';
-  return 'score-fail';
+  if (score >= 90) return 'excellent';
+  if (score >= 80) return 'good';
+  if (score >= 60) return 'pass';
+  return 'fail';
 };
 
 /**
@@ -767,6 +780,11 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   color: white;
 }
 
+.exercise-status.graded {
+  background-color: #409eff;
+  color: white;
+}
+
 .exercise-detail {
   padding: 24px;
   display: flex;
@@ -875,131 +893,73 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
 }
 
 /* 批改结果样式 */
-.grading-section {
-  margin-top: 30px;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border-left: 4px solid #67c23a;
-}
-
-.grading-header {
-  margin-bottom: 20px;
-}
-
-.grading-header h3 {
-  margin: 0;
-  color: #303133;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.grading-score {
-  display: flex;
-  align-items: center;
-  margin-bottom: 16px;
-  padding: 12px;
-  background: white;
-  border-radius: 6px;
-  border: 1px solid #e4e7ed;
-}
-
-.score-label {
-  font-size: 16px;
-  font-weight: 500;
+.answer-content h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
   color: #606266;
-  margin-right: 12px;
+  font-weight: 600;
 }
 
-.score-value {
-  font-size: 20px;
-  font-weight: 600;
-  padding: 4px 12px;
+.answer-content pre {
+  background: white;
+  border: 1px solid #e4e7ed;
   border-radius: 4px;
-}
-
-.score-excellent {
-  color: #67c23a;
-  background-color: #f0f9ff;
-  border: 1px solid #67c23a;
-}
-
-.score-good {
-  color: #409eff;
-  background-color: #ecf5ff;
-  border: 1px solid #409eff;
-}
-
-.score-pass {
-  color: #e6a23c;
-  background-color: #fdf6ec;
-  border: 1px solid #e6a23c;
-}
-
-.score-fail {
-  color: #f56c6c;
-  background-color: #fef0f0;
-  border: 1px solid #f56c6c;
-}
-
-.grading-analysis {
-  margin-bottom: 16px;
-}
-
-.analysis-label {
-  font-size: 16px;
-  font-weight: 500;
-  color: #606266;
-  margin-bottom: 8px;
-}
-
-.analysis-content {
-  background: white;
-  padding: 16px;
-  border-radius: 6px;
-  border: 1px solid #e4e7ed;
-  line-height: 1.6;
-  color: #303133;
-}
-
-.analysis-content h1,
-.analysis-content h2,
-.analysis-content h3,
-.analysis-content h4,
-.analysis-content h5,
-.analysis-content h6 {
-  margin-top: 0;
-  margin-bottom: 12px;
-  color: #303133;
-}
-
-.analysis-content p {
-  margin-bottom: 12px;
-}
-
-.analysis-content ul,
-.analysis-content ol {
-  margin-bottom: 12px;
-  padding-left: 20px;
-}
-
-.analysis-content code {
-  background-color: #f5f5f5;
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-family: 'Courier New', monospace;
-}
-
-.analysis-content pre {
-  background-color: #f5f5f5;
   padding: 12px;
-  border-radius: 6px;
-  overflow-x: auto;
-  font-family: 'Courier New', monospace;
+  margin: 0 0 16px 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-.grading-pending {
+.check-result {
   margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e4e7ed;
+}
+
+.check-score {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  background: white;
+  border: 1px solid #e4e7ed;
+  box-sizing: border-box;
+}
+
+/* .check-score.excellent {
+  background-color: #f0f9ff;
+  color: #1890ff;
+  border: 1px solid #b3d8ff;
+}
+
+.check-score.good {
+  background-color: #f6ffed;
+  color: #52c41a;
+  border: 1px solid #b7eb8f;
+}
+
+.check-score.pass {
+  background-color: #fff7e6;
+  color: #fa8c16;
+  border: 1px solid #ffd591;
+}
+
+.check-score.fail {
+  background-color: #fff2f0;
+  color: #ff4d4f;
+  border: 1px solid #ffb3b3;
+} */
+
+.check-analyse {
+  background: white;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  padding: 12px;
+  margin-top: 12px;
 }
 
 .re-answer {
@@ -1010,58 +970,6 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
 .back-button {
   margin-bottom: 20px;
   align-self: flex-end;
-}
-
-.exercise-detail h3 {
-  line-height: 1.6;
-  color: #303133;
-  margin-bottom: 20px;
-}
-
-.exercise-detail h1,
-.exercise-detail h2,
-.exercise-detail h3,
-.exercise-detail h4,
-.exercise-detail h5,
-.exercise-detail h6 {
-  margin-top: 16px;
-  margin-bottom: 12px;
-  font-weight: 600;
-}
-
-.exercise-detail p {
-  line-height: 1.6;
-  margin-bottom: 12px;
-}
-
-.exercise-detail ul,
-.exercise-detail ol {
-  margin-bottom: 12px;
-  padding-left: 20px;
-}
-
-.exercise-detail li {
-  margin-bottom: 4px;
-}
-
-.exercise-detail code {
-  background-color: #f5f5f5;
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-family: 'Courier New', monospace;
-}
-
-.exercise-detail pre {
-  background-color: #f5f5f5;
-  padding: 12px;
-  border-radius: 6px;
-  overflow-x: auto;
-  margin-bottom: 12px;
-}
-
-.exercise-detail pre code {
-  background: none;
-  padding: 0;
 }
 
 .nav-title {
@@ -1183,301 +1091,6 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   gap: 16px;
 }
 
-/* 题目内容 Markdown 样式 - Typora风格 */
-.question-content {
-  line-height: 1.7;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  font-size: 14px;
-  color: #2c3e50;
-}
-
-/* 标题样式 */
-.question-content h1,
-.question-content h2,
-.question-content h3,
-.question-content h4,
-.question-content h5,
-.question-content h6 {
-  margin: 24px 0 16px 0;
-  font-weight: 600;
-  color: #2c3e50;
-  line-height: 1.4;
-}
-
-.question-content h1 {
-  font-size: 2em;
-  border-bottom: 2px solid #eaecef;
-  padding-bottom: 12px;
-  margin-bottom: 20px;
-}
-
-.question-content h2 {
-  font-size: 1.6em;
-  border-bottom: 1px solid #eaecef;
-  padding-bottom: 8px;
-}
-
-.question-content h3 {
-  font-size: 1.3em;
-}
-
-.question-content h4 {
-  font-size: 1.1em;
-}
-
-.question-content h5 {
-  font-size: 1em;
-}
-
-.question-content h6 {
-  font-size: 0.9em;
-  color: #6a737d;
-}
-
-/* 段落样式 */
-.question-content p {
-  margin: 16px 0;
-  text-align: justify;
-  text-justify: inter-ideograph;
-}
-
-/* 列表样式 */
-.question-content ul,
-.question-content ol {
-  margin: 16px 0;
-  padding-left: 24px;
-}
-
-.question-content li {
-  margin: 8px 0;
-  line-height: 1.6;
-}
-
-.question-content ul li {
-  list-style-type: disc;
-}
-
-.question-content ol li {
-  list-style-type: decimal;
-}
-
-/* 嵌套列表 */
-.question-content ul ul,
-.question-content ol ol,
-.question-content ul ol,
-.question-content ol ul {
-  margin: 4px 0;
-}
-
-/* 行内代码样式 */
-.question-content code {
-  background-color: #f6f8fa;
-  border: 1px solid #e1e4e8;
-  border-radius: 3px;
-  padding: 2px 6px;
-  font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', 'Courier', monospace;
-  font-size: 0.85em;
-  color: #d73a49;
-}
-
-/* 代码块样式 */
-.question-content pre {
-  background-color: #f6f8fa;
-  border: 1px solid #e1e4e8;
-  border-radius: 6px;
-  padding: 16px;
-  margin: 16px 0;
-  overflow-x: auto;
-  font-size: 0.85em;
-  line-height: 1.45;
-}
-
-.question-content pre code {
-  background: none;
-  border: none;
-  padding: 0;
-  color: #24292e;
-  font-size: inherit;
-}
-
-/* 引用样式 */
-.question-content blockquote {
-  border-left: 4px solid #dfe2e5;
-  margin: 16px 0;
-  padding: 0 16px;
-  color: #6a737d;
-  background-color: #f8f9fa;
-  border-radius: 0 3px 3px 0;
-}
-
-.question-content blockquote p {
-  margin: 12px 0;
-}
-
-/* 表格样式 */
-.question-content table {
-  border-collapse: collapse;
-  margin: 20px 0;
-  width: 100%;
-  border: 1px solid #d0d7de;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.question-content th,
-.question-content td {
-  border: 1px solid #d0d7de;
-  padding: 12px 16px;
-  text-align: left;
-  vertical-align: top;
-}
-
-.question-content th {
-  background-color: #f6f8fa;
-  font-weight: 600;
-  color: #24292e;
-}
-
-.question-content tr:nth-child(even) {
-  background-color: #f6f8fa;
-}
-
-.question-content tr:hover {
-  background-color: #f1f8ff;
-}
-
-/* 链接样式 */
-.question-content a {
-  color: #0969da;
-  text-decoration: none;
-  border-bottom: 1px solid transparent;
-  transition: all 0.2s ease;
-}
-
-.question-content a:hover {
-  color: #0550ae;
-  border-bottom-color: #0969da;
-}
-
-.question-content a:visited {
-  color: #8250df;
-}
-
-/* 强调样式 */
-.question-content strong {
-  font-weight: 600;
-  color: #24292e;
-}
-
-.question-content em {
-  font-style: italic;
-  color: #656d76;
-}
-
-/* 分隔线样式 */
-.question-content hr {
-  border: none;
-  height: 2px;
-  background-color: #d0d7de;
-  margin: 24px 0;
-  border-radius: 1px;
-}
-
-/* 删除线样式 */
-.question-content del {
-  text-decoration: line-through;
-  color: #656d76;
-}
-
-/* 高亮样式 */
-.question-content mark {
-  background-color: #fff8c5;
-  padding: 2px 4px;
-  border-radius: 3px;
-}
-
-/* 图片样式 */
-.question-content img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 6px;
-  margin: 16px 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* 任务列表样式 */
-.question-content input[type="checkbox"] {
-  margin-right: 8px;
-  transform: scale(1.1);
-}
-
-.question-content .task-list-item {
-  list-style: none;
-  margin-left: -20px;
-}
-
-/* 键盘按键样式 */
-.question-content kbd {
-  background-color: #f6f8fa;
-  border: 1px solid #d0d7de;
-  border-bottom-color: #afb8c1;
-  border-radius: 6px;
-  box-shadow: inset 0 -1px 0 #afb8c1;
-  color: #24292e;
-  display: inline-block;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
-  font-size: 11px;
-  line-height: 10px;
-  padding: 3px 5px;
-  vertical-align: middle;
-}
-
-/* 首行缩进优化 */
-.question-content p:first-child {
-  margin-top: 0;
-}
-
-.question-content p:last-child {
-  margin-bottom: 0;
-}
-
-.question-content code {
-  background: #f5f7fa;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-family: 'Courier New', monospace;
-  font-size: 14px;
-  color: #e6a23c;
-}
-
-.question-content pre {
-  background: #f5f7fa;
-  padding: 16px;
-  border-radius: 6px;
-  border: 1px solid #e4e7ed;
-  overflow-x: auto;
-  margin: 16px 0;
-}
-
-.question-content pre code {
-  background: none;
-  padding: 0;
-  color: #303133;
-}
-
-.question-content strong {
-  font-weight: 600;
-  color: #303133;
-}
-
-.question-content blockquote {
-  margin: 16px 0;
-  padding: 12px 16px;
-  background: #f8f9fa;
-  border-left: 4px solid #409eff;
-  color: #606266;
-}
-
 /* 滚动条样式 */
 .chapter-navigation::-webkit-scrollbar,
 .content-area::-webkit-scrollbar {
@@ -1539,6 +1152,152 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   .function-buttons {
     padding: 16px 20px;
   }
+}
+
+/* Markdown内容样式 - 基于 Notion 风格 */
+.markdown-content {
+  line-height: 1.4;
+  color: #37352f;
+  font-family: sans-serif;
+}
+
+.markdown-content :deep(h1) {
+  margin-top: 3rem;
+  margin-bottom: 1.5rem;
+  font-size: 1.875rem;
+  font-weight: bold;
+  color: #37352f;
+}
+
+.markdown-content :deep(h1:not(:first-child)) {
+  margin-top: 3rem;
+}
+
+.markdown-content :deep(h2) {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #37352f;
+}
+
+.markdown-content :deep(h3) {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #37352f;
+}
+
+.markdown-content :deep(h4),
+.markdown-content :deep(h5),
+.markdown-content :deep(h6) {
+  margin-top: 1rem;
+  margin-bottom: 0rem;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #37352f;
+}
+
+.markdown-content :deep(p) {
+  margin: 1rem 0;
+}
+
+.markdown-content :deep(ul),
+.markdown-content :deep(ol) {
+  padding-left: 0;
+  margin-left: 0;
+}
+
+.markdown-content :deep(ul li),
+.markdown-content :deep(ol li) {
+  padding-left: 0;
+  margin-left: 2rem;
+}
+
+.markdown-content :deep(li p) {
+  margin: 0;
+}
+
+.markdown-content :deep(blockquote) {
+  margin: 1rem 0;
+  padding-left: 2ch;
+  margin-left: 0.5ch;
+  position: relative;
+  overflow: hidden;
+  border-left: 0.1875rem solid #37352f;
+}
+
+.markdown-content :deep(code) {
+  font-family: "SFMono-Regular", monospace;
+  font-size: 85%;
+  line-height: normal;
+  color: #eb5757;
+  background-color: #ededeb;
+  padding: 0.15em 0.4em;
+  border-radius: 0.25rem;
+}
+
+.markdown-content pre {
+  background-color: #f7f6f3;
+  padding: 2.5em 1.5em;
+  border-radius: 5px;
+  overflow-x: auto;
+  margin: 1rem 0;
+  font-family: "Cascadia Code Variable", SFMono-Regular, Menlo, Consolas, "PT Mono", "Liberation Mono";
+}
+
+.markdown-content :deep(pre code) {
+  background: none;
+  padding: 0;
+  color: #37352f;
+}
+
+.markdown-content :deep(table) {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  width: auto;
+  max-width: fit-content;
+  border-collapse: collapse;
+}
+
+.markdown-content :deep(th),
+.markdown-content :deep(td) {
+  min-width: 0.5rem;
+  max-width: 20rem;
+  width: auto;
+  word-wrap: break-word;
+  white-space: normal;
+  border: 0.0625px solid #e1e7e8;
+  padding: 0.5rem 1rem;
+}
+
+.markdown-content :deep(th) {
+  background-color: #f7f6f3;
+  font-weight: bold;
+}
+
+.markdown-content :deep(a) {
+  color: #73716d;
+  text-decoration: none;
+}
+
+.markdown-content :deep(a:hover) {
+  text-decoration: underline;
+}
+
+.markdown-content :deep(img) {
+  max-width: 100%;
+  height: auto;
+  margin: 0.5em 0;
+  border-radius: 10px;
+}
+
+.markdown-content :deep(hr) {
+  border: none;
+  border-bottom: 0.0625rem solid #e1e7e8;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
 }
 
 </style>
