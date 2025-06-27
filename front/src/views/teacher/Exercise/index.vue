@@ -58,18 +58,18 @@
     </div>
 
   </div>
-<el-dialog v-model="analysisDialogVisible" title="批改结果分析" width="700px" class="analysis" style="padding: 2rem; text-align: left;background-color: var(--titleColor2);">
-  <p class="analysis-info"><strong style="color: var(--titleColor);">学生：</strong>{{ selectedStudent?.student_name }}</p>
-  <p class="analysis-info"><strong style="color: var(--titleColor);">作答内容：</strong>{{ selectedStudent?.student_answer }}</p>
+<el-dialog v-model="analysisDialogVisible" title="批改结果分析" width="700px" class="analysis" style="padding: 2rem; text-align: left;">
+  <p class="analysis-info"><strong style="color: #080808">学生：</strong>{{ selectedStudent?.student_name }}</p>
+  <p class="analysis-info"><strong style="color: #080808">作答内容：</strong>{{ selectedStudent?.student_answer }}</p>
   <p class="analysis-info">
-    <strong style="color: var(--titleColor);">批改结果：</strong>
+    <strong style="color: #080808">批改结果：</strong>
     <span v-if="selectedStudent?.check === 1">❌错误</span>
     <span v-else-if="selectedStudent?.check === 0">✔️正确</span>
     <span v-else-if="selectedStudent?.check === 2">⭕半对半错</span> 
     <span v-else>❓未批改</span>
   </p>
   <div v-if="selectedStudent?.check != null && selectedStudent?.analyse">
-    <strong style="color: var(--titleColor);">分析：</strong>
+    <strong style="color: #080808">分析：</strong>
     <div class="analysis-content" v-html="marked.parse(selectedStudent.analyse)"></div>
   </div>
 
@@ -201,7 +201,7 @@ onMounted(() => {
 
 </script>
 
-<style>
+<style scoped>
 .main {
   display: flex;
   height: 100%;
@@ -370,16 +370,16 @@ onMounted(() => {
 }
 
 .el-dialog__title {
-  color: var(--titleColor);
+  color: #080808;
   font-weight: bold;
 }
 .analysis-content {
   margin-left: 1rem;
-  color: var(--textColor);
+  color: #080808;
 }
 .analysis-info {
   margin-bottom: 0.5rem;
-  color: var(--textColor);
+  color: #080808;
 }
 
 .buttom-right {
