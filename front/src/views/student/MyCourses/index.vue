@@ -221,7 +221,6 @@ onMounted(() => {
 .courses-container {
   background: transparent;
   overflow: hidden;
-  box-shadow: 0 2px 8px var(--shadowColor);
   margin-left: 2rem;
   margin-right: 2rem;
 }
