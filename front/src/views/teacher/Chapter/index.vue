@@ -148,7 +148,7 @@ const handleAddChapter = () => {
   }
   const formData = new FormData();
   formData.append('chapter', Cname.value)
-  formData.append('Cno', courseId)
+  formData.append('Cno', courseId.value)
   axios({
     method: 'post',
     url: `${store.ip}/api/teacher/generate_teachcontent`,
