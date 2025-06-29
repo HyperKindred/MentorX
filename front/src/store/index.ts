@@ -1,16 +1,28 @@
 import { defineStore } from 'pinia';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, markRaw } from 'vue';
 import Home from '../views/Home/index.vue';
 import T_home from '../views/Teacher/index.vue'
 import A_home from '../views/Admin/index.vue'
 import S_home from '../views/Student/index.vue'
+
+/**
+ * 标签页接口定义
+ */
+interface Tab {
+  name: string;
+  title: string;
+  component: any;
+  closable: boolean;
+  props?: any;
+}
+
 // 定义 Store
 export const mainStore = defineStore('main', {
   state: () => ({
     ip:'http://10.16.205.171:5000',
     tabs: [
-      { name: 'home', title: '首页', component: Home, closable: false }
-    ],
+      { name: 'home', title: '首页', component: markRaw(Home), closable: false, props: {} }
+    ] as Tab[],
     activeTab: 'home',
     tabIndex: 1,
     account: '',
@@ -18,14 +30,27 @@ export const mainStore = defineStore('main', {
     gender: 'unknown',
     type: 'U',
     name: '请登录',
-    token: ''
-
+    token: '',
+    theme: localStorage.getItem('theme') || 'dark',
   }),
   getters: {},
   actions: {
-    addTab(title: string, component: any) {
+    /**
+     * 添加新标签页
+     * @param title 标签页标题
+     * @param component 组件
+     * @param props 传递给组件的props（可选）
+     */
+    addTab(title: string, component: any, props?: any) {
+      // 使用唯一的tabIndex生成name，确保每个标签页都有唯一标识
       const newName = `tab${this.tabIndex++}`;
-      this.tabs.push({ name: newName, title, component, closable: true });
+      this.tabs.push({ 
+        name: newName, 
+        title, 
+        component: markRaw(component), 
+        closable: true, 
+        props: props || {} 
+      });
       this.activeTab = newName;
     },
     removeTab(name: string) {
@@ -58,10 +83,10 @@ export const mainStore = defineStore('main', {
       this.tabs[0] = {
         name: 'home',
         title: '首页',
-        component: homeComponent,
-        closable: false
+        component: markRaw(homeComponent),
+        closable: false,
+        props: {}
       };
-    }
-
+    },
   },
 });

@@ -2,12 +2,6 @@
   <div class="course-page">
     <!-- 左侧面板 -->
     <div class="left-panel">
-      <!-- 课程信息 -->
-      <div class="course-header" v-if="courseInfo">
-        <h2 class="course-name">{{ courseInfo.name }}</h2>
-        <p class="course-teacher">讲师：{{ courseInfo.teacher_name }}</p>
-      </div>
-      
       <!-- 章节导航 -->
       <div class="chapter-navigation">
         <h3 class="nav-title">课程章节</h3>
@@ -19,7 +13,6 @@
             :class="{ active: activeChapter === chapter.id }"
             @click="selectChapter(chapter)"
           >
-            <span class="chapter-number">{{ index + 1 }}</span>
             <span class="chapter-title">{{ chapter.name }}</span>
           </div>
         </div>
@@ -28,6 +21,44 @@
     
     <!-- 右侧面板 -->
     <div class="right-panel">
+      <!-- 功能按钮组 -->
+      <div class="function-buttons">
+        <div class="button-group">
+          <el-button 
+             type="default" 
+             :icon="Document" 
+             class="function-btn"
+             @click="openCourseware"
+           >
+             课件学习
+           </el-button>
+           <el-button 
+             type="primary" 
+             :icon="Edit" 
+             class="function-btn active"
+             disabled
+           >
+             章节习题
+           </el-button>
+           <el-button 
+             type="default" 
+             :icon="Notebook" 
+             class="function-btn"
+             @click="openPractice"
+           >
+             个人练习
+           </el-button>
+           <el-button 
+             type="default" 
+             :icon="ChatDotRound" 
+             class="function-btn"
+             @click="openAiAssistant"
+           >
+             AI助手
+           </el-button>
+        </div>
+      </div>
+      
       <!-- 内容展示区域 -->
       <div class="content-area">
         <div v-if="loading" class="loading-state">
@@ -41,10 +72,10 @@
             <div v-for="exercise in exercises" :key="exercise.exercise_id" class="exercise-item" @click="selectExercise(exercise)">
               <div class="exercise-content">{{ formatExerciseContent(exercise.exercise_content, 80) }}</div>
               <div class="exercise-meta">
-                <span class="exercise-difficulty">难度: {{ exercise.difficulty }}</span>
+                <span class="exercise-difficulty">难度: {{ getExerciseDifficultyText(exercise.difficulty) }}</span>
                 <span class="exercise-type">{{ getExerciseTypeText(exercise.type) }}</span>
-                <span class="exercise-status" :class="{ 'submitted': exercise.is_committed === 1 }">
-                  {{ exercise.is_committed === 1 ? '已提交' : '未提交' }}
+                <span class="exercise-status" :class="{ 'submitted': exercise.is_committed === 1, 'graded': exercise.is_committed === 1 && (exercise.check !== undefined || exercise.analyse) }">
+                  {{ exercise.is_committed === 1 ? (exercise.check !== undefined || exercise.analyse ? '已批改' : '已提交') : '未提交' }}
                 </span>
               </div>
             </div>
@@ -58,13 +89,14 @@
             <div class="question-header">
               <h2>题目内容</h2>
               <div class="question-meta">
-                <span class="exercise-difficulty-1">难度: {{ selectedExercise.difficulty }}</span>
+                <span class="exercise-difficulty-1">难度: {{ getExerciseDifficultyText(selectedExercise.difficulty) }}</span>
                 <el-tag type="info">{{ getExerciseTypeText(selectedExercise.type) }}</el-tag>
-                <el-tag v-if="selectedExercise.is_committed" type="success">已提交</el-tag>
+                <el-tag v-if="selectedExercise.is_committed && (selectedExercise.check !== undefined || selectedExercise.analyse)" type="success">已批改</el-tag>
+                <el-tag v-else-if="selectedExercise.is_committed" type="warning">已提交</el-tag>
                 <el-tag v-else type="danger">未提交</el-tag>
               </div>
             </div>
-            <div class="question-content" v-html="marked.parse(selectedExercise.exercise_content)"></div>
+            <div class="question-content markdown-content" v-html="marked.parse(selectedExercise.exercise_content)"></div>
           </div>
           
           <!-- 作答区域 -->
@@ -76,13 +108,21 @@
               </div>
             </div>
             
-            <!-- 已提交状态：显示历史答案 -->
+            <!-- 已提交状态：显示历史答案和批改结果 -->
             <div v-if="selectedExercise.is_committed" class="submitted-answer">
               <div class="answer-content">
+                <h4>学生答案：</h4>
                 <pre>{{ selectedExercise.student_answer }}</pre>
-              </div>
-              <div class="answer-actions">
-                <el-button @click="editAnswer" type="primary" plain disabled>已提交，不可重新作答</el-button>
+                <div v-if="selectedExercise.check !== undefined || selectedExercise.analyse" class="check-result">
+                  <h4>批改结果：</h4>
+                  <div v-if="selectedExercise.check !== undefined" class="check-score" :class="getScoreClass(selectedExercise.check)">
+                    <div class="markdown-content" v-html="marked.parse(selectedExercise.check)"></div>
+                  </div>
+                  <div v-if="selectedExercise.analyse" class="check-analyse">
+                    <h4>详细分析：</h4>
+                    <div class="markdown-content" v-html="marked.parse(selectedExercise.analyse)"></div>
+                  </div>
+                </div>
               </div>
             </div>
             
@@ -112,11 +152,15 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, onActivated } from 'vue';
 import { ElMessage } from 'element-plus';
+import { Document, Edit, Notebook, ChatDotRound } from '@element-plus/icons-vue';
 import { mainStore } from '../../../store/index.ts';
 import axios from 'axios';
 import { marked } from 'marked';
+import Course from '../Course/index.vue';
+import Practice from '../Practice/index.vue';
+import AiAssistant from '../AiAssistant/index.vue';
 
 interface Chapter {
   id: number;
@@ -138,7 +182,24 @@ interface Exercise {
   is_committed: number;
   student_answer?: string;
   submitted_at?: string;
+  check?: string;
+  analyse?: string;
 }
+
+/**
+ * 组件Props定义
+ */
+interface Props {
+  courseData?: CourseInfo;
+  chapterData?: Chapter[];
+  activeChapterId?: number | null;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  courseData: undefined,
+  chapterData: () => [],
+  activeChapterId: null
+});
 
 const store = mainStore();
 const courseInfo = ref<CourseInfo | null>(null);
@@ -152,17 +213,105 @@ const submitting = ref(false);
 
 
 
-onMounted(() => {
-  const storedCourse = localStorage.getItem('currentCourse');
-  if (storedCourse) {
-    courseInfo.value = JSON.parse(storedCourse);
-    if (courseInfo.value) {
-      getChapterList(courseInfo.value.id);
+/**
+ * 初始化课程数据
+ * 优先使用props传递的课程数据，然后回退到localStorage
+ */
+const initCourseData = () => {
+  let newCourseInfo: CourseInfo | null = null;
+  
+  // 优先使用props传递的课程数据
+  if (props.courseData) {
+    newCourseInfo = props.courseData;
+  } else {
+    // 回退到localStorage
+    const storedCourse = localStorage.getItem('currentCourse');
+    if (storedCourse) {
+      newCourseInfo = JSON.parse(storedCourse);
+    }
+  }
+  
+  if (newCourseInfo) {
+    // 检查是否需要更新课程数据
+    if (!courseInfo.value || courseInfo.value.id !== newCourseInfo.id) {
+      courseInfo.value = newCourseInfo;
+      
+      // 如果有传递章节数据，直接使用
+      if (props.chapterData && props.chapterData.length > 0) {
+        chapters.value = props.chapterData;
+        // 设置激活的章节
+        if (props.activeChapterId) {
+          activeChapter.value = props.activeChapterId;
+        } else if (chapters.value.length > 0) {
+          activeChapter.value = chapters.value[0].id;
+        }
+      } else {
+        // 没有章节数据时，重新获取
+        getChapterList(newCourseInfo.id);
+      }
     }
   } else {
     ElMessage.error('无法加载课程信息');
   }
+};
+
+/**
+ * 组件首次挂载时初始化课程数据
+ */
+onMounted(() => {
+  initCourseData();
 });
+
+/**
+ * keep-alive组件激活时检查并更新课程数据
+ */
+onActivated(() => {
+  initCourseData();
+});
+
+/**
+ * 监听courseData props变化，当传入新的课程数据时更新组件状态
+ */
+watch(
+  () => props.courseData,
+  (newCourseData) => {
+    if (newCourseData && (!courseInfo.value || courseInfo.value.id !== newCourseData.id)) {
+      initCourseData();
+    }
+  },
+  { immediate: false }
+);
+
+/**
+ * 监听chapterData props变化
+ */
+watch(
+  () => props.chapterData,
+  (newChapterData) => {
+    if (newChapterData && newChapterData.length > 0) {
+      chapters.value = newChapterData;
+      if (props.activeChapterId) {
+        activeChapter.value = props.activeChapterId;
+      } else if (chapters.value.length > 0) {
+        activeChapter.value = chapters.value[0].id;
+      }
+    }
+  },
+  { immediate: false }
+);
+
+/**
+ * 监听activeChapterId props变化
+ */
+watch(
+  () => props.activeChapterId,
+  (newActiveChapterId) => {
+    if (newActiveChapterId && newActiveChapterId !== activeChapter.value) {
+      activeChapter.value = newActiveChapterId;
+    }
+  },
+  { immediate: false }
+);
 
 watch(activeChapter, (newChapterId) => {
   if (newChapterId !== null) {
@@ -208,7 +357,45 @@ const getExercisesList = async (chapterId: number) => {
 
     if (response.data.ret === 0 && response.data.exercisesList) {
       const allExercises = Array.isArray(response.data.exercisesList) ? response.data.exercisesList : [response.data.exercisesList];
-      exercises.value = allExercises.filter(ex => ex.is_official === 1 || ex.is_official === '1');
+      const filteredExercises = allExercises.filter(ex => ex.is_official === 1 || ex.is_official === '1');
+      
+      // 为每个已提交的习题获取批改状态
+      const exercisesWithStatus = await Promise.all(
+        filteredExercises.map(async (exercise) => {
+          if (exercise.is_committed === 1) {
+            try {
+              const historyFormData = new FormData();
+              historyFormData.append('exercise_id', exercise.exercise_id.toString());
+              
+              const historyResponse = await axios.post(`${store.ip}/api/student/getExerciseHistory`, historyFormData, {
+                headers: {
+                  'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                timeout: 5000
+              });
+              
+              if (historyResponse.data.ret === 0) {
+                // 习题已作答且批改
+                exercise.student_answer = historyResponse.data.student_answer;
+                exercise.submitted_at = historyResponse.data.answer_time;
+                exercise.check = historyResponse.data.check;
+                exercise.analyse = historyResponse.data.analyse;
+              } else if (historyResponse.data.ret === 3) {
+                // 习题已作答但未批改
+                exercise.student_answer = historyResponse.data.student_answer;
+                exercise.submitted_at = historyResponse.data.answer_time;
+                exercise.check = undefined;
+                exercise.analyse = undefined;
+              }
+            } catch (error) {
+              console.error(`获取习题${exercise.exercise_id}历史记录失败:`, error);
+            }
+          }
+          return exercise;
+        })
+      );
+      
+      exercises.value = exercisesWithStatus;
     } else {
       exercises.value = [];
       ElMessage.error('获取习题列表失败：' + response.data.msg);
@@ -313,12 +500,14 @@ const getExerciseHistory = async (exerciseId: number) => {
       },
       timeout: 5000
     });
-    
+
     if (response.data.ret === 0) {
       // 习题已作答且批改
       if (selectedExercise.value) {
         selectedExercise.value.student_answer = response.data.student_answer;
         selectedExercise.value.submitted_at = response.data.answer_time;
+        selectedExercise.value.check = response.data.check;
+        selectedExercise.value.analyse = response.data.analyse;
       }
     } else if (response.data.ret === 2) {
       // 习题未作答
@@ -330,6 +519,9 @@ const getExerciseHistory = async (exerciseId: number) => {
       if (selectedExercise.value) {
         selectedExercise.value.student_answer = response.data.student_answer;
         selectedExercise.value.submitted_at = response.data.answer_time;
+        // 未批改状态，清空批改结果
+        selectedExercise.value.check = undefined;
+        selectedExercise.value.analyse = undefined;
       }
     }
   } catch (error) {
@@ -338,9 +530,9 @@ const getExerciseHistory = async (exerciseId: number) => {
 };
 
 /**
- * 将英文习题类型转换为中文显示
+ * 获取习题类型的中文显示文本
  * @param {string} type - 习题类型
- * @returns {string} 中文类型名称
+ * @returns {string} 中文显示文本
  */
 const getExerciseTypeText = (type: string): string => {
   const typeMap: Record<string, string> = {
@@ -354,6 +546,33 @@ const getExerciseTypeText = (type: string): string => {
 };
 
 /**
+ * 获取习题难度的中文显示文本
+ * @param {number} difficulty - 难度等级数字
+ * @returns {string} 中文显示文本
+ */
+const getExerciseDifficultyText = (difficulty: number): string => {
+  const difficultyMap: Record<number, string> = {
+    1: '容易',
+    2: '中等',
+    3: '困难',
+    4: '极难'
+  };
+  return difficultyMap[difficulty] || `难度${difficulty}`;
+};
+
+/**
+ * 根据分数获取样式类名
+ * @param {number} score - 分数
+ * @returns {string} 样式类名
+ */
+const getScoreClass = (score: number): string => {
+  if (score >= 90) return 'excellent';
+  if (score >= 80) return 'good';
+  if (score >= 60) return 'pass';
+  return 'fail';
+};
+
+/**
  * Markdown 渲染器实例
  */
 /**
@@ -364,6 +583,51 @@ marked.setOptions({
   breaks: true,
   sanitize: false
 });
+
+/**
+ * 导航到课件学习页面
+ */
+const openCourseware = () => {
+  if (courseInfo.value && chapters.value.length > 0) {
+    store.addTab('课件学习', Course, {
+      courseData: courseInfo.value,
+      chapterData: chapters.value,
+      activeChapterId: activeChapter.value
+    });
+  } else {
+    ElMessage.warning('课程信息不完整，无法跳转');
+  }
+};
+
+/**
+ * 导航到个人练习页面
+ */
+const openPractice = () => {
+  if (courseInfo.value && chapters.value.length > 0) {
+    store.addTab('个人练习', Practice, {
+      courseData: courseInfo.value,
+      chapterData: chapters.value,
+      activeChapterId: activeChapter.value
+    });
+  } else {
+    ElMessage.warning('课程信息不完整，无法跳转');
+  }
+};
+
+/**
+ * 导航到AI助手页面
+ */
+const openAiAssistant = () => {
+  if (courseInfo.value && chapters.value.length > 0) {
+    store.addTab('AI助手', AiAssistant, {
+      courseData: courseInfo.value,
+      chapterData: chapters.value,
+      activeChapterId: activeChapter.value
+    });
+  } else {
+    ElMessage.warning('课程信息不完整，无法跳转');
+  }
+};
 
 /**
  * 将 Markdown 内容转换为纯文本并截取指定长度
@@ -400,33 +664,15 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
 
 .left-panel {
   width: 300px;
-  min-width: 300px;
-  flex-shrink: 0;
-  background: transparent;
-  border-right: 1.5px solid #f8f8f8;
+  background: var(--backgroundColor2);
+  border-right: 1.5px solid transparent;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
   display: flex;
   flex-direction: column;
 }
 
-.course-header {
-  padding: 24px 20px;
-  border-bottom: 1.5px solid #f8f8f8;
-  background: transparent;
-  color: white;
-}
 
-.course-name {
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0 0 8px 0;
-  line-height: 1.4;
-}
-
-.course-teacher {
-  font-size: 14px;
-  margin: 0;
-  opacity: 0.9;
-}
 
 .chapter-navigation {
   flex: 1;
@@ -457,7 +703,6 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   margin-bottom: 8px;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
   line-height: 1.4;
   flex: 1;
   width: 100%;
@@ -510,8 +755,15 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   color: white;
 }
 
+.exercise-status.graded {
+  background-color: #409eff;
+  color: white;
+}
+
 .exercise-detail {
   padding: 24px;
+  display: flex;
+  flex-direction: column;
 }
 
 .question-section {
@@ -611,6 +863,80 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   justify-content: flex-end;
 }
 
+.answer-actions .el-button {
+  min-width: 120px;
+}
+
+/* 批改结果样式 */
+.answer-content h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #606266;
+  font-weight: 600;
+}
+
+.answer-content pre {
+  background: white;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  padding: 12px;
+  margin: 0 0 16px 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.check-result {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e4e7ed;
+}
+
+.check-score {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  background: white;
+  border: 1px solid #e4e7ed;
+  box-sizing: border-box;
+}
+
+/* .check-score.excellent {
+  background-color: #f0f9ff;
+  color: #1890ff;
+  border: 1px solid #b3d8ff;
+}
+
+.check-score.good {
+  background-color: #f6ffed;
+  color: #52c41a;
+  border: 1px solid #b7eb8f;
+}
+
+.check-score.pass {
+  background-color: #fff7e6;
+  color: #fa8c16;
+  border: 1px solid #ffd591;
+}
+
+.check-score.fail {
+  background-color: #fff2f0;
+  color: #ff4d4f;
+  border: 1px solid #ffb3b3;
+} */
+
+.check-analyse {
+  background: white;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  padding: 12px;
+  margin-top: 12px;
+}
+
 .re-answer {
   margin-top: 20px;
   padding-top: 20px;
@@ -618,71 +944,21 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
 
 .back-button {
   margin-bottom: 20px;
-}
-
-.exercise-detail h3 {
-  line-height: 1.6;
-  color: #303133;
-  margin-bottom: 20px;
-}
-
-.exercise-detail h1,
-.exercise-detail h2,
-.exercise-detail h3,
-.exercise-detail h4,
-.exercise-detail h5,
-.exercise-detail h6 {
-  margin-top: 16px;
-  margin-bottom: 12px;
-  font-weight: 600;
-}
-
-.exercise-detail p {
-  line-height: 1.6;
-  margin-bottom: 12px;
-}
-
-.exercise-detail ul,
-.exercise-detail ol {
-  margin-bottom: 12px;
-  padding-left: 20px;
-}
-
-.exercise-detail li {
-  margin-bottom: 4px;
-}
-
-.exercise-detail code {
-  background-color: #f5f5f5;
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-family: 'Courier New', monospace;
-}
-
-.exercise-detail pre {
-  background-color: #f5f5f5;
-  padding: 12px;
-  border-radius: 6px;
-  overflow-x: auto;
-  margin-bottom: 12px;
-}
-
-.exercise-detail pre code {
-  background: none;
-  padding: 0;
+  align-self: flex-end;
 }
 
 .nav-title {
   font-size: 16px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--titleColor);
   margin: 0;
   padding: 20px 20px 16px 20px;
 }
 
 .chapter-list {
-  padding: 0 12px 20px 12px;
-  border-top: 1px solid transparent;
+  padding-bottom: 20px;
+  padding-left: 5px;
+  padding-right: 5px;
 }
 
 .chapter-item {
@@ -690,45 +966,27 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   align-items: center;
   padding: 12px 16px;
   margin-bottom: 4px;
-  border-top: none;
-  border-left: none;
-  border-right: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  border-bottom: 1px solid transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
   background-color: transparent;
-  color: #a5a5a5;
+  color: var(--textColor2);
 }
 
 .chapter-item:hover {
-  background-color: transparent;
-  border-color: #f8f8f8;
+  background-color: var(--backgroundColor2);
+  color: var(--titleColor);
 }
 
 .chapter-item.active {
   background-color: transparent;
-  border-color: #f8f8f8;
-  color: #f8f8f8;
+  color: var(--titleColor);
+  background-color: var(--backgroundColor2);
+  font-weight: 540;
 }
 
-.chapter-number {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  background-color: #f0f2f5;
-  border-radius: 50%;
-  font-size: 12px;
-  font-weight: 600;
-  margin-right: 12px;
-  flex-shrink: 0;
-}
 
-.chapter-item.active .chapter-number {
-  background-color: #409eff;
-  color: white;
-}
 
 .chapter-title {
   font-size: 14px;
@@ -743,6 +1001,47 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   background: transparent;
 }
 
+/* 功能按钮组样式 */
+.function-buttons {
+  border-bottom: 1.5px solid #e4e7ed;
+  padding: 20px 24px;
+  background: transparent;
+}
+
+.button-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.function-btn {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 12px 20px;
+  transition: all 0.3s ease;
+  border: 1px solid var(--textColor2);
+  background-color: var(--backgroundColor2);
+  color: var(--textColor2);
+}
+
+.function-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadowColor2);
+  color: var(--textColor);
+  border: 1.5px solid var(--textColor);
+}
+
+.function-btn.active {
+  background: #417dff;
+  border-color: #409eff;
+  color: white;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.4);
+}
+
+.function-btn :deep(.el-icon) {
+  margin-right: 6px;
+}
+
 .content-area {
   flex: 1;
   overflow-y: auto;
@@ -755,299 +1054,69 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   gap: 16px;
 }
 
-/* 题目内容 Markdown 样式 - Typora风格 */
-.question-content {
-  line-height: 1.7;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  font-size: 14px;
-  color: #2c3e50;
+/* 滚动条样式 */
+.chapter-navigation::-webkit-scrollbar,
+.content-area::-webkit-scrollbar {
+  width: 4px;
 }
 
-/* 标题样式 */
-.question-content h1,
-.question-content h2,
-.question-content h3,
-.question-content h4,
-.question-content h5,
-.question-content h6 {
-  margin: 24px 0 16px 0;
-  font-weight: 600;
-  color: #2c3e50;
-  line-height: 1.4;
+.chapter-navigation::-webkit-scrollbar-track,
+.content-area::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.question-content h1 {
-  font-size: 2em;
-  border-bottom: 2px solid #eaecef;
-  padding-bottom: 12px;
-  margin-bottom: 20px;
+.chapter-navigation::-webkit-scrollbar-thumb,
+.content-area::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 2px;
 }
 
-.question-content h2 {
-  font-size: 1.6em;
-  border-bottom: 1px solid #eaecef;
-  padding-bottom: 8px;
+.chapter-navigation::-webkit-scrollbar-thumb:hover,
+.content-area::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
 
-.question-content h3 {
-  font-size: 1.3em;
+/* 响应式设计 */
+/* 骨架屏自定义样式 - 适配深蓝色背景 */
+.loading-state :deep(.el-skeleton__item) {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
 }
 
-.question-content h4 {
-  font-size: 1.1em;
+.loading-state :deep(.el-skeleton__p) {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
 }
 
-.question-content h5 {
-  font-size: 1em;
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
-.question-content h6 {
-  font-size: 0.9em;
-  color: #6a737d;
+@media (max-width: 768px) {
+  .left-panel {
+    width: 240px;
+  }
+  
+  .chapter-list {
+    padding: 0 8px 20px 8px;
+  }
+  
+  .content-area {
+    padding: 16px;
+  }
+  
+  .function-buttons {
+    padding: 16px 20px;
+  }
 }
 
-/* 段落样式 */
-.question-content p {
-  margin: 16px 0;
-  text-align: justify;
-  text-justify: inter-ideograph;
-}
 
-/* 列表样式 */
-.question-content ul,
-.question-content ol {
-  margin: 16px 0;
-  padding-left: 24px;
-}
-
-.question-content li {
-  margin: 8px 0;
-  line-height: 1.6;
-}
-
-.question-content ul li {
-  list-style-type: disc;
-}
-
-.question-content ol li {
-  list-style-type: decimal;
-}
-
-/* 嵌套列表 */
-.question-content ul ul,
-.question-content ol ol,
-.question-content ul ol,
-.question-content ol ul {
-  margin: 4px 0;
-}
-
-/* 行内代码样式 */
-.question-content code {
-  background-color: #f6f8fa;
-  border: 1px solid #e1e4e8;
-  border-radius: 3px;
-  padding: 2px 6px;
-  font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', 'Courier', monospace;
-  font-size: 0.85em;
-  color: #d73a49;
-}
-
-/* 代码块样式 */
-.question-content pre {
-  background-color: #f6f8fa;
-  border: 1px solid #e1e4e8;
-  border-radius: 6px;
-  padding: 16px;
-  margin: 16px 0;
-  overflow-x: auto;
-  font-size: 0.85em;
-  line-height: 1.45;
-}
-
-.question-content pre code {
-  background: none;
-  border: none;
-  padding: 0;
-  color: #24292e;
-  font-size: inherit;
-}
-
-/* 引用样式 */
-.question-content blockquote {
-  border-left: 4px solid #dfe2e5;
-  margin: 16px 0;
-  padding: 0 16px;
-  color: #6a737d;
-  background-color: #f8f9fa;
-  border-radius: 0 3px 3px 0;
-}
-
-.question-content blockquote p {
-  margin: 12px 0;
-}
-
-/* 表格样式 */
-.question-content table {
-  border-collapse: collapse;
-  margin: 20px 0;
-  width: 100%;
-  border: 1px solid #d0d7de;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.question-content th,
-.question-content td {
-  border: 1px solid #d0d7de;
-  padding: 12px 16px;
-  text-align: left;
-  vertical-align: top;
-}
-
-.question-content th {
-  background-color: #f6f8fa;
-  font-weight: 600;
-  color: #24292e;
-}
-
-.question-content tr:nth-child(even) {
-  background-color: #f6f8fa;
-}
-
-.question-content tr:hover {
-  background-color: #f1f8ff;
-}
-
-/* 链接样式 */
-.question-content a {
-  color: #0969da;
-  text-decoration: none;
-  border-bottom: 1px solid transparent;
-  transition: all 0.2s ease;
-}
-
-.question-content a:hover {
-  color: #0550ae;
-  border-bottom-color: #0969da;
-}
-
-.question-content a:visited {
-  color: #8250df;
-}
-
-/* 强调样式 */
-.question-content strong {
-  font-weight: 600;
-  color: #24292e;
-}
-
-.question-content em {
-  font-style: italic;
-  color: #656d76;
-}
-
-/* 分隔线样式 */
-.question-content hr {
-  border: none;
-  height: 2px;
-  background-color: #d0d7de;
-  margin: 24px 0;
-  border-radius: 1px;
-}
-
-/* 删除线样式 */
-.question-content del {
-  text-decoration: line-through;
-  color: #656d76;
-}
-
-/* 高亮样式 */
-.question-content mark {
-  background-color: #fff8c5;
-  padding: 2px 4px;
-  border-radius: 3px;
-}
-
-/* 图片样式 */
-.question-content img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 6px;
-  margin: 16px 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* 任务列表样式 */
-.question-content input[type="checkbox"] {
-  margin-right: 8px;
-  transform: scale(1.1);
-}
-
-.question-content .task-list-item {
-  list-style: none;
-  margin-left: -20px;
-}
-
-/* 键盘按键样式 */
-.question-content kbd {
-  background-color: #f6f8fa;
-  border: 1px solid #d0d7de;
-  border-bottom-color: #afb8c1;
-  border-radius: 6px;
-  box-shadow: inset 0 -1px 0 #afb8c1;
-  color: #24292e;
-  display: inline-block;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
-  font-size: 11px;
-  line-height: 10px;
-  padding: 3px 5px;
-  vertical-align: middle;
-}
-
-/* 首行缩进优化 */
-.question-content p:first-child {
-  margin-top: 0;
-}
-
-.question-content p:last-child {
-  margin-bottom: 0;
-}
-
-.question-content code {
-  background: #f5f7fa;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-family: 'Courier New', monospace;
-  font-size: 14px;
-  color: #e6a23c;
-}
-
-.question-content pre {
-  background: #f5f7fa;
-  padding: 16px;
-  border-radius: 6px;
-  border: 1px solid #e4e7ed;
-  overflow-x: auto;
-  margin: 16px 0;
-}
-
-.question-content pre code {
-  background: none;
-  padding: 0;
-  color: #303133;
-}
-
-.question-content strong {
-  font-weight: 600;
-  color: #303133;
-}
-
-.question-content blockquote {
-  margin: 16px 0;
-  padding: 12px 16px;
-  background: #f8f9fa;
-  border-left: 4px solid #409eff;
-  color: #606266;
-}
 
 </style>

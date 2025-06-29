@@ -1,14 +1,25 @@
 :root[theme='light']{
-    --backgroundColor:rgba(243, 243, 240, 0.6);
-    --textColor:rgb(17, 16, 17);
-    --titleColor:rgb(25, 24, 28);
-
-
+    --backgroundColor:	#D2E9FFd0;
+    --textColor:#272727;
+    --textColor2:#686767;
+    --titleColor:#080808;
+    --titleColor2:#fcfcfc;
+    --shadowColor:rgba(0, 0, 0, 0.08);
+    --shadowColor2:rgba(0, 0, 0, 0.15);
+    --backgroundColor2: #42a4ff24;
+    --backgroundColor3: #ffffff83;
+    --borderColor:#e4e7ed;
 }
 
 :root[theme='dark']{
-    --backgroundColor:rgba(44, 43, 43, 0.6);
-    --textColor: rgb(237, 237, 232);
-    --titleColor:beige;
-
+    --backgroundColor:#000f2dd0;
+    --textColor: #f0f0f0;
+    --textColor2:rgb(173, 173, 173);
+    --titleColor:#fcfcfc;
+    --titleColor2:#080808;
+    --shadowColor:rgba(255, 255, 255, 0.08);
+    --shadowColor2:rgba(255, 255, 255, 0.4);
+    --backgroundColor2: #d2e9ff34;
+    --backgroundColor3: #00000045;
+    --borderColor:#505d9e;
 }

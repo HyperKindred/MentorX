@@ -1,60 +1,80 @@
 <template>
-  <div class="Main">
+  <div class="main">
     <el-card class="info-card">
       <el-row :gutter="20">
         <el-col :span="12">
-          <div class="info-item">
+          <div class="info-account">
             <strong>账号：</strong>{{ account }}
           </div>
         </el-col>
 
         <el-col :span="12">
-          <div class="info-item">
-            <strong>密码：</strong>
-            <span>******</span>
-            <el-button size="small" type="primary" @click="showPasswordEdit = !showPasswordEdit" class="edit-btn">
-              {{ showPasswordEdit ? '取消修改' : '修改密码' }}
-            </el-button>
+          <div class="info-name">
+            <template v-if="editName">
+              <div class="name">
+              <strong>姓名：</strong>
+              <el-input v-model="name" size="small" class="inline-input" />
+              </div>
+              <div class="name_btn">
+              <el-button size="small" @click="cancelEditName" class="edit-btn">取消</el-button>
+              <el-button size="small" type="success" @click="saveInfo('name')" class="edit-btn">保存</el-button>
+              </div>
+            </template>
+            <template v-else>
+              <div class="name">
+              <strong>姓名：</strong>
+              <span>{{ name }}</span>
+              </div>
+              <el-button size="small" @click="startEditName" class="edit-btn">修改</el-button>
+            </template>
           </div>
         </el-col>
 
+
         <el-col :span="12">
-          <div class="info-item">
-            <strong>性别：</strong>
+          <div class="info-gender">
             <template v-if="editGender">
-              <el-select v-model="gender" placeholder="请选择" size="small" class="genderSelect">
-                <el-option label="男" value="male" />
-                <el-option label="女" value="female" />
-                <el-option label="保密" value="unknow" />
-              </el-select>
+              <div class="gender">
+                <strong>性别：</strong>
+                <el-select v-model="gender" placeholder="请选择" size="small" class="genderSelect">
+                  <el-option label="男" value="male" />
+                  <el-option label="女" value="female" />
+                  <el-option label="保密" value="unknow" />
+                </el-select>
+              </div>
+              <div class="gender_btn">
               <el-button size="small" @click="cancelEditGender" class="edit-btn">取消</el-button>
               <el-button size="small" type="success" @click="saveInfo('gender')" class="edit-btn">保存</el-button>
+              </div>
+
             </template>
             <template v-else>
+              <div class="gender">
+                <strong>性别：</strong>
               <span>{{ genderText }}</span>
+              </div>              
               <el-button size="small" @click="startEditGender" class="edit-btn">修改</el-button>
             </template>
           </div>
         </el-col>
 
         <el-col :span="12">
-          <div class="info-item">
+          <div class="info-type">
             <strong>身份：</strong>{{ getTypeLabel(type) }}
           </div>
         </el-col>
 
+
         <el-col :span="12">
-          <div class="info-item">
-            <strong>姓名：</strong>
-            <template v-if="editName">
-              <el-input v-model="name" size="small" class="inline-input" />
-              <el-button size="small" @click="cancelEditName" class="edit-btn">取消</el-button>
-              <el-button size="small" type="success" @click="saveInfo('name')" class="edit-btn">保存</el-button>
-            </template>
-            <template v-else>
-              <span>{{ name }}</span>
-              <el-button size="small" @click="startEditName" class="edit-btn">修改</el-button>
-            </template>
+          <div class="info-password">
+            <div class="password">
+            <strong>密码：</strong>
+            <span>******</span>
+            </div>
+
+            <el-button size="small" type="primary" @click="showPasswordEdit = !showPasswordEdit" class="edit-btn">
+              {{ showPasswordEdit ? '取消修改' : '修改密码' }}
+            </el-button>
           </div>
         </el-col>
       </el-row>
@@ -201,23 +221,71 @@ const cancelEditGender = () => {
 </script>
 
 <style scoped>
-
-.info-card {
+.main {
   font-family: Arial, Helvetica, sans-serif;
-  width: 80%;
-  margin: 50px auto;
-  padding: 20px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
 }
-.info-item {
+
+.info-card {
+  width: 60%;
+  margin: 50px auto;
+  padding: 20px;
+}
+
+.info-card .el-row {
+  display: flex;
+  flex-wrap: wrap;
+  max-width: 750px;
+}
+
+.info-card .el-col {
+  flex: 0 0 50%;
+  max-width: 400px;
+}
+.info-account {
   font-size: 16px;
   margin-bottom: 12px;
   display: flex;
-
+  flex-direction: row;
+  justify-content: left;
+  margin-right: 2rem;
 }
+
+.info-name {
+  font-size: 16px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.info-gender {
+  font-size: 16px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-right: 2rem;
+}
+
+.info-type {
+  font-size: 16px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: row;
+  justify-content: left;
+}
+.info-password {
+  font-size: 16px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-right: 2rem;
+}
+
 .genderSelect {
   width: 4rem;
 }
@@ -253,6 +321,28 @@ const cancelEditGender = () => {
   border: none;
 }
 
+.main {
+  font-family: Arial, Helvetica, sans-serif;
+}
 
+@media (max-width: 1068px) {
+  .info-card .el-col {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .info-gender {
+    margin-right: 0;
+  }
+
+  .info-password {
+    margin-right: 0;
+  }
+}
 
 </style>

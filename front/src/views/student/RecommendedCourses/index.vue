@@ -199,8 +199,6 @@ const joinCourse = async (course: RecommendedCourse) => {
       timeout: 3000
     });
 
-    console.log(response)
-
     if (response.data.ret === 0) {
       ElMessage.success('成功加入课程');
       // 更新学生人数
@@ -245,7 +243,6 @@ const isCourseEnrolled = (courseId: number): boolean => {
 onMounted(async () => {
   await fetchEnrolledCourses();
   await fetchCourses();
-  console.log('推荐课程组件已加载');
 });
 </script>
 
@@ -255,13 +252,11 @@ onMounted(async () => {
   padding: 20px;
   background-color: transparent;
   min-height: 100%;
-  color: white;
 }
 
 .h2 {
     margin: 0.2rem;
     font-size: 1rem;
-    color: white;
 }
 
 .p {
@@ -304,9 +299,9 @@ onMounted(async () => {
 }
 
 .section-title {
-  font-size: 24px;
+  font-size: 30px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--titleColor);
   margin: 0;
 }
 
@@ -361,17 +356,17 @@ onMounted(async () => {
 
 /* 课程卡片样式 */
 .course-card {
-  background: rgba(255, 255, 255, 0.835);
+  background: #fdfffff0;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 12px var(--shadowColor);
   transition: all 0.3s ease;
   color: #080808;
 }
 
 .course-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 25px var(--shadowColor2);
 }
 
 
@@ -379,6 +374,7 @@ onMounted(async () => {
 .course-content {
   color: #080808;
   padding: 20px;
+  padding-bottom: 5px;
 }
 
 .course-title {
@@ -424,5 +420,38 @@ onMounted(async () => {
   justify-content: center;
   align-items: center;
   height: 400px; /* or any other height */
+}
+
+/* 骨架屏自定义样式 - 适配深蓝色背景 */
+.loading-state :deep(.el-skeleton__item) {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+.loading-state :deep(.el-skeleton__p) {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .courses-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .course-card {
+    padding: 16px;
+  }
 }
 </style>

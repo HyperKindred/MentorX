@@ -74,7 +74,6 @@ interface MyCourse {
   teacher_id: number;
   teacher_name: string;
   student_num: number;
-  image?: string;
 }
 
 // 响应式数据
@@ -149,8 +148,7 @@ const store = mainStore();
  * @param course 课程对象
  */
 const openCourse = (course: MyCourse) => {
-  localStorage.setItem('currentCourse', JSON.stringify(course));
-  store.addTab(`${course.name}`, Course);
+  store.addTab(`${course.name}`, Course, { courseData: course });
 };
 
 
@@ -159,7 +157,6 @@ const openCourse = (course: MyCourse) => {
  * 组件挂载时的初始化操作
  */
 onMounted(() => {
-  console.log('我的课程组件已加载');
   fetchMyCourses();
 });
 </script>
@@ -180,7 +177,7 @@ onMounted(() => {
 .page-title {
   font-size: 28px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--titleColor);
   margin: 0 0 8px 0;
 }
 
@@ -209,7 +206,7 @@ onMounted(() => {
   border-radius: 8px;
   padding: 0 24px;
   margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px var(--shadowColor);
 }
 
 .course-filters :deep(.el-tabs__header) {
@@ -224,7 +221,7 @@ onMounted(() => {
 .courses-container {
   background: transparent;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px var(--shadowColor);
   margin-left: 2rem;
   margin-right: 2rem;
 }
@@ -246,8 +243,8 @@ onMounted(() => {
   display: flex;
   align-items: center;
   padding: 24px;
-  margin-bottom: 0.5rem;
-  background-color: #f8f8f8;
+  margin-bottom: 1rem;
+  background-color: #f8f8f8f8;
   transition: background-color 0.2s ease;
   cursor: pointer;
   border-radius: 8px;
@@ -261,24 +258,6 @@ onMounted(() => {
   background-color: #fafbfc;
 }
 
-/* 课程图片样式 */
-.course-image {
-  position: relative;
-  width: 120px;
-  height: 80px;
-  border-radius: 8px;
-  overflow: hidden;
-  margin-right: 20px;
-  flex-shrink: 0;
-}
-
-.course-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-
 
 /* 课程信息样式 */
 .course-info {
@@ -289,9 +268,9 @@ onMounted(() => {
 .course-title {
   font-size: 18px;
   font-weight: 600;
-  color: #2c3e50;
-  margin: 0 0 8px 0;
+  color: #213244;
   line-height: 1.4;
+  margin-bottom: 3px;
 }
 
 .course-instructor {
@@ -328,28 +307,6 @@ onMounted(() => {
 
 
 
-/* 课程操作样式 */
-.course-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-left: 20px;
-}
-
-.course-menu {
-  margin-left: 8px;
-}
-
-.menu-btn {
-  padding: 8px;
-  color: #7f8c8d;
-}
-
-.menu-btn:hover {
-  color: #409eff;
-  background-color: #f0f9ff;
-}
-
 /* 响应式设计 */
 @media (max-width: 768px) {
   .my-courses {
@@ -379,6 +336,28 @@ onMounted(() => {
   
   .course-meta {
     gap: 12px;
+  }
+}
+
+/* 骨架屏自定义样式 - 适配深蓝色背景 */
+.loading-state :deep(.el-skeleton__item) {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+.loading-state :deep(.el-skeleton__p) {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
   }
 }
 

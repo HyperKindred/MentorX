@@ -44,13 +44,13 @@
             <div class="overlay-container">
                 <div class="overlay">
                     <div class="overlay-pannel overlay-left">
-                        <h1>已有账号?</h1>
-                        <p>用现有账号直接登录</p>
+                        <h1 style="margin-bottom: 1.2rem;">已有账号?</h1>
+                        <p style="margin-bottom: 2rem;">用现有账号直接登录</p>
                         <button class="ghost" @click="goSignIn">登录</button>
                     </div>
                     <div class="overlay-pannel overlay-right">
-                        <h1>没有账号?</h1>
-                        <p>注册一个账号</p>
+                        <h1 style="margin-bottom: 1.2rem;">没有账号?</h1>
+                        <p style="margin-bottom: 2rem;">注册一个账号</p>
                         <button class="ghost" @click="goSignUp">注册</button>
                     </div>
                 </div>
@@ -274,7 +274,6 @@ onMounted(() => {
 }
 
 .form-container button {
-    padding: 0.4rem 1rem;
     background-color: #417dff;
     color: white;
     border: 1px solid #fff;
@@ -309,11 +308,13 @@ button.ghost{
 
 button.ghost:active{
     transform: scale(0.95 0.95);
+    background-color: rgba(255, 255, 255, 0.555);
 }
 
 button.ghost:hover{
-    color: rgb(225, 225, 225);
+    color: rgb(255, 255, 255);
     border-color: rgb(225, 225, 225);
+    background-color: rgba(179, 192, 247, 0.301);
 }
 
 .form-container {
@@ -337,7 +338,7 @@ button.ghost:hover{
 }
 
 .overlay {
-    background-color: #1c3976ac;
+    background-color: #417dff;
     width: 200%;
     height: 100%;
     position: relative;
@@ -368,6 +369,7 @@ button.ghost:hover{
     height: 100%;
     padding: 0 2.2rem;
 }
+
 
 .overlay-right {
     right: 0;
@@ -401,6 +403,18 @@ button.ghost:hover{
     transform: translateX(20%);
     transition: all 0.6s ease-in-out;
 }
+.gender,
+.type {
+    display: flex;
+    flex-direction: row;
+    padding: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+}
 
-
+.input-title {
+    padding-top: 0.3rem;
+    padding-right: 1rem;
+    font-size: 15px;
+}
 </style>

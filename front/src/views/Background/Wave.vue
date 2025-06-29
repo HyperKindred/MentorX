@@ -20,7 +20,8 @@ export default {
         minHeight: 200.00,
         minWidth: 200.00,
         scale: 1.00,
-        scaleMobile: 1.00
+        scaleMobile: 1.00,
+        color: 0x797979
       });
     });
 
@@ -49,8 +50,8 @@ export default {
     position: absolute; /* 让背景定位相对于父级元素 */
     top: 0;
     left: 0;
-    width: 100%; /* 覆盖整个父级元素 */
-    height: 100%; /* 覆盖整个父级元素 */
+    min-height: 100vh;
+    min-width: 100vw;
     z-index: -1; /* 将背景放在内容后面 */
   }
 </style>

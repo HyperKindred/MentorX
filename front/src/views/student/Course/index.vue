@@ -1,13 +1,7 @@
 <template>
   <div class="course-page">
     <!-- 左侧面板 -->
-    <div class="left-panel">
-      <!-- 课程信息 -->
-      <div class="course-header" v-if="courseInfo">
-        <h2 class="course-name">{{ courseInfo.name }}</h2>
-        <p class="course-teacher">讲师：{{ courseInfo.teacher_name }}</p>
-      </div>
-      
+    <div class="left-panel">   
       <!-- 章节导航 -->
       <div class="chapter-navigation">
         <h3 class="nav-title">课程章节</h3>
@@ -19,7 +13,6 @@
             :class="{ active: activeChapter === chapter.id }"
             @click="selectChapter(chapter)"
           >
-            <span class="chapter-number">{{ index + 1 }}</span>
             <span class="chapter-title">{{ chapter.name }}</span>
           </div>
         </div>
@@ -28,30 +21,54 @@
     
     <!-- 右侧面板 -->
     <div class="right-panel">
-      <!-- 横向导航栏 -->
-      <div class="top-navigation">
-        <el-tabs v-model="activeTab" @tab-click="handleTabClick">
-          <el-tab-pane label="课件" name="courseware"></el-tab-pane>
-          <el-tab-pane label="习题" name="exercises"></el-tab-pane>
-          <el-tab-pane label="个人练习" name="practice"></el-tab-pane>
-          <el-tab-pane label="AI助手" name="ai-assistant"></el-tab-pane>
-        </el-tabs>
+      <!-- 功能按钮组 -->
+      <div class="function-buttons">
+        <div class="button-group">
+          <el-button 
+             type="primary" 
+             :icon="Document" 
+             class="function-btn active"
+             disabled
+           >
+             课件学习
+           </el-button>
+           <el-button 
+             type="default" 
+             :icon="Edit" 
+             class="function-btn"
+             @click="openExercises"
+           >
+             章节习题
+           </el-button>
+           <el-button 
+             type="default" 
+             :icon="Notebook" 
+             class="function-btn"
+             @click="openPractice"
+           >
+             个人练习
+           </el-button>
+           <el-button 
+             type="default" 
+             :icon="ChatDotRound" 
+             class="function-btn"
+             @click="openAiAssistant"
+           >
+             AI助手
+           </el-button>
+        </div>
       </div>
       
       <!-- 内容展示区域 -->
       <div class="content-area">
-        <div v-if="activeTab === 'courseware'" class="courseware-content">
+        <div class="courseware-content">
           <div v-if="currentCourseware" class="courseware-display">
             <h3 class="content-title">{{ currentCourseware.title }}</h3>
-            <div class="courseware-body" v-html="currentCourseware.content"></div>
+            <div class="courseware-body markdown-content" v-html="currentCourseware.content"></div>
           </div>
           <div v-else class="empty-content">
             <el-empty description="暂无课件内容" />
           </div>
-        </div>
-        
-        <div v-else class="placeholder-content">
-          <el-empty :description="getPlaceholderText()" />
         </div>
       </div>
     </div>
@@ -59,14 +76,27 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onActivated, watch } from 'vue';
 import { ElMessage } from 'element-plus';
+import { Document, Edit, Notebook, ChatDotRound } from '@element-plus/icons-vue';
 import { mainStore } from '../../../store/index.ts';
 import axios from 'axios';
 import { marked } from 'marked';
 import Exercises from '../Exercises/index.vue';
 import Practice from '../Practice/index.vue';
 import AiAssistant from '../AiAssistant/index.vue';
+import '@/assets/style/markdown.css';
+
+/**
+ * 组件Props定义
+ */
+interface Props {
+  courseData?: CourseInfo;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  courseData: undefined
+});
 
 interface Chapter {
   id: number;
@@ -81,11 +111,9 @@ interface CourseInfo {
 }
 
 const store = mainStore();
-const activeTab = ref('courseware');
 const activeChapter = ref<number | null>(null);
 const courseInfo = ref<CourseInfo | null>(null);
 const chapters = ref<Chapter[]>([]);
-
 /**
  * Markdown渲染器实例
  */
@@ -119,69 +147,111 @@ const currentCourseware = computed(() => {
   };
 });
 
-// 选择章节
+/**
+ * 选择章节
+ * @param chapter 章节对象
+ */
 const selectChapter = (chapter: Chapter) => {
   activeChapter.value = chapter.id;
-  // 切换章节时自动回到课件标签
-  activeTab.value = 'courseware';
 };
 
-// 处理标签页点击
-const handleTabClick = (tab: any) => {
-  const tabName = tab.props.name;
-  
-  if (tabName !== 'courseware') {
-    let tabTitle = '';
-    let component: any = null;
-
-    switch (tabName) {
-      case 'exercises':
-        tabTitle = '习题';
-        component = Exercises;
-        break;
-      case 'practice':
-        tabTitle = '个人练习';
-        component = Practice;
-        break;
-      case 'ai-assistant':
-        tabTitle = 'AI助手';
-        component = AiAssistant;
-        break;
-    }
-    
-    if (tabTitle && component) {
-      store.addTab(tabTitle, component);
-      // 切换回课件，避免在当前页面显示空内容
-      activeTab.value = 'courseware';
-    }
-  }
-};
-
-// 获取占位符文本
-const getPlaceholderText = () => {
-  switch (activeTab.value) {
-    case 'exercises':
-      return '习题功能开发中...';
-    case 'practice':
-      return '个人练习功能开发中...';
-    case 'ai-assistant':
-      return 'AI助手功能开发中...';
-    default:
-      return '内容加载中...';
-  }
-};
-
-onMounted(() => {
-  const storedCourse = localStorage.getItem('currentCourse');
-  if (storedCourse) {
-    courseInfo.value = JSON.parse(storedCourse);
-    if (courseInfo.value) {
-      getChapterList(courseInfo.value.id);
-    }
+/**
+ * 打开习题页面
+ */
+const openExercises = () => {
+  if (courseInfo.value && chapters.value.length > 0) {
+    store.addTab('章节习题', Exercises, {
+      courseData: courseInfo.value,
+      chapterData: chapters.value,
+      activeChapterId: activeChapter.value
+    });
   } else {
-    ElMessage.error('无法加载课程信息');
+    ElMessage.warning('课程信息不完整，无法跳转');
   }
+};
+
+/**
+ * 打开个人练习页面
+ */
+const openPractice = () => {
+  if (courseInfo.value && chapters.value.length > 0) {
+    store.addTab('个人练习', Practice, {
+      courseData: courseInfo.value,
+      chapterData: chapters.value,
+      activeChapterId: activeChapter.value
+    });
+  } else {
+    ElMessage.warning('课程信息不完整，无法跳转');
+  }
+};
+
+/**
+ * 打开AI助手页面
+ */
+const openAiAssistant = () => {
+  if (courseInfo.value && chapters.value.length > 0) {
+    store.addTab('AI助手', AiAssistant, {
+      courseData: courseInfo.value,
+      chapterData: chapters.value,
+      activeChapterId: activeChapter.value
+    });
+  } else {
+    ElMessage.warning('课程信息不完整，无法跳转');
+  }
+};
+
+
+
+/**
+  * 初始化课程数据
+  * 优先使用props传递的课程数据，然后回退到localStorage
+  */
+ const initCourseData = () => {
+   let newCourseInfo: CourseInfo | null = null;
+   
+   // 优先使用props传递的课程数据
+   if (props.courseData) {
+     newCourseInfo = props.courseData;
+   }
+   
+   if (newCourseInfo) {
+     // 检查是否需要更新课程数据
+     if (!courseInfo.value || courseInfo.value.id !== newCourseInfo.id) {
+       courseInfo.value = newCourseInfo;
+       getChapterList(newCourseInfo.id);
+     }
+   } else {
+     ElMessage.error('无法加载课程信息');
+   }
+ };
+
+/**
+ * 组件首次挂载时初始化课程数据
+ */
+onMounted(() => {
+  initCourseData();
 });
+
+/**
+  * keep-alive组件激活时检查并更新课程数据
+  */
+ onActivated(() => {
+   initCourseData();
+ });
+
+/**
+ * 监听courseData props变化，当传入新的课程数据时更新组件状态
+ */
+watch(
+  () => props.courseData,
+  (newCourseData) => {
+    if (newCourseData && (!courseInfo.value || courseInfo.value.id !== newCourseData.id)) {
+      courseInfo.value = newCourseData;
+      getChapterList(newCourseData.id);
+    }
+  },
+  { immediate: false }
+);
 
 /**
  * 获取课程章节列表
@@ -223,37 +293,22 @@ const getChapterList = async (courseId: number) => {
 .course-page {
   display: flex;
   height: 100%;
-  background-color: #f5f7fa;
+  background-color: transparent;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 /* 左侧面板 */
 .left-panel {
   width: 300px;
-  background: white;
-  border-right: 1px solid #e4e7ed;
+  background: var(--backgroundColor2);
+  border-right: 1.5px solid transparent;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
   display: flex;
   flex-direction: column;
 }
 
-.course-header {
-  padding: 24px 20px;
-  border-bottom: 1px solid #e4e7ed;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
 
-.course-name {
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0 0 8px 0;
-  line-height: 1.4;
-}
-
-.course-teacher {
-  font-size: 14px;
-  margin: 0;
-  opacity: 0.9;
-}
 
 .chapter-navigation {
   flex: 1;
@@ -263,13 +318,15 @@ const getChapterList = async (courseId: number) => {
 .nav-title {
   font-size: 16px;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--titleColor);
   margin: 0;
   padding: 20px 20px 16px 20px;
 }
 
 .chapter-list {
-  padding: 0 12px 20px 12px;
+  padding-bottom: 20px;
+  padding-left: 5px;
+  padding-right: 5px;
 }
 
 .chapter-item {
@@ -277,41 +334,26 @@ const getChapterList = async (courseId: number) => {
   align-items: center;
   padding: 12px 16px;
   margin-bottom: 4px;
-  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
   border: 1px solid transparent;
+  border-radius: 5px;
+  background-color: transparent;
+  color: var(--textColor2);
 }
 
 .chapter-item:hover {
-  background-color: #f8f9fa;
-  border-color: #e4e7ed;
+  background-color: var(--backgroundColor2);
+  color: var(--titleColor);
 }
 
 .chapter-item.active {
-  background-color: #e8f4fd;
-  border-color: #409eff;
-  color: #409eff;
+  background-color: transparent;
+  color: var(--titleColor);
+  background-color: var(--backgroundColor2);
+  font-weight: 540;
 }
 
-.chapter-number {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  background-color: #f0f2f5;
-  border-radius: 50%;
-  font-size: 12px;
-  font-weight: 600;
-  margin-right: 12px;
-  flex-shrink: 0;
-}
-
-.chapter-item.active .chapter-number {
-  background-color: #409eff;
-  color: white;
-}
 
 .chapter-title {
   font-size: 14px;
@@ -324,311 +366,160 @@ const getChapterList = async (courseId: number) => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: white;
+  background: transparent;
 }
 
-.top-navigation {
-  border-bottom: 1px solid #e4e7ed;
-  padding: 0 24px;
+/* 功能按钮组样式 */
+.function-buttons {
+  padding: 20px 24px;
+  background: transparent;
 }
 
-.top-navigation :deep(.el-tabs__header) {
-  margin: 0;
+.button-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
-.top-navigation :deep(.el-tabs__nav-wrap::after) {
-  display: none;
+.function-btn {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 12px 20px;
+  transition: all 0.3s ease;
+  border: 1px solid var(--textColor2);
+  background-color: var(--backgroundColor2);
+  color: var(--textColor2);
 }
 
+.function-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadowColor2);
+  color: var(--textColor);
+  border: 1.5px solid var(--textColor);
+}
+
+.function-btn.active {
+  background: #417dff;
+  border-color: #409eff;
+  color: white;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.4);
+}
+
+.function-btn :deep(.el-icon) {
+  margin-right: 6px;
+}
+
+/* 内容区域样式优化 */
 .content-area {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
-  text-align: left;
+  padding: 32px;
+  background: transparent;
 }
 
 .courseware-content {
-  max-width: 800px;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
-.content-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 0 0 24px 0;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #e4e7ed;
-}
-
-.courseware-body {
-  line-height: 1.6;
-  color: #5a6c7d;
-  font-size: 14px;
-}
-
-/* 课件内容 Markdown 样式 - Typora风格 */
-.courseware-body {
-  line-height: 1.7;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  font-size: 14px;
-  color: #2c3e50;
-}
-
-/* 标题样式 */
-.courseware-body h1,
-.courseware-body h2,
-.courseware-body h3,
-.courseware-body h4,
-.courseware-body h5,
-.courseware-body h6 {
-  margin: 24px 0 16px 0;
-  font-weight: 600;
-  color: #2c3e50;
-  line-height: 1.4;
-}
-
-.courseware-body h1 {
-  font-size: 2em;
-  border-bottom: 2px solid #eaecef;
-  padding-bottom: 12px;
-  margin-bottom: 20px;
-}
-
-.courseware-body h2 {
-  font-size: 1.6em;
-  border-bottom: 1px solid #eaecef;
-  padding-bottom: 8px;
-}
-
-.courseware-body h3 {
-  font-size: 1.3em;
-}
-
-.courseware-body h4 {
-  font-size: 1.1em;
-}
-
-.courseware-body h5 {
-  font-size: 1em;
-}
-
-.courseware-body h6 {
-  font-size: 0.9em;
-  color: #6a737d;
-}
-
-/* 段落样式 */
-.courseware-body p {
-  margin: 16px 0;
-  text-align: justify;
-  text-justify: inter-ideograph;
-}
-
-/* 列表样式 */
-.courseware-body ul,
-.courseware-body ol {
-  margin: 16px 0;
-  padding-left: 24px;
-}
-
-.courseware-body li {
-  margin: 8px 0;
-  line-height: 1.6;
-}
-
-.courseware-body ul li {
-  list-style-type: disc;
-}
-
-.courseware-body ol li {
-  list-style-type: decimal;
-}
-
-/* 嵌套列表 */
-.courseware-body ul ul,
-.courseware-body ol ol,
-.courseware-body ul ol,
-.courseware-body ol ul {
-  margin: 4px 0;
-}
-
-/* 引用样式 */
-.courseware-body blockquote {
-  border-left: 4px solid #dfe2e5;
-  margin: 16px 0;
-  padding: 0 16px;
-  color: #6a737d;
-  background-color: #f8f9fa;
-  border-radius: 0 3px 3px 0;
-}
-
-.courseware-body blockquote p {
-  margin: 12px 0;
-}
-
-/* 行内代码样式 */
-.courseware-body code {
-  background-color: #f6f8fa;
-  border: 1px solid #e1e4e8;
-  border-radius: 3px;
-  padding: 2px 6px;
-  font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', 'Courier', monospace;
-  font-size: 0.85em;
-  color: #d73a49;
-}
-
-/* 代码块样式 */
-.courseware-body pre {
-  background-color: #f6f8fa;
-  border: 1px solid #e1e4e8;
-  border-radius: 6px;
-  padding: 16px;
-  margin: 16px 0;
-  overflow-x: auto;
-  font-size: 0.85em;
-  line-height: 1.45;
-}
-
-.courseware-body pre code {
-  background: none;
-  border: none;
-  padding: 0;
-  color: #24292e;
-  font-size: inherit;
-}
-
-/* 表格样式 */
-.courseware-body table {
-  border-collapse: collapse;
-  margin: 20px 0;
-  width: 100%;
-  border: 1px solid #d0d7de;
-  border-radius: 6px;
+/* 课件展示卡片样式 */
+.courseware-display {
+  background-color: var(--backgroundColor3);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px var(--shadowColor);
   overflow: hidden;
+  transition: all 0.3s ease;
 }
 
-.courseware-body th,
-.courseware-body td {
-  border: 1px solid #d0d7de;
-  padding: 12px 16px;
+.courseware-display:hover {
+  box-shadow: 0 8px 30px var(--shadowColor2);
+  transform: translateY(-2px);
+}
+
+/* 课件标题样式 */
+.content-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--titleColor);
+  margin: 0;
+  padding: 32px 32px 24px 32px;
+  background: var(--backgroundColor3);
+}
+
+/* 课件内容容器 */
+.courseware-body {
+  padding-left: 4rem;
+  padding-right: 4rem;
+  padding-top: 10px;
+  padding-bottom: 2rem;
   text-align: left;
-  vertical-align: top;
+  background: var(--backgroundColor3);
 }
 
-.courseware-body th {
-  background-color: #f6f8fa;
-  font-weight: 600;
-  color: #24292e;
-}
-
-.courseware-body tr:nth-child(even) {
-  background-color: #f6f8fa;
-}
-
-.courseware-body tr:hover {
-  background-color: #f1f8ff;
-}
-
-/* 链接样式 */
-.courseware-body a {
-  color: #0969da;
-  text-decoration: none;
-  border-bottom: 1px solid transparent;
-  transition: all 0.2s ease;
-}
-
-.courseware-body a:hover {
-  color: #0550ae;
-  border-bottom-color: #0969da;
-}
-
-.courseware-body a:visited {
-  color: #8250df;
-}
-
-/* 图片样式 */
-.courseware-body img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 6px;
-  margin: 16px 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* 分隔线样式 */
-.courseware-body hr {
-  border: none;
-  height: 2px;
-  background-color: #d0d7de;
-  margin: 24px 0;
-  border-radius: 1px;
-}
-
-/* 强调样式 */
-.courseware-body strong {
-  font-weight: 600;
-  color: #24292e;
-}
-
-.courseware-body em {
-  font-style: italic;
-  color: #656d76;
-}
-
-/* 删除线样式 */
-.courseware-body del {
-  text-decoration: line-through;
-  color: #656d76;
-}
-
-/* 高亮样式 */
-.courseware-body mark {
-  background-color: #fff8c5;
-  padding: 2px 4px;
-  border-radius: 3px;
-}
-
-/* 任务列表样式 */
-.courseware-body input[type="checkbox"] {
-  margin-right: 8px;
-  transform: scale(1.1);
-}
-
-.courseware-body .task-list-item {
-  list-style: none;
-  margin-left: -20px;
-}
-
-/* 键盘按键样式 */
-.courseware-body kbd {
-  background-color: #f6f8fa;
-  border: 1px solid #d0d7de;
-  border-bottom-color: #afb8c1;
-  border-radius: 6px;
-  box-shadow: inset 0 -1px 0 #afb8c1;
-  color: #24292e;
-  display: inline-block;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
-  font-size: 11px;
-  line-height: 10px;
-  padding: 3px 5px;
-  vertical-align: middle;
-}
-
-/* 首行缩进优化 */
-.courseware-body p:first-child {
-  margin-top: 0;
-}
-
-.courseware-body p:last-child {
-  margin-bottom: 0;
-}
-
-.empty-content,
-.placeholder-content {
+/* 空状态样式优化 */
+.empty-content {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 300px;
+  min-height: 400px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+  margin: 0 auto;
+  max-width: 900px;
+}
+
+.empty-content :deep(.el-empty) {
+  padding: 60px 40px;
+}
+
+.empty-content :deep(.el-empty__image) {
+  width: 120px;
+  height: 120px;
+}
+
+.empty-content :deep(.el-empty__description) {
+  color: #64748b;
+  font-size: 16px;
+  margin-top: 24px;
+  font-weight: 500;
+}
+
+/* 滚动条样式 */
+.chapter-navigation::-webkit-scrollbar,
+.content-area::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chapter-navigation::-webkit-scrollbar-track,
+.content-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chapter-navigation::-webkit-scrollbar-thumb,
+.content-area::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 2px;
+}
+
+.chapter-navigation::-webkit-scrollbar-thumb:hover,
+.content-area::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .left-panel {
+    width: 240px;
+  }
+  
+  .content-area {
+    padding: 16px;
+  }
+  
+  .function-buttons {
+    padding: 16px 20px;
+  }
 }
 </style>
