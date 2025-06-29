@@ -395,7 +395,7 @@ const getChapterList = async (courseId: number) => {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px var(--shadowColor2);
   color: var(--textColor);
-  border: 1.5px solid var(--textColor);
+  border: 1px solid var(--textColor2);
 }
 
 .function-btn.active {

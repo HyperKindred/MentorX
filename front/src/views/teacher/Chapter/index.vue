@@ -12,8 +12,10 @@
             <el-space direction="vertical" fill>
               <div class="chapter-item" v-for="chapter in chapters" :key="chapter.id" @click="handleChapterClick(chapter)">
                 <span class="chapter-title">{{ chapter.name }}</span>
-                <el-button type="text" class='chapterBtn' style="color: white;" @click.stop="renameChapter(chapter)">重命名</el-button>
-                <el-button type="text" class='chapterBtn' style="color: red" @click.stop="deleteChapter(chapter.id)">删除</el-button>
+                <div class="chapter-actions">
+                  <el-button size="small" type="primary" plain class="function-btn chapter-btn" :icon="Edit" @click.stop="renameChapter(chapter)">重命名</el-button>
+                  <el-button size="small" type="primary" plain class="function-btn chapter-btn" :icon="Delete" @click.stop="deleteChapter(chapter.id)">删除</el-button>
+                </div>
               </div>
             </el-space>
           </div>
@@ -25,12 +27,32 @@
       <div class="header">
         <h3 class="chapterTitle">{{ selectedChapter.name }}</h3>
       </div>
-      <div class="header-btn">
-        <el-button type="primary" class='head-btn' @click="showExercises">习题</el-button>
-        <el-button type="primary" class='head-btn' @click="toggleEditContent">
-          {{ isEditing ? '保存' : '修改' }}
-        </el-button>
-        <el-button type="primary" @click="exportToWord" class='head-btn'>导出为 Word</el-button>
+      <!-- 功能按钮组 -->
+      <div class="function-buttons">
+        <div class="button-group">
+          <el-button 
+             type="primary" 
+             :icon="Document" 
+             class="function-btn active"
+             disabled
+           >
+             课件学习
+           </el-button>
+           <el-button 
+             type="default" 
+             :icon="Edit" 
+             class="function-btn"
+             @click="showExercises"
+           >
+             章节习题
+           </el-button>
+        </div>
+        <div class="edit-buttons">
+          <el-button type="primary" class='function-btn' @click="toggleEditContent">
+            {{ isEditing ? '保存' : '修改' }}
+          </el-button>
+          <el-button type="primary" @click="exportToWord" class='function-btn'>导出为 Word</el-button>
+        </div>
       </div>
 
 
@@ -71,6 +93,7 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { marked } from 'marked';
 import { ElMessage } from 'element-plus';
+import { Document, Edit, Delete } from '@element-plus/icons-vue';
 import T_Exercises from '../Exercises/index.vue'
 const store = mainStore();
 const courseId = ref('');
@@ -125,7 +148,7 @@ const handleAddChapter = () => {
   }
   const formData = new FormData();
   formData.append('chapter', Cname.value)
-  formData.append('Cno', courseId)
+  formData.append('Cno', courseId.value)
   axios({
     method: 'post',
     url: `${store.ip}/api/teacher/generate_teachcontent`,
@@ -328,6 +351,7 @@ onMounted(() => {
 .chapter-item {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 12px 16px;
   margin-bottom: 4px;
   cursor: pointer;
@@ -356,21 +380,23 @@ onMounted(() => {
   flex: 1;
 }
 
-.chapter-btn {
-  flex-grow: 1;
-  margin-right: 4px;
+.chapter-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: 16px;
+  opacity: 1;
+  transition: all 0.2s ease;
 }
 
-
-.chapterBtn {
-  width: 2rem;
-  height: 2rem;
-  margin-left: 1rem;
-  font-size: 11px;
+.chapter-actions .chapter-btn.function-btn {
+  font-size: 10px;
+  padding: 2px 6px;
+  height: auto;
+  min-height: 20px;
+  border-radius: 4px;
+  font-weight: 500;
 }
 
-.chapterBtn:hover {
-}
 .nav-title {
   font-size: 16px;
   font-weight: 600;
@@ -379,6 +405,7 @@ onMounted(() => {
   margin-right: auto;
   padding: 20px 20px 16px 20px;
 }
+
 .add-btn {
   width: 4rem;
   height: 2rem;
@@ -412,6 +439,12 @@ onMounted(() => {
   background: transparent;
 }
 
+.content-area {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .chapter-content {
   flex: 1;
   overflow-y: auto;
@@ -428,16 +461,53 @@ onMounted(() => {
   margin-top: 1.5rem;
 }
 
-.header-btn {
+/* 功能按钮组样式 */
+.function-buttons {
   display: flex;
-  flex-direction: row;
+  justify-content: space-between;
   align-items: center;
-  justify-content: end;
-  margin-right: 2rem;
+  padding: 20px 24px;
+  background: transparent;
 }
 
-.head-btn {
-  
+.button-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.edit-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.function-btn {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 12px 20px;
+  transition: all 0.3s ease;
+  border: 1px solid var(--textColor2);
+  background-color: var(--backgroundColor2);
+  color: var(--textColor2);
+}
+
+.function-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadowColor2);
+  color: var(--textColor);
+  border: 1px solid var(--textColor2);
+}
+
+.function-btn.active {
+  background: #417dff;
+  border-color: #409eff;
+  color: white;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.4);
+}
+
+.function-btn :deep(.el-icon) {
+  margin-right: 6px;
 }
 
 
