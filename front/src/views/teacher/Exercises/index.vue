@@ -24,7 +24,7 @@
       <h2 class="course-name">题目列表</h2>
       </div>
       <div class="head-btn">
-      <el-button type="primary" @click="dialogVisible = true" class="add-btn">生成习题</el-button>
+      <el-button type="primary" @click="dialogVisible = true" class="function-btn">生成习题</el-button>
       </div>
     <div class="content-area">
     <div v-if="loading" class="loading-state">
@@ -721,9 +721,34 @@ onMounted(() => {
   flex-direction: row;
   align-items: center;
   justify-content: end;
+  margin-right: 24px;
 }
 
 .add-btn {
   margin-right: 2rem;
+}
+
+.function-btn {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 12px 20px;
+  transition: all 0.3s ease;
+  border: 1px solid var(--textColor2);
+  background-color: var(--backgroundColor2);
+  color: var(--textColor2);
+}
+
+.function-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadowColor2);
+  color: var(--textColor);
+  border: 1px solid var(--textColor2);
+}
+
+.function-btn.active {
+  background: #417dff;
+  border-color: #409eff;
+  color: white;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.4);
 }
 </style>
