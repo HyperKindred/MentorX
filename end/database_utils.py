@@ -108,6 +108,8 @@ def f_getLearningStatsByChapter(chapter_id, student_id = None):
         right = cursor.fetchone()[0]
         
         chapter["correctness"] = right / total if total > 0 else 0
+        chapter["sum_exercises"] = total 
+        chapter["right_exercises"] = right
     else:
         sql = "SELECT COUNT(*) FROM communicate_history WHERE chapter_id = %s;"
         cursor.execute(sql, (chapter_id,))
@@ -122,6 +124,8 @@ def f_getLearningStatsByChapter(chapter_id, student_id = None):
         right = cursor.fetchone()[0]
         
         chapter["correctness"] = right / total if total > 0 else 0
+        chapter["sum_exercises"] = total 
+        chapter["right_exercises"] = right
     
     closeSQL(conn, cursor)
     return chapter
@@ -533,3 +537,26 @@ def sum_time_db(user_id, time):
         return True, "使用时长统计成功！"
     finally:
         closeSQL(conn, cursor)
+
+def get_system_info_db():
+    conn, cursor = connectSQL()
+    systemInfo = {}
+    tables = ["user", "course", "chapter"]
+    try:
+        cursor.execute("SELECT COUNT(*) FROM exercise WHERE is_official = 1;")
+        systemInfo["exercise_num"] = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM user WHERE gender = 'female';")
+        systemInfo["female_num"] = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM user WHERE gender = 'male';")
+        systemInfo["male_num"] = cursor.fetchone()[0]
+
+        for table in tables:
+            cursor.execute(f"SELECT COUNT(*) FROM {table};")
+            systemInfo[table + "_num"] = cursor.fetchone()[0]
+
+        return systemInfo
+    finally:
+        closeSQL(conn, cursor)
+    
