@@ -452,9 +452,6 @@ const getChapterList = async (courseId: number) => {
   padding-right: 4rem;
   padding-top: 10px;
   padding-bottom: 2rem;
-  line-height: 1.8;
-  color: #334155;
-  font-size: 15px;
   text-align: left;
   background: var(--backgroundColor3);
 }
