@@ -468,7 +468,10 @@ const renderCorrectnessChart = (chartId: string, chapters: any[]) => {
       {
         name: '答题准确率',
         type: 'bar',
-        data: chapters.map(c => c.correctness),
+        data: chapters.map(c => {
+          const correctness = c.correctness * 100; // 乘以100转换为百分比
+          return Math.round(correctness * 100) / 100; // 保留两位小数
+        }),
         itemStyle: {
           color: function(params) {
             // Color based on value - red for low, yellow for medium, green for high
