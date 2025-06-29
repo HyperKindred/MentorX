@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import  JWTManager, create_access_token, get_jwt_identity, jwt_required
 from database_utils import *
-from deepseek_model import *
+from ai_model import *
 from datetime import timedelta
 
 app = Flask(__name__)
@@ -288,7 +288,8 @@ def getSystemStats():
     keys = ["S_AiChat", "S_exercises", "S_check", "T_courseware", "T_exercises", "T_check"]
     systemStats = {k: result[i] for i, k in enumerate(keys)}
     
-    data = {"ret": 0, "systemStats": systemStats}
+    systemInfo = get_system_info_db()
+    data = {"ret": 0, "systemStats": systemStats, "systemInfo": systemInfo}
     return jsonify(data)
 
 @app.route('/api/deleteCourse', methods=["POST"])
@@ -317,7 +318,7 @@ def AIchat():
     content = request.form.get("content")
     session_id = request.form.get("session_id")
     student_id = int(get_jwt_identity())
-    success, answer = ds_aichat(student_id, chapter_id, content, int(session_id))
+    success, answer = ai_aichat(student_id, chapter_id, content, int(session_id))
     if success:
         increase_count("AIchat")
         increase_frequence(student_id)
@@ -330,7 +331,7 @@ def generate_exercises():
     difficulty = request.form.get("difficulty")
     type = request.form.get("type")
     student_id = int(get_jwt_identity())
-    success = ds_generate_tasks(ChapterNo, difficulty, type, student_id)
+    success = ai_generate_tasks(ChapterNo, difficulty, type, student_id)
     if success:
         increase_count("generate_exercises")
     return jsonify({"ret": 0} if success else {"ret": 1, "msg": "习题生成失败！"})
@@ -341,7 +342,7 @@ def generate_exercises():
 def check_exercises():
     Eno = request.form.get("Eno")
     student_id = int(get_jwt_identity())
-    success, info = ds_check_answer(Eno, student_id)
+    success, info = ai_check_answer(Eno, student_id)
     if success:
         increase_count("check_exercises")
     return jsonify({"ret": 0} if success else {"ret": 1, "msg": info})
@@ -351,7 +352,7 @@ def check_exercises():
 def generate_teachcontent():
     Cno = request.form.get("Cno")  
     chapter = request.form.get("chapter")
-    success = ds_generate_teachcontent(Cno, chapter)
+    success = ai_generate_teachcontent(Cno, chapter)
     if success:
         increase_count("generate_teachcontent")
     return jsonify({"ret": 0} if success else {"ret": 1, "msg": "课件生成失败！"})
@@ -361,7 +362,7 @@ def generate_tasks():
     ChapterNo = request.form.get("ChapterNo")   
     difficulty = request.form.get("difficulty")
     type = request.form.get("type")
-    success = ds_generate_tasks(ChapterNo, difficulty, type)
+    success = ai_generate_tasks(ChapterNo, difficulty, type)
     if success:
         increase_count("generate_tasks")
     return jsonify({"ret": 0} if success else {"ret": 1, "msg": "习题生成失败！"})
@@ -370,7 +371,7 @@ def generate_tasks():
 def check_answer():
     Eno = request.form.get("Eno")
     student_id = request.form.get("student_id")
-    success, info = ds_check_answer(Eno, student_id)
+    success, info = ai_check_answer(Eno, student_id)
     if success:
         increase_count("check")
     return jsonify({"ret": 0} if success else {"ret": 1, "msg": info})
