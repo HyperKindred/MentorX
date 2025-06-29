@@ -12,7 +12,7 @@
 }
 
 :root[theme='dark']{
-    --backgroundColor:#000079d0;
+    --backgroundColor:#000f2dd0;
     --textColor: #f0f0f0;
     --textColor2:rgb(173, 173, 173);
     --titleColor:#fcfcfc;

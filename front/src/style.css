@@ -21,6 +21,7 @@ body {
   place-items: center;
   min-width: 220px;
   min-height: 180px;
+  overflow: hidden;
 }
 
 h1 {
