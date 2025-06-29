@@ -18,52 +18,6 @@ def closeSQL(p_conn, p_cursor):
     p_cursor.close()
     p_conn.close()
 
-# def f_getLearningStatsByPersonAndCourse(user_id, course_id):
-#     conn, cursor = connectSQL()
-#     course = {}
-#     sql = "SELECT name FROM course WHERE id = %s;"
-#     cursor.execute(sql, (course_id))
-#     course["id"] = course_id
-#     course["name"] = cursor.fetchone()[0]
-
-
-
-#     sql = "SELECT chapter_id, COUNT(*) FROM practice_history WHERE `check`` = 'T' AND student_id = %s GROUP BY chapter_id;"
-#     cursor.execute(sql, (user_id,))
-#     right = cursor.fetchall()
-#     for row in right:         
-#         chapter_map_correctness[row[0]] = row[1]
-    
-#     sql = "SELECT chapter_id, COUNT(*) FROM practice_history WHERE student_id = %s GROUP BY chapter_id;"
-#     cursor.execute(sql, (user_id,))
-#     total = cursor.fetchall()
-#     for row in total:
-#         if row[0] in chapter_map_correctness.keys():
-#             chapter_map_correctness[row[0]] = chapter_map_correctness[row[0]] / row[1]
-#         else:
-#             chapter_map_correctness[row[0]] = 0
-    
-#     sql = "SELECT chapter_id, COUNT(*) FROM communicate_history WHERE user_id = %s GROUP BY chapter_id;"
-#     cursor.execute(sql, (user_id,))
-#     total_1 = cursor.fetchall()
-#     for row in total_1:
-#         chapter_map_aiFrequence[row[0]] = int(row[1] / 2)
-
-#     chapter_list = list(set(chapter_map_correctness.keys()) | set(chapter_map_aiFrequence.keys()))
-#     for chapter_id in chapter_list:
-#         chapter = {}
-#         sql = "SELECT name FROM chapter WHERE id = %s;"
-#         cursor.execute(sql, (chapter_id,))
-#         chapter_name = cursor.fetchone()[0]
-#         chapter["name"] = chapter_name
-#         chapter["AiFrequence"] = chapter_map_aiFrequence.get(chapter_id, -1)
-#         chapter["correctness"] = chapter_map_correctness.get(chapter_id, -1)
-#         chapters.append(chapter)
-    
-#     student["chapters"] = chapters
-#     closeSQL(conn, cursor)
-#     return student
-
 def f_getLearningStatsByPerson(user_id):
     student = {}
     courses = []
@@ -103,7 +57,7 @@ def f_getLearningStatsByChapter(chapter_id, student_id = None):
         cursor.execute(sql, (chapter_id, student_id))
         total = cursor.fetchone()[0]
         
-        sql = "SELECT COUNT(*) FROM practice_history WHERE chapter_id = %s AND `check` = 'T' AND student_id = %s;"
+        sql = "SELECT COUNT(*) FROM practice_history WHERE chapter_id = %s AND `check` = '0' AND student_id = %s;"
         cursor.execute(sql, (chapter_id, student_id))
         right = cursor.fetchone()[0]
         
@@ -119,7 +73,7 @@ def f_getLearningStatsByChapter(chapter_id, student_id = None):
         cursor.execute(sql, (chapter_id,))
         total = cursor.fetchone()[0]
         
-        sql = "SELECT COUNT(*) FROM practice_history WHERE chapter_id = %s AND `check` = 'T';"
+        sql = "SELECT COUNT(*) FROM practice_history WHERE chapter_id = %s AND `check` = '0';"
         cursor.execute(sql, (chapter_id,))
         right = cursor.fetchone()[0]
         

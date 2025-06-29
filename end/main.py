@@ -352,7 +352,7 @@ def check_exercises():
 def generate_teachcontent():
     Cno = request.form.get("Cno")  
     chapter = request.form.get("chapter")
-    success = ai_generate_teachcontent(Cno, chapter)
+    success, msg = ai_generate_teachcontent(Cno, chapter)
     if success:
         increase_count("generate_teachcontent")
     return jsonify({"ret": 0} if success else {"ret": 1, "msg": "课件生成失败！"})

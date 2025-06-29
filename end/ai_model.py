@@ -14,7 +14,7 @@ def ai_generate_teachcontent(Cno, chapter):
         result = cursor.fetchone()
         Cname = result[0] if result else "暂无课程名"
     except:
-        return False
+        return False, None
     
     query = f"{Cname} {chapter}"
     context = db.similarity_search(query, k=3)
@@ -35,9 +35,10 @@ def ai_generate_teachcontent(Cno, chapter):
         content = get_answer(full_prompt)
         sql = "INSERT INTO chapter(name, content, course_id) values(%s, %s, %s);"
         cursor.execute(sql, (chapter, content, Cno))
-        return True
-    except:
-        return False
+        return True, None
+    except Exception as e:
+        print(f"ERROR: {e}")
+        return False, e
     finally:
         closeSQL(conn, cursor)
 
