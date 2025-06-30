@@ -4,10 +4,6 @@
     <div class="left-panel">
       <!-- 顶部章节信息 -->
       <div class="chapter-header">
-        <div class="current-chapter" v-if="currentChapterName">
-          <i class="el-icon-document"></i>
-          <span class="chapter-name">{{ currentChapterName }}</span>
-        </div>
         <div class="chapter-selector">
           <el-select
             v-model="activeChapter" 
@@ -701,32 +697,33 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 .ai-assistant-page {
   display: flex;
   height: 100%;
-  background-color: #fafafa;
+  background-color: transparent;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 /* 左侧面板样式 */
 .left-panel {
   width: 280px;
-  background: #ffffff;
-  border-right: 1px solid #e5e7eb;
+  background: var(--backgroundColor2);
+  border-right: 2px solid var(--backgroundColor);
   display: flex;
   flex-direction: column;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
 }
 
 /* 章节头部样式 */
 .chapter-header {
   padding: 16px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #1c3976;
+  border-bottom: 2px solid var(--backgroundColor);
+  background: var(--backgroundColor1);
 }
 
 .current-chapter {
   display: flex;
   align-items: center;
   margin-bottom: 12px;
-  color: #374151;
+  color: var(--titleColor);
   font-weight: 500;
 }
 
@@ -766,23 +763,23 @@ const handleShiftEnter = (event: KeyboardEvent) => {
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 2px solid var(--backgroundColor);
 }
 
 .history-title {
   font-size: 14px;
   font-weight: 600;
-  color: #374151;
+  color: var(--titleColor);
 }
 
 .new-chat-btn {
   font-size: 12px;
-  color: #6366f1;
+  color: var(--textColor2);
   padding: 4px 8px;
 }
 
 .new-chat-btn:hover {
-  background-color: #f3f4f6;
+  color: var(--textColor);
 }
 
 .history-list {
@@ -801,12 +798,11 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 }
 
 .conversation-item:hover {
-  background-color: #f9fafb;
-  border-color: #e5e7eb;
+  background-color: var(--titleColor2);
 }
 
 .conversation-item.active {
-  background-color: #eff6ff;
+  background-color: var(--borderColor);
   border-color: #3b82f6;
 }
 
@@ -817,7 +813,7 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 
 .conversation-title {
   font-size: 13px;
-  color: #374151;
+  color: var(--textColor);
   margin-bottom: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
