@@ -838,8 +838,8 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 /* 聊天头部样式 */
 .chat-header {
   padding: 16px 24px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #1c3976;
+  border-bottom: 1px solid var(--backgroundColor);
+  background: var(--backgroundColor2);
 }
 
 .chat-title {
@@ -847,7 +847,7 @@ const handleShiftEnter = (event: KeyboardEvent) => {
   align-items: center;
   font-size: 16px;
   font-weight: 600;
-  color: white;
+  color: var(--titleColor);
 }
 
 .chat-title i {
@@ -950,25 +950,23 @@ const handleShiftEnter = (event: KeyboardEvent) => {
   border-radius: 12px;
   word-wrap: break-word;
   white-space: pre-wrap;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--titleColor2);
   padding: 20px;
   text-align: left;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   font-size: 16px;
   line-height: 1.6;
-  color: #2c3e50;
+  color: var(--textColor);
 }
 
 .message-item.user .message-text {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--titleColor2);
   padding: 10px 20px;
   text-align: left;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 16px;
   line-height: 1.7;
-  color: #2c3e50;
+  color: var(--textColor);
 }
 
 .message-time {
@@ -994,8 +992,8 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 /* 输入区域样式 */
 .chat-input-area {
   padding: 16px 24px;
-  border-top: 1px solid #e5e7eb;
-  background: #1c3976;
+  border-top: 1px solid var(--backgroundColor);
+  background: var(--backgroundColor2);
 }
 
 .input-container {
@@ -1011,7 +1009,6 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 
 .message-input :deep(.el-textarea__inner) {
   border-radius: 12px;
-  border: 1px solid #e5e7eb;
   padding: 12px 16px;
   font-size: 14px;
   line-height: 1.5;

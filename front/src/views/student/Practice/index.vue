@@ -148,8 +148,8 @@
                 <pre>{{ selectedPractice.student_answer }}</pre>
                 <div v-if="selectedPractice.check_result" class="check-result">
                   <h4>批改结果：</h4>
-                  <div class="check-score" :class="getScoreClass(selectedPractice.check_result)">
-                    <div class="markdown-content" v-html="marked.parse(selectedPractice.check_result)"></div>
+                  <div class="check-score">
+                    <div class="markdown-content" v-html="getCheckLabel(selectedPractice.check_result)"></div>
                   </div>
                   <div v-if="selectedPractice.analyse" class="check-analyse">
                     <h4>详细分析：</h4>
@@ -662,12 +662,14 @@ const getPracticeDifficultyText = (difficulty: number): string => {
 /**
  * 根据评分获取样式类名
  */
-const getScoreClass = (score: string): string => {
-  const numScore = parseInt(score);
-  if (numScore >= 90) return 'excellent';
-  if (numScore >= 80) return 'good';
-  if (numScore >= 60) return 'pass';
-  return 'fail';
+const checkMap: Record<string, string> = {
+  0:'✔️正确',
+  1: '❌错误',
+  2: '⭕半对半错'
+};
+
+const getCheckLabel = (type: string): string => {
+  return checkMap[type] || '❓未批改';
 };
 
 /**
@@ -1070,29 +1072,6 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   box-sizing: border-box;
 }
 
-/* .check-score.excellent {
-  background-color: #f0f9ff;
-  color: #1890ff;
-  border: 1px solid #b3d8ff;
-}
-
-.check-score.good {
-  background-color: #f6ffed;
-  color: #52c41a;
-  border: 1px solid #b7eb8f;
-}
-
-.check-score.pass {
-  background-color: #fff7e6;
-  color: #fa8c16;
-  border: 1px solid #ffd591;
-}
-
-.check-score.fail {
-  background-color: #fff2f0;
-  color: #ff4d4f;
-  border: 1px solid #ffb3b3;
-} */
 
 .check-analyse {
   background: white;

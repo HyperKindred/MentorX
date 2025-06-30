@@ -128,7 +128,7 @@ const originalGender = ref('');
 const genderMap: Record<string, string> = {
   male: '男',
   female: '女',
-  unknown: '未知'
+  unknow: '保密'
 };
 
 const getGenderLabel = (gender: string): string => {
@@ -434,8 +434,11 @@ item.gender = originalGender.value;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  border-left: 0;
 }
-
+.gender {
+  padding: 0;
+}
 .info-time {
   font-size: 16px;
   margin-bottom: 12px;

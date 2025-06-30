@@ -36,7 +36,7 @@
         <div class="exercise-meta">
         <span class="exercise-difficulty">难度: {{ item.difficulty }}</span>
         <span class="exercise-type">{{ getTypeLabel(item.type) }}</span>
-        <el-button @click="deleteExercise(item)" class="deleteBtn">删除</el-button>
+        <el-button @click.stop="deleteExercise(item)" class="deleteBtn">删除</el-button>
         </div>
       </div>
     </div>

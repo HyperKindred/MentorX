@@ -142,72 +142,47 @@
       </div>
     </div>
 
-    <div class="background">
-      <!-- 动态小鸟背景 -->
-      <div class="bird" v-for="(bird, index) in birds" :key="index" :style="bird.style"></div>
-    </div>
+    <!-- 动态渐变背景层 -->
+    <div class="dynamic-background"></div>
+    
+    <LogIn v-model:visible="showLogIn" @close-login="closeLogIn" />
   </div>
-  <LogIn v-model:visible="showLogIn" @close-login="closeLogIn" />
 </template>
 
 <script lang="ts" setup>
-import { defineComponent, ref, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { mainStore } from '../../store/index.ts';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
 import LogIn from '../LogIn/index.vue'
-import Birds from '../Background/Birds.vue'
 import slide1 from '../../assets/videos/生成习题.mp4'
 import slide2 from '../../assets/videos/AI问答.mp4'
 import slide3 from '../../assets/videos/课件生成.mp4'
 import slide4 from '../../assets/videos/批改习题.mp4'
 import slide5 from '../../assets/videos/学习情况.mp4'
 import slide6 from '../../assets/videos/统计信息.mp4'
+
 const store = mainStore();
 const router = useRouter();
 const showLogIn = ref(false);
 const isScrolled = ref(false);
-const birds = ref<Array<{ style: object }>>([]);
-
-const createBirds = () => {
-  const newBirds = [];
-  for (let i = 0; i < 12; i++) {
-    newBirds.push({
-      style: {
-        left: `${Math.random() * 100}%`,
-        top: `${Math.random() * 100}%`,
-        animationDuration: `${10 + Math.random() * 20}s`,
-        animationDelay: `${Math.random() * 5}s`,
-        opacity: `${0.2 + Math.random() * 0.5}`,
-        width: `${20 + Math.random() * 30}px`,
-        height: `${20 + Math.random() * 30}px`
-      }
-    });
-  }
-  birds.value = newBirds;
-};
-
-
 
 const scrollToFeatures = () => {
   isScrolled.value = true;
 };
 
-// 滚动到顶部
 const scrollToTop = () => {
   isScrolled.value = false;
 };
+
 const closeLogIn = () => {
   showLogIn.value = false;
 }
-// 初始化页面
+
 onMounted(() => {
-  createBirds();
   showLogIn.value = false;
 });
-
-
 </script>
 
 <style scoped>
@@ -219,8 +194,6 @@ onMounted(() => {
 
 .main {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #0a1a3d, #1c3976);
-  background-attachment: fixed;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -232,11 +205,37 @@ onMounted(() => {
   position: relative;
 }
 
+/* 动态渐变背景 */
+.dynamic-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1; /* 确保在内容层之下 */
+  background: linear-gradient(135deg, #0a1a3d, #1c3976, #2a1b5e, #1c1f4d);
+  background-size: 400% 400%;
+  animation: gradientFlow 15s ease infinite;
+}
+
+@keyframes gradientFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 .scroll-container {
   position: relative;
   height: 100vh;
   overflow: hidden;
   width: 100%;
+  z-index: 1; /* 确保内容在背景之上 */
 }
 
 .welcome-screen {
@@ -270,6 +269,8 @@ onMounted(() => {
   transition: transform 1.2s cubic-bezier(0.33, 1, 0.68, 1);
   transform: translateY(0);
   margin-top: 1.8rem;
+  background: rgba(10, 26, 61, 0.92);
+  backdrop-filter: blur(8px);
 }
 
 .scrolled .features-section {
@@ -302,6 +303,7 @@ onMounted(() => {
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
   background: linear-gradient(to right, #ffffff, #a0c4ff);
   background-clip: text;
+  -webkit-background-clip: text;
   color: transparent;
   animation: fadeInUp 0.8s ease-out;
 }
@@ -377,19 +379,12 @@ onMounted(() => {
 }
 
 @keyframes bounce {
-
-  0%,
-  20%,
-  50%,
-  80%,
-  100% {
+  0%, 20%, 50%, 80%, 100% {
     transform: translateY(0) translateX(-50%);
   }
-
   40% {
     transform: translateY(-20px) translateX(-50%);
   }
-
   60% {
     transform: translateY(-10px) translateX(-50%);
   }
@@ -400,7 +395,6 @@ onMounted(() => {
     opacity: 0;
     transform: translateY(20px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -412,7 +406,6 @@ onMounted(() => {
     opacity: 0;
     transform: translateY(40px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -424,7 +417,6 @@ onMounted(() => {
     opacity: 0;
     transform: translateY(-40px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -465,19 +457,12 @@ onMounted(() => {
 
 /* 反向弹跳动画 */
 @keyframes bounceReverse {
-
-  0%,
-  20%,
-  50%,
-  80%,
-  100% {
+  0%, 20%, 50%, 80%, 100% {
     transform: translateY(0) translateX(-50%);
   }
-
   40% {
     transform: translateY(20px) translateX(-50%);
   }
-
   60% {
     transform: translateY(10px) translateX(-50%);
   }
@@ -633,94 +618,27 @@ onMounted(() => {
   color: #f8f8f8;
 }
 
-.back-to-top {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  width: 50px;
-  height: 50px;
-  background: rgba(65, 125, 255, 0.8);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 100;
-  opacity: 0;
-  transition: all 0.3s;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-}
-
-.back-to-top.show {
-  opacity: 1;
-}
-
-.back-to-top:hover {
-  transform: translateY(-3px);
-  background: rgba(65, 125, 255, 1);
-  box-shadow: 0 6px 15px rgba(65, 125, 255, 0.5);
-}
-
-.arrow-up-icon {
-  width: 1.5rem;
-  height: 1.5rem;
-  fill: white;
-}
-
-.background {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
-  overflow: hidden;
-}
-
-.bird {
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="rgba(255,255,255,0.3)"><path d="M23.643 4.937c-.835.37-1.732.62-2.675.733.962-.576 1.7-1.49 2.048-2.578-.9.534-1.897.922-2.958 1.13-.85-.904-2.06-1.47-3.4-1.47-2.572 0-4.658 2.086-4.658 4.66 0 .364.042.718.12 1.06-3.873-.195-7.304-2.05-9.602-4.868-.4.69-.63 1.49-.63 2.342 0 1.616.823 3.043 2.072 3.878-.764-.025-1.482-.234-2.11-.583v.06c0 2.257 1.605 4.14 3.737 4.568-.392.106-.803.162-1.227.162-.3 0-.593-.028-.877-.082.593 1.85 2.313 3.198 4.352 3.234-1.595 1.25-3.604 1.995-5.786 1.995-.376 0-.747-.022-1.112-.065 2.062 1.323 4.51 2.093 7.14 2.093 8.57 0 13.255-7.098 13.255-13.254 0-.2-.005-.402-.014-.602.91-.658 1.7-1.477 2.323-2.41z"/></svg>');
-  background-size: contain;
-  background-repeat: no-repeat;
-  animation: fly linear infinite;
-}
-
-@keyframes fly {
-  0% {
-    transform: translateX(-100px) translateY(0);
-  }
-
-  50% {
-    transform: translateX(calc(100vw + 100px)) translateY(50px);
-  }
-
-  100% {
-    transform: translateX(calc(100vw + 100px)) translateY(-50px);
-  }
-}
-
 /* 响应式设计 */
 @media (max-width: 768px) {
-  /* ... 其他响应式样式保持不变 ... */
-
   .feature-display {
     margin-top: 60px;
-    /* 移动端减少顶部间距 */
     min-height: auto;
-    /* 移除固定高度 */
   }
 
   .slide-content {
     padding: 1.5rem;
     min-height: auto;
-    /* 移除固定高度 */
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .slide-text {
+    margin-right: 0;
+    margin-bottom: 1.5rem;
   }
 
   .media-container {
     height: 200px;
-    /* 减少移动端图片高度 */
   }
 
   .features-grid {
@@ -729,34 +647,30 @@ onMounted(() => {
 
   .feature-card {
     padding: 1.2rem;
-    /* 减少内边距 */
     margin-bottom: 1rem;
-    /* 增加卡片间距 */
   }
 
   .back-to-top-hint {
     top: 20px;
-    /* 移动端调整位置 */
+  }
+  
+  .title {
+    font-size: 2.8rem;
   }
 }
 
 @media (max-width: 480px) {
-  /* ... 其他响应式样式保持不变 ... */
-
   .slide-title {
-    font-size: 1.5rem;
-    /* 减小标题字号 */
+    font-size: 1.8rem;
   }
 
   .slide-description {
-    font-size: 0.9rem;
-    /* 减小描述字号 */
+    font-size: 1rem;
     margin-bottom: 1.5rem;
   }
 
   .media-container {
-    height: 150px;
-    /* 进一步减少图片高度 */
+    height: 180px;
   }
 
   .feature-icon {
@@ -764,13 +678,11 @@ onMounted(() => {
   }
 
   .feature-card h3 {
-    font-size: 1.2rem;
-    /* 减小卡片标题字号 */
+    font-size: 1.3rem;
   }
 
   .feature-card p {
-    font-size: 0.85rem;
-    /* 减小卡片描述字号 */
+    font-size: 0.9rem;
   }
 
   .back-to-top-hint {
@@ -782,6 +694,18 @@ onMounted(() => {
   .back-to-top-hint .arrow-up-icon {
     width: 2rem;
     height: 2rem;
+  }
+  
+  .title {
+    font-size: 2.2rem;
+  }
+  
+  .title-content {
+    font-size: 1.1rem;
+  }
+  
+  .logo {
+    font-size: 1.5rem;
   }
 }
 </style>

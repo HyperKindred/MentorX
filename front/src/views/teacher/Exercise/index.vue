@@ -48,7 +48,7 @@
                   type="primary" 
                   size="small" 
                   @click.stop="ansChecker(student)" 
-                  :disabled="student.is_checked === 1" 
+                  :disabled="student.check === '1' || student.check === '0' || student.check === '2'" 
                   class="check_btn"
                   :loading="checkingId === student.student_id"
                 >
@@ -327,7 +327,6 @@ onMounted(() => {
 }
 
 .check_btn.is-loading::after {
-  content: "";
   position: absolute;
   top: 50%;
   left: 50%;
@@ -500,9 +499,8 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   z-index: 5;
-  background: var(--backgroundColor2);
+  background: transparent;
   padding-top: 10px;
-  padding-bottom: 10px;
 }
 
 .correction {
