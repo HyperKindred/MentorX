@@ -935,7 +935,7 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 .form-item label {
   display: block;
   font-size: 14px;
-  color: #f8f8f8;
+  color: var(--titleColor);
   margin-bottom: 8px;
   font-weight: 500;
 }

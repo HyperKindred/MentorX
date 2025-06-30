@@ -10,11 +10,11 @@
         <div class="sidebar">
           <div class="chapter-list">
             <el-space direction="vertical" fill>
-              <div class="chapter-item" v-for="chapter in chapters" :key="chapter.id" @click="handleChapterClick(chapter)">
+              <div v-for="chapter in chapters" :key="chapter.id" @click="handleChapterClick(chapter)" class="chapter-item" :class="{ active: activeChapter === chapter.id }"  >
                 <span class="chapter-title">{{ chapter.name }}</span>
                 <div class="chapter-actions">
-                  <el-button size="small" type="primary" plain class="function-btn chapter-btn" :icon="Edit" @click.stop="renameChapter(chapter)">重命名</el-button>
-                  <el-button size="small" type="primary" plain class="function-btn chapter-btn" :icon="Delete" @click.stop="deleteChapter(chapter.id)">删除</el-button>
+                  <el-button size="small" type="primary" plain class="function-btn-left chapter-btn" :icon="Edit" @click.stop="renameChapter(chapter)"></el-button>
+                  <el-button size="small" type="primary" plain class="function-btn-left chapter-btn" :icon="Delete" @click.stop="deleteChapter(chapter.id)"></el-button>
                 </div>
               </div>
             </el-space>
@@ -107,7 +107,12 @@ const editedContent = ref('');
 const renameDialogVisible = ref(false);
 const renameValue = ref('');
 const renameTargetId = ref(0);
-
+const activeChapter = ref<number | null>(null);
+interface Chapter {
+  id: number;
+  name: string;
+  content: string;
+}
 
 const renderedHtml = computed(() => {
   return marked(selectedChapter.value.content || '');
@@ -228,6 +233,7 @@ const deleteChapter = (id: number) => {
       getChapterList();
       if (selectedChapter.value?.id === id) {
         selectedChapter.value = null;
+        activeChapter.value = null;
       }
     } else {
       ElMessage.error('删除失败：' + res.data.msg);
@@ -239,6 +245,7 @@ const deleteChapter = (id: number) => {
 
 const handleChapterClick = (chapter: any) => {
   selectedChapter.value = { ...chapter };
+  activeChapter.value = chapter.id;
   isEditing.value = false;
   editedContent.value = chapter.content;
 };
@@ -353,7 +360,6 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  margin-bottom: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
   border: 1px solid transparent;
@@ -368,7 +374,6 @@ onMounted(() => {
 }
 
 .chapter-item.active {
-  background-color: transparent;
   color: var(--titleColor);
   background-color: var(--backgroundColor2);
   font-weight: 540;
@@ -382,15 +387,14 @@ onMounted(() => {
 
 .chapter-actions {
   display: flex;
-  gap: 8px;
   margin-left: 16px;
   opacity: 1;
   transition: all 0.2s ease;
 }
 
-.chapter-actions .chapter-btn.function-btn {
+.chapter-actions .chapter-btn.function-btn-left {
   font-size: 10px;
-  padding: 2px 6px;
+  padding: 2px 2px;
   height: auto;
   min-height: 20px;
   border-radius: 4px;
@@ -422,13 +426,14 @@ onMounted(() => {
 }
 
 .chapterTitle {
-  color:black;
+  color: var(--titleColor);
 }
 
 .chapter-head {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  padding-left: 4rem;
 }
 
 
@@ -482,6 +487,32 @@ onMounted(() => {
   align-items: center;
 }
 
+.function-btn-left {
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+  background-color: transparent;
+  color: var(--textColor2);
+}
+
+.function-btn-left:hover:not(:disabled) {
+  transform: translateY(-2px);
+  color: var(--textColor);
+  border: 1px solid transparent;
+}
+
+.function-btn-left.active {
+  background: #417dff;
+  border-color: #409eff;
+  color: white;
+  box-shadow: 0 2px 8px var(--shadowColor);
+}
+
+.function-btn-left :deep(.el-icon) {
+  font-size: 15px;
+}
+
+
 .function-btn {
   border-radius: 8px;
   font-weight: 500;
@@ -510,18 +541,21 @@ onMounted(() => {
   margin-right: 6px;
 }
 
-
 .read-only-content {
-  padding: 12px;
-  background: white;
+  padding: 2rem;
+  background: var(--backgroundColor3);
   border: 1px solid #ddd;
   border-radius: 6px;
   white-space: pre-wrap;
   max-height: 70vh;
-  color: black;
+  color: var(--textColor);
 }
 
-.edit-content {
-
+.edit-content :deep(.el-textarea__inner){
+  max-height: 70vh;
+  background: var(--backgroundColor3);
+  color: var(--textColor);
+  padding: 2rem;
+  border-radius: 6px;
 }
 </style>
