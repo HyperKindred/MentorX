@@ -243,6 +243,7 @@ onMounted(() => {
   chapter.value = JSON.parse(localStorage.getItem('selectedChapter') || '{}');
   if (chapter.value?.id) {
     getExercisesList();
+    activeChapter.value = chapter.value.id; 
   }
 });
 

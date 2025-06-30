@@ -9,10 +9,10 @@
         <div class="sidebar">
           <div class="chapter-list">
             <el-space direction="vertical" fill>
-              <div class="chapter-item" v-for="chapter in chapters" :key="chapter.id" @click="handleChapterClick(chapter)">
+              <div class="chapter-item" :class="{ active: activeChapter === chapter.id }" v-for="chapter in chapters" :key="chapter.id" @click="handleChapterClick(chapter)">
                 <span class="chapter-title">{{ chapter.name }}</span>
-                <el-button type="text" class='chapterBtn' style="color: white;" @click.stop="renameChapter(chapter)">重命名</el-button>
-                <el-button type="text" class='chapterBtn' style="color: red" @click.stop="deleteChapter(chapter.id)">删除</el-button>
+                <el-button type="text" class='chapterBtn' :icon="Edit" @click.stop="renameChapter(chapter)"></el-button>
+                <el-button type="text" class='chapterBtn' :icon="Delete" @click.stop="deleteChapter(chapter.id)"></el-button>
               </div>
             </el-space>
           </div>
@@ -62,6 +62,7 @@ import axios from 'axios';
 import { marked } from 'marked';
 import { ElMessage } from 'element-plus';
 import A_Exercises from '../Exercises/index.vue'
+import { Document, Edit, Delete } from '@element-plus/icons-vue';
 const store = mainStore();
 const courseId = ref('');
 const courseName = ref('');
@@ -72,7 +73,7 @@ const editedContent = ref('');
 const renameDialogVisible = ref(false);
 const renameValue = ref('');
 const renameTargetId = ref(0);
-
+const activeChapter = ref<number | null>(null);
 
 const renderedHtml = computed(() => {
   return marked(selectedChapter.value.content || '');
@@ -132,6 +133,7 @@ const deleteChapter = (id: number) => {
       getChapterList();
       if (selectedChapter.value?.id === id) {
         selectedChapter.value = null;
+        activeChapter.value = null;
       }
     } else {
       ElMessage.error('删除失败：' + res.data.msg);
@@ -143,6 +145,7 @@ const deleteChapter = (id: number) => {
 
 const handleChapterClick = (chapter: any) => {
   selectedChapter.value = { ...chapter };
+  activeChapter.value = chapter.id;
   isEditing.value = false;
   editedContent.value = chapter.content;
 };
@@ -273,7 +276,6 @@ onMounted(() => {
 }
 
 .chapter-item.active {
-  background-color: transparent;
   color: var(--titleColor);
   background-color: var(--backgroundColor2);
   font-weight: 540;
@@ -283,6 +285,7 @@ onMounted(() => {
   font-size: 14px;
   line-height: 1.4;
   flex: 1;
+  margin-right: 1rem;
 }
 
 .chapter-btn {
@@ -292,10 +295,28 @@ onMounted(() => {
 
 
 .chapterBtn {
-  width: 2rem;
-  height: 2rem;
-  margin-left: 1rem;
-  font-size: 11px;
+  font-size: 10px;
+  padding: 2px 2px;
+  height: auto;
+  min-height: 20px;
+  border-radius: 4px;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+  background-color: transparent;
+  color: var(--textColor2);
+}
+
+.chapterBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  color: var(--textColor);
+  border: 1px solid transparent;
+}
+
+
+.chapterBtn :deep(.el-icon) {
+  font-size: 15px;
 }
 
 .chapterBtn:hover {
@@ -310,7 +331,7 @@ onMounted(() => {
 }
 
 .chapterTitle {
-  color:black;
+  color:var(--titleColor);
 }
 
 .chapter-head {
@@ -323,7 +344,7 @@ onMounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: white;
+  background: transparent;
 }
 
 .chapter-content {
@@ -356,16 +377,20 @@ onMounted(() => {
 
 
 .read-only-content {
-  padding: 12px;
-  background: white;
+  padding: 2rem;
+  background: var(--backgroundColor3);
   border: 1px solid #ddd;
   border-radius: 6px;
   white-space: pre-wrap;
   max-height: 70vh;
-  color: black;
+  color: var(--textColor);
 }
 
-.edit-content {
-
+.edit-content :deep(.el-textarea__inner){
+  max-height: 70vh;
+  background: var(--backgroundColor3);
+  color: var(--textColor);
+  padding: 2rem;
+  border-radius: 6px;
 }
 </style>

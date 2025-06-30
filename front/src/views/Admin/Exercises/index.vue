@@ -1,9 +1,6 @@
 <template>
   <div class="main">
     <div class="left-panel">
-      <div class="course-header">
-        <h2 class="course-name">{{ courseName }}</h2>
-      </div>
       <div class="chapter-navigation">
         <div class="chapter-head">
         <h3 class="nav-title">课程章节</h3>
@@ -11,7 +8,7 @@
         <div class="sidebar">
           <div class="chapter-list">
             <el-space direction="vertical" fill>
-              <div class="chapter-item" v-for="chapter in chapters" :key="chapter.id" @click="handleChapterClick(chapter)">
+              <div class="chapter-item" :class="{ active: activeChapter === chapter.id }" v-for="chapter in chapters" :key="chapter.id" @click="handleChapterClick(chapter)">
                 <span class="chapter-title">{{ chapter.name }}</span>
               </div>
             </el-space>
@@ -63,7 +60,7 @@ const difficulty = ref('');
 const type = ref('');
 const selectedExercise = ref<any>(null);
 const dialogVisible = ref(false);
-
+const activeChapter = ref<number | null>(null);
 const typeMap: Record<string, string> = {
   choices: '选择题',
   blanks: '填空题',
@@ -160,6 +157,7 @@ const deleteExercise = (exercise: any) => {
 
 const handleChapterClick = (Chapter: any) => {
   chapter.value = { ...Chapter };
+  activeChapter.value = Chapter.id;
   getExercisesList();
 };
 
@@ -188,6 +186,7 @@ onMounted(() => {
   chapter.value = JSON.parse(localStorage.getItem('selectedChapter') || '{}');
   if (chapter.value?.id) {
     getExercisesList();
+    activeChapter.value = chapter.value.id;
   }
 });
 
@@ -201,19 +200,22 @@ onMounted(() => {
   display: flex;
   height: 100%;
   background-color: transparent;
+  font-family: Arial, Helvetica, sans-serif;
 }
 .left-panel {
   width: 300px;
-  background: transparent;
-  border-right: 1px solid #e4e7ed;
+  background: var(--backgroundColor2);  
+  border-right: 1px solid transparent;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
   display: flex;
   flex-direction: column;
 }
 .course-header {
   padding: 24px 20px;
-  border-bottom: 1.5px solid #e4e7ed;
+  border-bottom: 2px solid var(--backgroundColor3);
   background: transparent;
-  color: #f8f8f8;
+  color: var(--titleColor);
 }
 
 .course-name {
@@ -237,24 +239,26 @@ onMounted(() => {
 .chapter-item {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 12px 16px;
   margin-bottom: 4px;
-  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
   border: 1px solid transparent;
-  background-color: #208bf6ab;
+  border-radius: 5px;
+  background-color: transparent;
+  color: var(--textColor2);
 }
 
 .chapter-item:hover {
-  background-color: #65b2ffa9;
-  color: #f8f8f8;
+  background-color: var(--backgroundColor2);
+  color: var(--titleColor);
 }
 
 .chapter-item.active {
-  background-color: #e8f4fd;
-  border-color: #409eff;
-  color: #409eff;
+  color: var(--titleColor);
+  background-color: var(--backgroundColor2);
+  font-weight: 540;
 }
 
 .chapter-title {
@@ -281,7 +285,7 @@ onMounted(() => {
 .nav-title {
   font-size: 16px;
   font-weight: 600;
-  color: #f8f8f8;
+  color: var(--titleColor);
   padding: 20px 20px 16px 20px;
 }
 
@@ -672,5 +676,18 @@ onMounted(() => {
 
 .add-btn {
   margin-right: 2rem;
+}
+
+.deleteBtn {
+  height: 1.5rem;
+  font-size: 13px;
+  color: rgb(255, 99, 99);
+  border-color: rgb(255, 99, 99);
+}
+
+.deleteBtn:hover {
+  color: white;
+  border-color: white;
+  background-color: rgb(255, 99, 99);
 }
 </style>
