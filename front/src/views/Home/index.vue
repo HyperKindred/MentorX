@@ -37,68 +37,68 @@
             <el-carousel-item :key="1" class="slide-content">
               <div class="slide-text">
                 <h2 class="slide-title">个性习题</h2>
-                <p class="slide-description">体验由AI驱动的互动学习系统带来的沉浸式课程</p>
+                <p class="slide-description">AI智能生成个性化习题，量身定制学习内容，支持自主训练，充分激发学习主动性。</p>
               </div>
-              <div class="media-container">
-                <img
-                  src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWJjZjU3eDJsNnF3dHp2N2Z0dGJmZ3R0d2d3bWZ3a2t0b3p2c2d6eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/JIX9t2j0ZTN9S/giphy.gif"
-                  alt="互动学习">
-              </div>
+                  <div class="media-container">
+                    <video autoplay loop muted playsinline>
+                      <source :src="slide1" type="video/mp4">
+                    </video>
+                  </div>
             </el-carousel-item>
             <el-carousel-item :key="2" class="slide-content">
               <div class="slide-text">
                 <h2 class="slide-title">AI问答</h2>
-                <p class="slide-description">体验由AI驱动的超级学习系统带来的沉浸式课程</p>
+                <p class="slide-description">AI智能问答，实时辅导学生，解答疑难问题，扫清学习障碍。</p>
               </div>
-              <div class="media-container">
-                <img
-                  src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWJjZjU3eDJsNnF3dHp2N2Z0dGJmZ3R0d2d3bWZ3a2t0b3p2c2d6eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/JIX9t2j0ZTN9S/giphy.gif"
-                  alt="互动学习">
-              </div>
+                  <div class="media-container">
+                    <video autoplay loop muted playsinline>
+                      <source :src="slide2" type="video/mp4">
+                    </video>
+                  </div>
             </el-carousel-item>
             <el-carousel-item :key="3" class="slide-content">
               <div class="slide-text">
                 <h2 class="slide-title">课件生成</h2>
-                <p class="slide-description">体验由AI驱动的拼命学习系统带来的沉浸式课程</p>
+                <p class="slide-description">根据章节内容智能生成课件，省时省力，助力教师高效备课。</p>
               </div>
-              <div class="media-container">
-                <img
-                  src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWJjZjU3eDJsNnF3dHp2N2Z0dGJmZ3R0d2d3bWZ3a2t0b3p2c2d6eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/JIX9t2j0ZTN9S/giphy.gif"
-                  alt="互动学习">
-              </div>
+                  <div class="media-container">
+                    <video autoplay loop muted playsinline>
+                      <source :src="slide3" type="video/mp4">
+                    </video>
+                  </div>
             </el-carousel-item>
             <el-carousel-item :key="4" class="slide-content">
               <div class="slide-text">
                 <h2 class="slide-title">智能批改</h2>
-                <p class="slide-description">体验由AI驱动的放弃学习系统带来的沉浸式课程</p>
+                <p class="slide-description">智能批改学生作答，提供详细分析，高效准确评估学习情况，精准定位知识薄弱点。</p>
               </div>
-              <div class="media-container">
-                <img
-                  src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWJjZjU3eDJsNnF3dHp2N2Z0dGJmZ3R0d2d3bWZ3a2t0b3p2c2d6eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/JIX9t2j0ZTN9S/giphy.gif"
-                  alt="互动学习">
-              </div>
+                  <div class="media-container">
+                    <video autoplay loop muted playsinline>
+                      <source :src="slide4" type="video/mp4">
+                    </video>
+                  </div>
             </el-carousel-item>
             <el-carousel-item :key="5" class="slide-content">
               <div class="slide-text">
-                <h2 class="slide-title">用户管理</h2>
-                <p class="slide-description">体验由AI驱动的放弃学习系统带来的沉浸式课程</p>
+                <h2 class="slide-title">学习追踪</h2>
+                <p class="slide-description">实时追踪学习进度，可视化分析各章节掌握情况，精准定位薄弱环节，助力重点突破。</p>
               </div>
-              <div class="media-container">
-                <img
-                  src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWJjZjU3eDJsNnF3dHp2N2Z0dGJmZ3R0d2d3bWZ3a2t0b3p2c2d6eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/JIX9t2j0ZTN9S/giphy.gif"
-                  alt="互动学习">
-              </div>
+                  <div class="media-container">
+                    <video autoplay loop muted playsinline>
+                      <source :src="slide5" type="video/mp4">
+                    </video>
+                  </div>
             </el-carousel-item>
             <el-carousel-item :key="6" class="slide-content">
               <div class="slide-text">
-                <h2 class="slide-title">信息监管</h2>
-                <p class="slide-description">体验由AI驱动的放弃学习系统带来的沉浸式课程</p>
+                <h2 class="slide-title">信息统计</h2>
+                <p class="slide-description">可视化统计系统各类信息，帮助管理者一目了然掌握全局，辅助科学决策。</p>
               </div>
-              <div class="media-container">
-                <img
-                  src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWJjZjU3eDJsNnF3dHp2N2Z0dGJmZ3R0d2d3bWZ3a2t0b3p2c2d6eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/JIX9t2j0ZTN9S/giphy.gif"
-                  alt="互动学习">
-              </div>
+                  <div class="media-container">
+                    <video autoplay loop muted playsinline>
+                      <source :src="slide6" type="video/mp4">
+                    </video>
+                  </div>
             </el-carousel-item>
           </el-carousel>
         </div>
@@ -112,7 +112,7 @@
               </svg>
             </div>
             <h3>AI驱动学习</h3>
-            <p>根据您的进度和技能水平量身定制的自适应学习路径</p>
+            <p>根据学习进度和技能水平，量身定制自适应学习路径。</p>
           </div>
           <div class="feature-card">
             <div class="feature-icon">
@@ -122,7 +122,7 @@
               </svg>
             </div>
             <h3>进度追踪</h3>
-            <p>详细分析您的学习旅程和技能发展情况</p>
+            <p>详细追踪和分析学习进度，全面掌握知识熟练度。</p>
           </div>
           <div class="feature-card">
             <div class="feature-icon">
@@ -131,8 +131,8 @@
                   d="M20,2H4C2.9,2,2,2.9,2,4v18l4-4h14c1.1,0,2-0.9,2-2V4C22,2.9,21.1,2,20,2z M6,14v-2h12v2H6z M18,11H6V9h12V11z M18,8H6V6 h12V8z" />
               </svg>
             </div>
-            <h3>即时反馈</h3>
-            <p>实时评估并提供改进建议</p>
+            <h3>智能教学</h3>
+            <p>智能生成学习内容与习题，实时反馈，助力高效学习。</p>
           </div>
         </div>
 
@@ -158,6 +158,12 @@ import axios from 'axios';
 import { ElMessage } from 'element-plus';
 import LogIn from '../LogIn/index.vue'
 import Birds from '../Background/Birds.vue'
+import slide1 from '../../assets/videos/生成习题.mp4'
+import slide2 from '../../assets/videos/AI问答.mp4'
+import slide3 from '../../assets/videos/课件生成.mp4'
+import slide4 from '../../assets/videos/批改习题.mp4'
+import slide5 from '../../assets/videos/学习情况.mp4'
+import slide6 from '../../assets/videos/统计信息.mp4'
 const store = mainStore();
 const router = useRouter();
 const showLogIn = ref(false);
@@ -263,7 +269,7 @@ onMounted(() => {
   padding: 2rem;
   transition: transform 1.2s cubic-bezier(0.33, 1, 0.68, 1);
   transform: translateY(0);
-  margin-top: 0rem;
+  margin-top: 1.8rem;
 }
 
 .scrolled .features-section {

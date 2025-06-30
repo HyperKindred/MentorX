@@ -40,23 +40,44 @@
         </div>
       </div>
     </div>
-    <el-dialog v-model="dialogVisible" title="生成习题" width="30%">
-      <h2 class="input-title">请选择难度等级</h2>
-      <el-select v-model="difficulty" placeholder="难度等级" style="width: 115px" size="large">
-        <el-option label="等级1" value="1" />
-        <el-option label="等级2" value="2" />
-        <el-option label="等级3" value="3" />
-        <el-option label="等级4" value="4" />
-      </el-select>
-      <h2 class="input-title">请选择题目类型</h2>
-      <el-select v-model="type" placeholder="题目类型" style="width: 115px" size="large">
-        <el-option label="选择题" value="choices" />
-        <el-option label="填空题" value="blanks" />
-        <el-option label="简答题" value="answers" />
-      </el-select>
+    <el-dialog 
+      v-model="dialogVisible" 
+      title="生成习题" 
+      width="400px"
+      :close-on-click-modal="false">
+      <div class="generate-dialog">
+        <h3 class="dialog-title">请选择难度等级</h3>
+        <el-select 
+          v-model="difficulty" 
+          placeholder="难度等级"
+          class="dialog-select"
+          size="large">
+          <el-option label="简单" value="1" />
+          <el-option label="中等" value="2" />
+          <el-option label="较难" value="3" />
+          <el-option label="困难" value="4" />
+        </el-select>
+        
+        <h3 class="dialog-title">请选择题目类型</h3>
+        <el-select 
+          v-model="type" 
+          placeholder="题目类型"
+          class="dialog-select"
+          size="large">
+          <el-option label="选择题" value="choices" />
+          <el-option label="填空题" value="blanks" />
+          <el-option label="简答题" value="answers" />
+        </el-select>
+      </div>
+      
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="createExercise">生成</el-button>
+        <el-button 
+          type="primary" 
+          @click="createExercise"
+          :loading="generating">
+          生成
+        </el-button>
       </template>
     </el-dialog>
   </div>
@@ -66,6 +87,7 @@
 
 <script lang="ts" setup>
 import { ref, onMounted, watch } from 'vue';
+import { Delete, Plus } from '@element-plus/icons-vue';
 import { mainStore } from '../../../store/index.ts';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
@@ -84,6 +106,8 @@ const type = ref('');
 const selectedExercise = ref<any>(null);
 const dialogVisible = ref(false);
 const activeChapter = ref<number | null>(null);
+const loading = ref(false);
+const generating = ref(false); 
 interface Chapter {
   id: number;
   name: string;
@@ -100,6 +124,7 @@ const getTypeLabel = (type: string): string => {
 };
 
 const getExercisesList = () => {
+   loading.value = true;
   const formData = new FormData();
   formData.append('id', chapter.value.id);
 
@@ -120,6 +145,7 @@ const getExercisesList = () => {
   }).catch(() => {
     ElMessage.error('获取习题列表失败：网络错误');
   });
+  loading.value = false;
 };
 
 const getChapterList = () => {
@@ -165,29 +191,41 @@ const handleExerciseClick = (item: any) => {
   store.addTab('习题', T_exercise);
 }
 
-const createExercise = () => {
+const createExercise = async () => {
+  if (!chapter.value) {
+    ElMessage.warning('请先选择章节');
+    return;
+  }
+  
+  generating.value = true;
+  
   const formData = new FormData();
-  formData.append('ChapterNo', chapter.value.id);
+  formData.append('ChapterNo', chapter.value.id.toString());
   formData.append('difficulty', difficulty.value);
   formData.append('type', type.value);
 
-  axios.post(`${store.ip}/api/teacher/generate_tasks`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    }
-  }).then(res => {
+  try {
+    const res = await axios.post(`${store.ip}/api/teacher/generate_tasks`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      }
+    });
+    
     const data = res.data;
-
     if (data.ret === 0) {
-      dialogVisible = false;
-      getExercisesList();
+      ElMessage.success('习题生成成功');
+      dialogVisible.value = false;
+      await getExercisesList();
     } else {
-      ElMessage.error('新建习题失败' + data.msg);
+      ElMessage.error('新建习题失败：' + (data.msg || '未知错误'));
     }
-  }).catch(() => {
+  } catch (error) {
     ElMessage.error('新建习题失败：网络错误');
-  });
+    console.error('Error creating exercise:', error);
+  } finally {
+    generating.value = false;
+  }
 }
 
 const deleteExercise = (exercise: any) => {
