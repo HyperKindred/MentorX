@@ -173,7 +173,7 @@ onMounted(() => {
   top: 0%;
   position: absolute;
   width: 100vw;
-  height: 98.5vh;
+  height: 100vh;
   overflow: hidden;
   right: 0px;
   bottom: 0px;

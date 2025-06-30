@@ -83,10 +83,10 @@
             <div class="message-content">
               <div class="message-text" v-if="message.sender === 'user'">{{ message.text }}</div>
               <div 
-                class="message-text" 
+                class="message-text markdown-content" 
                 v-else-if="message.isTyping"
               >
-                <span class="typing-text">{{ message.displayText }}</span>
+                <span class="typing-text" v-html="marked.parse(message.displayText || '')"></span>
                 <span class="typing-cursor">|</span>
               </div>
               <div 
@@ -117,7 +117,7 @@
             type="primary" 
             @click="sendMessage"
             :disabled="!newMessage.trim() || isLoading"
-            :loading="isLoading"
+            :loading="!isLoading"
             class="send-button"
           >
             <i class="el-icon-position" v-if="!isLoading"></i>
@@ -595,8 +595,6 @@ const sendMessage = async () => {
       }
     });
 
-    console.log(response)
-
     if (response.data.ret === 0) {
       // 移除加载消息
       messages.value.pop();
@@ -640,12 +638,12 @@ const sendMessage = async () => {
 };
 
 /**
- * 逐字显示文本效果
+ * 逐字显示文本效果（随机速度模拟AI思考）
  * @param message - 要显示的消息对象
  * @param fullText - 完整的文本内容
- * @param speed - 显示速度（毫秒）
+ * @param baseSpeed - 基础显示速度（毫秒），默认30ms
  */
-const typewriterEffect = (message: Message, fullText: string, speed: number = 30) => {
+const typewriterEffect = (message: Message, fullText: string, baseSpeed: number = 30) => {
   let index = 0;
   
   // 确保响应式更新
@@ -653,19 +651,42 @@ const typewriterEffect = (message: Message, fullText: string, speed: number = 30
   message.isTyping = true;
   message.text = fullText; // 先设置完整文本
   
-  const timer = setInterval(() => {
+  /**
+   * 递归函数，为每个字符设置随机延迟
+   */
+  const typeNextChar = () => {
     if (index < fullText.length) {
       message.displayText = fullText.substring(0, index + 1);
       index++;
+      
       // 自动滚动到底部
       nextTick(() => {
         scrollToBottom();
       });
+      
+      // 生成随机延迟时间：基础速度 ± 50%的随机变化
+      // 对于标点符号和空格，增加额外的停顿时间
+      const currentChar = fullText[index - 1];
+      let randomDelay = baseSpeed + Math.random() * baseSpeed - baseSpeed / 2;
+      
+      // 标点符号后增加停顿，模拟AI思考
+      if (/[。！？；，、：]/.test(currentChar)) {
+        randomDelay += Math.random() * 200 + 100; // 额外100-300ms停顿
+      } else if (/[\s\n]/.test(currentChar)) {
+        randomDelay += Math.random() * 50 + 25; // 空格和换行增加25-75ms停顿
+      }
+      
+      // 确保延迟时间不小于10ms
+      randomDelay = Math.max(10, randomDelay);
+      
+      setTimeout(typeNextChar, randomDelay);
     } else {
       message.isTyping = false;
-      clearInterval(timer);
     }
-  }, speed);
+  };
+  
+  // 开始打字效果
+  typeNextChar();
 };
 
 /**
@@ -913,14 +934,24 @@ const handleShiftEnter = (event: KeyboardEvent) => {
   color: white;
 }
 
-.message-content-user {
+.message-content {
   flex: 1;
-  max-width: calc(100% - 80px);
-  margin-left: 80px;
-  margin-right: 80px;
+  margin: 0 12px;
 }
 
+.message-item.user .message-content {
+  margin-left: 68px;
+  margin-right: 12px;
+  width: fit-content;
+  max-width: none;
+  flex: none;
+}
 
+.message-item.bot .message-content {
+  max-width: calc(100% - 80px);
+  margin-left: 12px;
+  margin-right: 68px;
+}
 
 .message-text {
   background: #f9fafb;
@@ -942,6 +973,115 @@ const handleShiftEnter = (event: KeyboardEvent) => {
   font-size: 16px;
   line-height: 1.6;
   color: #2c3e50;
+}
+
+/* Markdown元素样式 */
+.message-text.markdown-content h1,
+.message-text.markdown-content h2,
+.message-text.markdown-content h3,
+.message-text.markdown-content h4,
+.message-text.markdown-content h5,
+.message-text.markdown-content h6 {
+  margin: 16px 0 8px 0;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.message-text.markdown-content h1 { font-size: 24px; }
+.message-text.markdown-content h2 { font-size: 20px; }
+.message-text.markdown-content h3 { font-size: 18px; }
+.message-text.markdown-content h4 { font-size: 16px; }
+.message-text.markdown-content h5 { font-size: 14px; }
+.message-text.markdown-content h6 { font-size: 12px; }
+
+.message-text.markdown-content p {
+  margin: 8px 0;
+}
+
+.message-text.markdown-content code {
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  color: #e11d48;
+}
+
+.message-text.markdown-content pre {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 12px 0;
+  overflow-x: auto;
+}
+
+.message-text.markdown-content pre code {
+  background: none;
+  padding: 0;
+  color: #334155;
+  font-size: 13px;
+}
+
+.message-text.markdown-content ul,
+.message-text.markdown-content ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.message-text.markdown-content li {
+  margin: 4px 0;
+}
+
+.message-text.markdown-content blockquote {
+  border-left: 4px solid #e5e7eb;
+  margin: 12px 0;
+  padding: 8px 16px;
+  background: #f9fafb;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.message-text.markdown-content strong {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.message-text.markdown-content em {
+  font-style: italic;
+}
+
+.message-text.markdown-content a {
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+.message-text.markdown-content a:hover {
+  text-decoration: underline;
+}
+
+.message-text.markdown-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 12px 0;
+}
+
+.message-text.markdown-content th,
+.message-text.markdown-content td {
+  border: 1px solid #e5e7eb;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.message-text.markdown-content th {
+  background: #f9fafb;
+  font-weight: 600;
+}
+
+.message-text.markdown-content hr {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 16px 0;
 }
 
 .message-item.user .message-text {
@@ -1000,6 +1140,7 @@ const handleShiftEnter = (event: KeyboardEvent) => {
   display: flex;
   align-items: flex-end;
   gap: 12px;
+  align-items: center;
 }
 
 .message-input {
@@ -1029,6 +1170,9 @@ const handleShiftEnter = (event: KeyboardEvent) => {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .send-button:hover {

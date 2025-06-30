@@ -33,9 +33,9 @@
           <div class="answer-time">{{ student.answer_time }}</div>
           <div class="buttom-right">
           <div class="correction">
-              <span v-if="student.check === 0">✔️</span>
-              <span v-else-if="student.check === 1">❌</span>
-              <span v-else-if="student.check === 2">⭕</span>
+              <span v-if="student.check === '0'"">✔️</span>
+              <span v-else-if="student.check === '1'">❌</span>
+              <span v-else-if="student.check === '2'">⭕</span>
               <span v-else>❓</span>
           </div>
           <el-button type="primary" size="small" @click="ansChecker(student)" :disabled="student.is_checked === 1" class="check_btn">
@@ -63,9 +63,9 @@
   <p class="analysis-info"><strong style="color: #080808">作答内容：</strong>{{ selectedStudent?.student_answer }}</p>
   <p class="analysis-info">
     <strong style="color: #080808">批改结果：</strong>
-    <span v-if="selectedStudent?.check === 1">❌错误</span>
-    <span v-else-if="selectedStudent?.check === 0">✔️正确</span>
-    <span v-else-if="selectedStudent?.check === 2">⭕半对半错</span> 
+    <span v-if="selectedStudent?.check === '1'">❌错误</span>
+    <span v-else-if="selectedStudent?.check === '0'">✔️正确</span>
+    <span v-else-if="selectedStudent?.check === '2'">⭕半对半错</span> 
     <span v-else>❓未批改</span>
   </p>
   <div v-if="selectedStudent?.check != null && selectedStudent?.analyse">
