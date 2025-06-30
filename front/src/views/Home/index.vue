@@ -212,7 +212,7 @@ onMounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: -1; /* 确保在内容层之下 */
+  z-index: 0; /* 确保在内容层之下 */
   background: linear-gradient(135deg, #0a1a3d, #1c3976, #2a1b5e, #1c1f4d);
   background-size: 400% 400%;
   animation: gradientFlow 15s ease infinite;
