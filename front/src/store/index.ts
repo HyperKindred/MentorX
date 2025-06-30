@@ -19,7 +19,7 @@ interface Tab {
 // 定义 Store
 export const mainStore = defineStore('main', {
   state: () => ({
-    ip:'http://10.19.130.90:5000',
+    ip:'http://10.16.205.239:5000',
     tabs: [
       { name: 'home', title: '首页', component: markRaw(Home), closable: false, props: {} }
     ] as Tab[],
