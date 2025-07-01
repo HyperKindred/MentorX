@@ -869,7 +869,7 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
 .answer-content h4 {
   margin: 0 0 12px 0;
   font-size: 14px;
-  color: #606266;
+  color: var(--textColor2);
   font-weight: 600;
 }
 
