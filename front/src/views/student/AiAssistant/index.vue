@@ -10,6 +10,8 @@
             placeholder="选择章节"
             @change="onChapterChange"
             size="small"
+            class="ai-assistant-chapter-select"
+            popper-class="ai-assistant-chapter-dropdown"
           >
             <el-option
               v-for="chapter in chapters"
@@ -714,7 +716,6 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 
 /* 章节头部样式 */
 .chapter-header {
-  padding: 16px;
   border-bottom: 2px solid var(--backgroundColor);
   background: var(--backgroundColor1);
 }
@@ -739,11 +740,66 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 
 .chapter-selector {
   width: 100%;
-
+  height: 100%;
 }
 
 .chapter-selector :deep(.el-select) {
   width: 100%;
+  height: 100%;
+}
+
+.chapter-selector :deep(.el-select .el-select__wrapper) {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 16px;
+  border-radius: 0;
+}
+
+.chapter-selector :deep(.el-select .el-select__wrapper:hover) {
+  box-shadow: none;
+}
+
+.chapter-selector :deep(.el-select .el-select__wrapper.is-focused) {
+  box-shadow: none;
+}
+
+.chapter-selector :deep(.el-select .el-select__input) {
+  background: transparent;
+  border: none;
+  outline: none;
+  box-shadow: none;
+}
+
+.chapter-selector :deep(.el-select .el-select__input:focus) {
+  border: none;
+  box-shadow: none;
+}
+
+.chapter-selector :deep(.el-select .el-select__selected-item) {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.chapter-selector :deep(.el-select .el-select__placeholder) {
+  background: transparent;
+  display: flex;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--textColor);
+  background: transparent;
+}
+
+.chapter-selector :deep(.el-select .el-select__placeholder.is-transparent) {
+  color: var(--textColor2);
+}
+
+/* 下拉框样式已移至全局样式中 */
+
+.chapter-selector :deep(.el-select .el-select__placeholder .is-transparent) {
+  color: var(--titleColor2);
 }
 
 .el-icon-document {
@@ -1084,5 +1140,27 @@ const handleShiftEnter = (event: KeyboardEvent) => {
   .chat-input-area {
     padding: 12px 16px;
   }
+}
+</style>
+
+<!-- 全局样式，用于控制下拉框 -->
+<style>
+/* AI助手章节选择器下拉框样式 */
+.ai-assistant-chapter-dropdown {
+  background: var(--backgroundColor4);
+}
+
+.ai-assistant-chapter-dropdown .el-select-dropdown__item {
+  background: transparent;
+  color: var(--textColor2);
+}
+
+.ai-assistant-chapter-dropdown .el-select-dropdown__item:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.ai-assistant-chapter-dropdown .el-select-dropdown__item.is-selected {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--textColor);
 }
 </style>
