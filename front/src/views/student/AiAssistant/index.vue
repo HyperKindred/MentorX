@@ -1007,7 +1007,7 @@ const handleShiftEnter = (event: KeyboardEvent) => {
   word-wrap: break-word;
   white-space: pre-wrap;
   background: var(--titleColor2);
-  padding: 20px;
+  padding: 0 20px;
   text-align: left;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   font-size: 16px;
