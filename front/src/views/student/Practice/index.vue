@@ -148,8 +148,8 @@
                 <pre>{{ selectedPractice.student_answer }}</pre>
                 <div v-if="selectedPractice.check_result" class="check-result">
                   <h4>批改结果：</h4>
-                  <div class="check-score" :class="getScoreClass(selectedPractice.check_result)">
-                    <div class="markdown-content" v-html="marked.parse(selectedPractice.check_result)"></div>
+                  <div class="check-score">
+                    <div class="markdown-content" v-html="getCheckLabel(selectedPractice.check_result)"></div>
                   </div>
                   <div v-if="selectedPractice.analyse" class="check-analyse">
                     <h4>详细分析：</h4>
@@ -662,12 +662,14 @@ const getPracticeDifficultyText = (difficulty: number): string => {
 /**
  * 根据评分获取样式类名
  */
-const getScoreClass = (score: string): string => {
-  const numScore = parseInt(score);
-  if (numScore >= 90) return 'excellent';
-  if (numScore >= 80) return 'good';
-  if (numScore >= 60) return 'pass';
-  return 'fail';
+const checkMap: Record<string, string> = {
+  0:'✔️正确',
+  1: '❌错误',
+  2: '⭕半对半错'
+};
+
+const getCheckLabel = (type: string): string => {
+  return checkMap[type] || '❓未批改';
 };
 
 /**
@@ -716,8 +718,7 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   width: 300px;
   background: var(--backgroundColor2);
   border-right: 1.5px solid transparent;
-  border-top-left-radius: 8px;
-  border-bottom-left-radius: 8px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
 }
@@ -775,7 +776,7 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   font-weight: 600;
   color: var(--titleColor);
   margin: 0;
-  padding: 20px 20px 16px 20px;
+  padding: 20px 20px 28px 20px;
 }
 
 .chapter-list {
@@ -795,6 +796,7 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   border-radius: 5px;
   background-color: transparent;
   color: var(--textColor2);
+  width: 270px;
 }
 
 .chapter-item:hover {
@@ -826,7 +828,6 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 
 /* 功能按钮组样式 */
 .function-buttons {
-  border-bottom: 1.5px solid #e4e7ed;
   padding: 20px 24px;
   background: transparent;
 }
@@ -842,8 +843,8 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   font-weight: 500;
   padding: 12px 20px;
   transition: all 0.3s ease;
-  border: 1px solid var(--textColor2);
-  background-color: var(--backgroundColor2);
+  border: 1.5px solid var(--textColor2);
+  background-color: var(--backgroundColor);
   color: var(--textColor2);
 }
 
@@ -851,7 +852,7 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   transform: translateY(-2px);
   box-shadow: 0 4px 12px var(--shadowColor2);
   color: var(--textColor);
-  border: 1px solid var(--textColor2);
+  border: 1.5px solid var(--textColor2);
 }
 
 .function-btn.active {
@@ -949,7 +950,7 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 .question-section {
   margin-bottom: 30px;
   padding: 20px;
-  background: #f8f9fa;
+  background: var(--backgroundColor3);
   border-radius: 8px;
   border-left: 4px solid #409eff;
 }
@@ -963,7 +964,7 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 
 .question-header h2 {
   margin: 0;
-  color: #303133;
+  color: var(--textColor);
   font-size: 20px;
   font-weight: 600;
 }
@@ -974,21 +975,21 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 }
 
 .question-content {
-  background: white;
+  background: var(--backgroundColor3);
   padding: 20px;
   border-radius: 6px;
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--borderColor);
   line-height: 1.6;
-  color: #303133;
+  color: var(--textColor);
   text-align: left;
 }
 
 /* 作答区域样式 */
 .answer-section {
   padding: 20px;
-  background: #ffffff;
+  background: var(--backgroundColor3);
   border-radius: 8px;
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--borderColor);
 }
 
 .answer-header {
@@ -997,12 +998,12 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #e4e7ed;
+  border-bottom: 1px solid var(--borderColor);
 }
 
 .answer-header h3 {
   margin: 0;
-  color: #303133;
+  color: var(--textColor);
   font-size: 18px;
   font-weight: 600;
 }
@@ -1017,10 +1018,10 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 }
 
 .submitted-answer .answer-content {
-  background: #f5f7fa;
+  background: var(--backgroundColor3);
   padding: 15px;
   border-radius: 6px;
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--borderColor);
   margin-bottom: 15px;
 }
 
@@ -1029,20 +1030,20 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   white-space: pre-wrap;
   word-wrap: break-word;
   font-family: 'Courier New', monospace;
-  color: #303133;
+  color: var(--textColor);
   line-height: 1.5;
 }
 
 .answer-content h4 {
   margin: 0 0 12px 0;
   font-size: 14px;
-  color: #606266;
+  color: var(--textColor2);
   font-weight: 600;
 }
 
 .answer-content pre {
-  background: white;
-  border: 1px solid #e4e7ed;
+  background: var(--backgroundColor3);
+  border: 1px solid var(--borderColor);
   border-radius: 4px;
   padding: 12px;
   margin: 0 0 16px 0;
@@ -1056,7 +1057,7 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 .check-result {
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid #e4e7ed;
+  border-top: 1px solid var(--borderColor);
 }
 
 .check-score {
@@ -1065,38 +1066,15 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   padding: 6px 12px;
   border-radius: 4px;
   margin-bottom: 12px;
-  background: white;
-  border: 1px solid #e4e7ed;
+  background: var(--backgroundColor3);
+  border: 1px solid var(--borderColor);
   box-sizing: border-box;
 }
 
-/* .check-score.excellent {
-  background-color: #f0f9ff;
-  color: #1890ff;
-  border: 1px solid #b3d8ff;
-}
-
-.check-score.good {
-  background-color: #f6ffed;
-  color: #52c41a;
-  border: 1px solid #b7eb8f;
-}
-
-.check-score.pass {
-  background-color: #fff7e6;
-  color: #fa8c16;
-  border: 1px solid #ffd591;
-}
-
-.check-score.fail {
-  background-color: #fff2f0;
-  color: #ff4d4f;
-  border: 1px solid #ffb3b3;
-} */
 
 .check-analyse {
-  background: white;
-  border: 1px solid #e4e7ed;
+  background: var(--backgroundColor3);
+  border: 1px solid var(--borderColor);
   border-radius: 4px;
   padding: 12px;
   margin-top: 12px;

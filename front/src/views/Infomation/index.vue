@@ -128,7 +128,7 @@ const newPassword2 = ref('');
 const genderText = computed(() => {
   if (gender.value === 'male') return '男';
   if (gender.value === 'female') return '女';
-  return '未知';
+  return '保密';
 });
 
 const typeMap: Record<string, string> = {
@@ -290,6 +290,9 @@ const cancelEditGender = () => {
   width: 4rem;
 }
 
+.gender {
+  padding: 0;
+}
 .inline-input {
   max-width: 5rem;
   height: 1.5rem;

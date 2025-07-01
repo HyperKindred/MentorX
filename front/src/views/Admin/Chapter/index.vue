@@ -25,8 +25,8 @@
         <h3 class="chapterTitle">{{ selectedChapter.name }}</h3>
       </div>
       <div class="header-btn">
-        <el-button type="primary" class='head-btn' @click="showExercises">习题</el-button>
-        <el-button type="primary" class='head-btn' @click="toggleEditContent">
+        <el-button type="primary" class='function-btn' @click="showExercises">习题</el-button>
+        <el-button type="primary" class='function-btn' @click="toggleEditContent">
           {{ isEditing ? '保存' : '修改' }}
         </el-button>
       </div>
@@ -235,8 +235,7 @@ onMounted(() => {
   width: 300px;
   background: var(--backgroundColor2);
   border-right: 1.5px solid transparent;
-  border-top-left-radius: 8px;
-  border-bottom-left-radius: 8px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
 }
@@ -268,6 +267,7 @@ onMounted(() => {
   border-radius: 5px;
   background-color: transparent;
   color: var(--textColor2);
+  width: 270px;
 }
 
 .chapter-item:hover {
@@ -319,15 +319,13 @@ onMounted(() => {
   font-size: 15px;
 }
 
-.chapterBtn:hover {
-}
 .nav-title {
   font-size: 16px;
   font-weight: 600;
   color: var(--titleColor);
   margin-left: auto;
   margin-right: auto;
-  padding: 20px 20px 16px 20px;
+  padding: 20px 20px 28px 20px;
 }
 
 .chapterTitle {
@@ -368,13 +366,25 @@ onMounted(() => {
   flex-direction: row;
   align-items: center;
   justify-content: end;
-  margin-right: 2rem;
+  margin-right: 24px;
 }
 
-.head-btn {
-  
+.function-btn {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 12px 20px;
+  transition: all 0.3s ease;
+  border: 1.5px solid var(--textColor2);
+  background-color: var(--backgroundColor);
+  color: var(--textColor2);
 }
 
+.function-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadowColor2);
+  color: var(--textColor);
+  border: 1.5px solid var(--textColor2);
+}
 
 .read-only-content {
   padding: 2rem;

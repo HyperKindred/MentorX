@@ -10,6 +10,8 @@
             placeholder="选择章节"
             @change="onChapterChange"
             size="small"
+            class="ai-assistant-chapter-select"
+            popper-class="ai-assistant-chapter-dropdown"
           >
             <el-option
               v-for="chapter in chapters"
@@ -714,7 +716,6 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 
 /* 章节头部样式 */
 .chapter-header {
-  padding: 16px;
   border-bottom: 2px solid var(--backgroundColor);
   background: var(--backgroundColor1);
 }
@@ -739,11 +740,66 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 
 .chapter-selector {
   width: 100%;
-
+  height: 100%;
 }
 
 .chapter-selector :deep(.el-select) {
   width: 100%;
+  height: 100%;
+}
+
+.chapter-selector :deep(.el-select .el-select__wrapper) {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 16px;
+  border-radius: 0;
+}
+
+.chapter-selector :deep(.el-select .el-select__wrapper:hover) {
+  box-shadow: none;
+}
+
+.chapter-selector :deep(.el-select .el-select__wrapper.is-focused) {
+  box-shadow: none;
+}
+
+.chapter-selector :deep(.el-select .el-select__input) {
+  background: transparent;
+  border: none;
+  outline: none;
+  box-shadow: none;
+}
+
+.chapter-selector :deep(.el-select .el-select__input:focus) {
+  border: none;
+  box-shadow: none;
+}
+
+.chapter-selector :deep(.el-select .el-select__selected-item) {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.chapter-selector :deep(.el-select .el-select__placeholder) {
+  background: transparent;
+  display: flex;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--textColor);
+  background: transparent;
+}
+
+.chapter-selector :deep(.el-select .el-select__placeholder.is-transparent) {
+  color: var(--textColor2);
+}
+
+/* 下拉框样式已移至全局样式中 */
+
+.chapter-selector :deep(.el-select .el-select__placeholder .is-transparent) {
+  color: var(--titleColor2);
 }
 
 .el-icon-document {
@@ -798,11 +854,11 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 }
 
 .conversation-item:hover {
-  background-color: var(--titleColor2);
+  background-color: var(--backgroundColor3);
 }
 
 .conversation-item.active {
-  background-color: var(--borderColor);
+  background-color: var(--backgroundColor);
   border-color: #3b82f6;
 }
 
@@ -838,8 +894,8 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 /* 聊天头部样式 */
 .chat-header {
   padding: 16px 24px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #1c3976;
+  border-bottom: 1px solid var(--backgroundColor);
+  background: var(--backgroundColor2);
 }
 
 .chat-title {
@@ -847,7 +903,7 @@ const handleShiftEnter = (event: KeyboardEvent) => {
   align-items: center;
   font-size: 16px;
   font-weight: 600;
-  color: white;
+  color: var(--titleColor);
 }
 
 .chat-title i {
@@ -950,25 +1006,23 @@ const handleShiftEnter = (event: KeyboardEvent) => {
   border-radius: 12px;
   word-wrap: break-word;
   white-space: pre-wrap;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--titleColor2);
   padding: 20px;
   text-align: left;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   font-size: 16px;
   line-height: 1.6;
-  color: #2c3e50;
+  color: var(--textColor);
 }
 
 .message-item.user .message-text {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--titleColor2);
   padding: 10px 20px;
   text-align: left;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 16px;
   line-height: 1.7;
-  color: #2c3e50;
+  color: var(--textColor);
 }
 
 .message-time {
@@ -994,8 +1048,8 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 /* 输入区域样式 */
 .chat-input-area {
   padding: 16px 24px;
-  border-top: 1px solid #e5e7eb;
-  background: #1c3976;
+  border-top: 1px solid var(--backgroundColor);
+  background: var(--backgroundColor2);
 }
 
 .input-container {
@@ -1011,7 +1065,6 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 
 .message-input :deep(.el-textarea__inner) {
   border-radius: 12px;
-  border: 1px solid #e5e7eb;
   padding: 12px 16px;
   font-size: 14px;
   line-height: 1.5;
@@ -1087,5 +1140,27 @@ const handleShiftEnter = (event: KeyboardEvent) => {
   .chat-input-area {
     padding: 12px 16px;
   }
+}
+</style>
+
+<!-- 全局样式，用于控制下拉框 -->
+<style>
+/* AI助手章节选择器下拉框样式 */
+.ai-assistant-chapter-dropdown {
+  background: var(--backgroundColor4);
+}
+
+.ai-assistant-chapter-dropdown .el-select-dropdown__item {
+  background: transparent;
+  color: var(--textColor2);
+}
+
+.ai-assistant-chapter-dropdown .el-select-dropdown__item:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.ai-assistant-chapter-dropdown .el-select-dropdown__item.is-selected {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--textColor);
 }
 </style>

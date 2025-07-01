@@ -1,32 +1,149 @@
 <template>
-  <div class="background">
-    <Birds />
-  </div>
   <div class="main">
-    <h1 style="margin-top: 10%;">Welcome to MENTOR X</h1>
-    <p>"Your AI Teaching Assistant for Practice and Evaluation."</p>
-    <div class="logIn">
-      <button class="logInBtn" @click="showLogIn = true">Sign in</button>
+    <div class="scroll-container" :class="{ scrolled: isScrolled }">
+      <!-- 欢迎屏幕 -->
+      <div class="welcome-screen">
+        <div class="logo">
+          <svg class='robot-icon' t="1751334052974" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1056" width="200" height="200"><path d="M892.224 117.024c-83.936-83.936-231.648-81.12-387.616-3.84-155.936-77.28-303.68-80.096-387.616 3.84-69.76 69.76-79.488 183.552-36.64 309.344a95.776 95.776 0 0 0 12.992 122.528c-55.936 136.896-53.472 266.176 23.68 343.328C200.96 976.16 348.736 973.376 504.8 896c152.8 75.68 302.016 81.632 387.424-3.776 85.44-85.44 79.424-234.72 3.68-387.584 75.744-152.896 81.76-302.176-3.68-387.616z m-45.248 729.952c-96.416 96.416-332.64 29.408-523.36-161.344a31.968 31.968 0 1 0-45.248 45.248 913.056 913.056 0 0 0 157.376 126.304c-117.248 47.904-219.104 44.128-273.472-10.24-55.776-55.776-56.544-158.368-10.656-271.808 2.816 0.256 5.504 0.864 8.384 0.864a96 96 0 0 0 96-96c0-21.024-6.944-40.288-18.4-56.096a870.592 870.592 0 0 1 86.016-100.288 31.968 31.968 0 1 0-45.248-45.248 933.6 933.6 0 0 0-93.472 109.344A92.928 92.928 0 0 0 160 384a95.68 95.68 0 0 0-24.736 3.616c-28.704-96.448-19.776-178.56 27.008-225.344 62.368-62.368 187.264-58.176 326.112 14.24a31.008 31.008 0 0 0 16.544 3.04 31.104 31.104 0 0 0 16.032-3.104c138.816-72.352 263.648-76.544 326.016-14.176 56 56 56.544 159.2 10.048 273.216a879.36 879.36 0 0 0-67.584-92.48C795.968 331.424 800 318.24 800 304a80 80 0 1 0-80 80c6.368 0 12.48-0.928 18.4-2.336a795.968 795.968 0 0 1 85.408 122.944c-31.52 56.672-73.984 114.08-126.176 168.352-3.2-0.384-6.336-0.96-9.632-0.96a80 80 0 1 0 65.792 34.624A901.056 901.056 0 0 0 857.024 573.76c46.464 113.984 45.952 217.216-10.048 273.216z" p-id="1057"></path><path d="M512 384a128 128 0 1 0 0 256 128 128 0 0 0 0-256z m0 192a64 64 0 1 1 0.032-128.032A64 64 0 0 1 512 576z" p-id="1058"></path></svg>
+          <span>MENTOR X</span>
+        </div>
+
+        <h1 class="title">Welcome to MENTOR X</h1>
+        <p class="title-content">"Your AI Teaching Assistant for Practice and Evaluation."</p>
+
+        <div class="logIn">
+          <button class="logInBtn" @click="showLogIn = true">Sign in</button>
+        </div>
+
+        <div class="scroll-hint" @click="scrollToFeatures">
+          <svg class="arrow-icon" viewBox="0 0 24 24">
+            <path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z" />
+          </svg>
+        </div>
+      </div>
+
+      <!-- 功能展示区域 -->
+      <div class="features-section">
+        <div class="back-to-top-hint" @click="scrollToTop">
+          <svg class="arrow-up-icon" viewBox="0 0 24 24">
+            <path d="M7.41,15.41L12,10.83l4.59,4.58L18,14l-6-6l-6,6L7.41,15.41z" />
+          </svg>
+        </div>
+        <div class="feature-display">
+          <el-carousel :interval="5000" arrow="never" height="400px">
+            <el-carousel-item :key="1" class="slide-content">
+              <div class="slide-text">
+                <h2 class="slide-title">个性习题</h2>
+                <p class="slide-description">AI智能生成个性化习题，量身定制学习内容，支持自主训练，充分激发学习主动性。</p>
+              </div>
+                  <div class="media-container">
+                    <video autoplay loop muted playsinline>
+                      <source :src="slide1" type="video/mp4">
+                    </video>
+                  </div>
+            </el-carousel-item>
+            <el-carousel-item :key="2" class="slide-content">
+              <div class="slide-text">
+                <h2 class="slide-title">AI问答</h2>
+                <p class="slide-description">AI智能问答，实时辅导学生，解答疑难问题，扫清学习障碍。</p>
+              </div>
+                  <div class="media-container">
+                    <video autoplay loop muted playsinline>
+                      <source :src="slide2" type="video/mp4">
+                    </video>
+                  </div>
+            </el-carousel-item>
+            <el-carousel-item :key="3" class="slide-content">
+              <div class="slide-text">
+                <h2 class="slide-title">课件生成</h2>
+                <p class="slide-description">根据章节内容智能生成课件，省时省力，助力教师高效备课。</p>
+              </div>
+                  <div class="media-container">
+                    <video autoplay loop muted playsinline>
+                      <source :src="slide3" type="video/mp4">
+                    </video>
+                  </div>
+            </el-carousel-item>
+            <el-carousel-item :key="4" class="slide-content">
+              <div class="slide-text">
+                <h2 class="slide-title">智能批改</h2>
+                <p class="slide-description">智能批改学生作答，提供详细分析，高效准确评估学习情况，精准定位知识薄弱点。</p>
+              </div>
+                  <div class="media-container">
+                    <video autoplay loop muted playsinline>
+                      <source :src="slide4" type="video/mp4">
+                    </video>
+                  </div>
+            </el-carousel-item>
+            <el-carousel-item :key="5" class="slide-content">
+              <div class="slide-text">
+                <h2 class="slide-title">学习追踪</h2>
+                <p class="slide-description">实时追踪学习进度，可视化分析各章节掌握情况，精准定位薄弱环节，助力重点突破。</p>
+              </div>
+                  <div class="media-container">
+                    <video autoplay loop muted playsinline>
+                      <source :src="slide5" type="video/mp4">
+                    </video>
+                  </div>
+            </el-carousel-item>
+            <el-carousel-item :key="6" class="slide-content">
+              <div class="slide-text">
+                <h2 class="slide-title">信息统计</h2>
+                <p class="slide-description">可视化统计系统各类信息，帮助管理者一目了然掌握全局，辅助科学决策。</p>
+              </div>
+                  <div class="media-container">
+                    <video autoplay loop muted playsinline>
+                      <source :src="slide6" type="video/mp4">
+                    </video>
+                  </div>
+            </el-carousel-item>
+          </el-carousel>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg class="brain-icon" viewBox="0 0 24 24">
+                <path
+                  d="M12,3C8.69,3,6,5.69,6,9c0,1.7,0.7,3.22,1.82,4.33C6.44,14.07,6,15.07,6,16.19C6,19.17,8.69,22,12,22s6-2.83,6-5.81 c0-1.12-0.44-2.12-1.82-2.86C17.3,12.22,18,10.7,18,9C18,5.69,15.31,3,12,3z M13,17c0,0.55-0.45,1-1,1s-1-0.45-1-1s0.45-1,1-1 S13,16.45,13,17z M16,14c-0.3,0.22-0.64,0.39-1,0.5c-0.03,1.49-1.17,2.5-3,2.5s-2.97-1.01-3-2.5c-0.36-0.11-0.7-0.28-1-0.5 c-0.03,1.49-1.17,2.5-3,2.5s-2.97-1.01-3-2.5c0-1.65,1.35-3,3-3c0.55,0,1,0.45,1,1s-0.45,1-1,1c-0.55,0-1,0.45-1,1 c0,0.55,0.45,1,1,1c0.55,0,1,0.45,1,1c0,0.55-0.45,1-1,1c-0.55,0-1,0.45-1,1c0,0.55,0.45,1,1,1c1.65,0,3-1.35,3-3 c0-0.55,0.45-1,1-1s1,0.45,1,1c0,1.65,1.35,3,3,3s3-1.35,3-3c0-0.55-0.45-1-1-1c-0.55,0-1-0.45-1-1c0-0.55,0.45-1,1-1 c0.55,0,1-0.45,1-1c0-0.55-0.45-1-1-1c-0.55,0-1-0.45-1-1c0-0.55,0.45-1,1-1c1.65,0,3,1.35,3,3C19,12.65,17.65,14,16,14z" />
+              </svg>
+            </div>
+            <h3>AI驱动学习</h3>
+            <p>根据学习进度和技能水平，量身定制自适应学习路径。</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg class="chart-icon" viewBox="0 0 24 24">
+                <path
+                  d="M16,11V5h4v6H16z M10,7V5h4v2H10z M4,9V5h4v4H4z M16,19v-6h4v6H16z M10,13v-2h4v2H10z M4,19v-4h4v4H4z M10,19v-4h4v4H10z" />
+              </svg>
+            </div>
+            <h3>进度追踪</h3>
+            <p>详细追踪和分析学习进度，全面掌握知识熟练度。</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg class="comments-icon" viewBox="0 0 24 24">
+                <path
+                  d="M20,2H4C2.9,2,2,2.9,2,4v18l4-4h14c1.1,0,2-0.9,2-2V4C22,2.9,21.1,2,20,2z M6,14v-2h12v2H6z M18,11H6V9h12V11z M18,8H6V6 h12V8z" />
+              </svg>
+            </div>
+            <h3>智能教学</h3>
+            <p>智能生成学习内容与习题，实时反馈，助力高效学习。</p>
+          </div>
+        </div>
+
+        <div class="footer">
+          © 2023 MENTOR X - 用AI改变教育
+        </div>
+      </div>
     </div>
 
-    <div class="feature-display">
-      <el-carousel :interval="5000" arrow="never">
-        <el-carousel-item :key="1" class="slide-content-item">
-          <h1>1</h1>
-        </el-carousel-item>
-        <el-carousel-item :key="2" class="slide-content-item">
-          <h1>2</h1>
-        </el-carousel-item>
-        <el-carousel-item :key="3" class="slide-content-item">
-          <h1>3</h1>
-        </el-carousel-item>
-        <el-carousel-item :key="4" class="slide-content-item">
-          <h1>4</h1>
-        </el-carousel-item>
-      </el-carousel>
-    </div>
+    <!-- 动态渐变背景层 -->
+    <div class="dynamic-background"></div>
+    
+    <LogIn v-model:visible="showLogIn" @close-login="closeLogIn" />
   </div>
-  <LogIn v-model:visible="showLogIn" @close-login="closeLogIn" />
 </template>
 
 <script lang="ts" setup>
@@ -36,101 +153,556 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
 import LogIn from '../LogIn/index.vue'
-import Birds from '../Background/Birds.vue'
+import slide1 from '../../assets/videos/生成习题.mp4'
+import slide2 from '../../assets/videos/AI问答.mp4'
+import slide3 from '../../assets/videos/课件生成.mp4'
+import slide4 from '../../assets/videos/批改习题.mp4'
+import slide5 from '../../assets/videos/学习情况.mp4'
+import slide6 from '../../assets/videos/统计信息.mp4'
 
 const store = mainStore();
 const router = useRouter();
 const showLogIn = ref(false);
+const isScrolled = ref(false);
+
+const scrollToFeatures = () => {
+  isScrolled.value = true;
+};
+
+const scrollToTop = () => {
+  isScrolled.value = false;
+};
 
 const closeLogIn = () => {
   showLogIn.value = false;
 }
+
 onMounted(() => {
-
+  showLogIn.value = false;
 });
-
-
 </script>
 
 <style scoped>
-html,
-body {
+* {
   margin: 0;
   padding: 0;
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
-}
-
-#app {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  width: 100%;
+  box-sizing: border-box;
 }
 
 .main {
-  font-family: Arial, Helvetica, sans-serif;
-  background-color: #1c3976ac;
-  background-attachment: fixed;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
   min-width: 100vw;
-  margin: 0 auto;
-  color: #f8f8f8;
+  overflow: hidden;
+  line-height: 1.6;
+  position: relative;
 }
 
-.h1 {
-  margin: 0.4rem;
-  font-size: 1.2rem;
-}
-
-.p {
-  font-size: 1rem;
-  line-height: 1.5rem;
-  font-weight: 100;
-  margin: 1.2rem 0;
-  letter-spacing: 0.1rem;
-}
-
-
-.feature-display {
+/* 动态渐变背景 */
+.dynamic-background {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  margin-top: 3rem;
-  padding-left: 10%;
-  padding-right: 10%;
+  z-index: 0; /* 确保在内容层之下 */
+  background: linear-gradient(135deg, #0a1a3d, #1c3976, #2a1b5e, #1c1f4d);
+  background-size: 400% 400%;
+  animation: gradientFlow 15s ease infinite;
+}
+
+@keyframes gradientFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.scroll-container {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+  width: 100%;
+  z-index: 1; /* 确保内容在背景之上 */
+}
+
+.welcome-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  z-index: 20;
+  transition: transform 1.2s cubic-bezier(0.33, 1, 0.68, 1);
+  background: rgba(10, 26, 61, 0.157);
+  backdrop-filter: blur(8px);
+}
+
+.scrolled .welcome-screen {
+  transform: translateY(-100%);
+}
+
+.features-section {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  min-height: 100vh;
+  padding: 2rem;
+  transition: transform 1.2s cubic-bezier(0.33, 1, 0.68, 1);
+  transform: translateY(0);
+  margin-top: 1.8rem;
+  background: rgba(10, 26, 61, 0.92);
+  backdrop-filter: blur(8px);
+}
+
+.scrolled .features-section {
+  transform: translateY(-100%);
+}
+
+.logo {
+  position: absolute;
+  top: 30px;
+  left: 30px;
+  display: flex;
+  align-items: center;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #5e9aff;
+  z-index: 30;
+  animation: fadeInDown 0.8s ease-out;
+}
+
+.robot-icon {
+  width: 2.2rem;
+  height: 2.2rem;
+  margin-right: 10px;
+  fill: currentColor;
+}
+
+.title {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(to right, #ffffff, #a0c4ff);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.title-content {
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+  max-width: 600px;
+  opacity: 0.9;
+  font-weight: 300;
+  padding: 0 20px;
+  animation: fadeIn 1.2s ease-out 0.3s forwards;
+  opacity: 0;
+  color: #f8f8f8;
 }
 
 .logIn {
-  margin-top: 3rem;
+  margin-top: 2rem;
+  animation: fadeIn 1.2s ease-out 0.6s forwards;
+  opacity: 0;
 }
 
-.logIn button {
-  background-color: #417dff;
-  color: #f8f8f8;
-  padding: 0.4rem 1rem;
-  border: 2px solid #fff;
-  outline: none;
+.logInBtn {
+  background: linear-gradient(45deg, #417dff, #5e9aff);
+  color: white;
+  border: none;
+  padding: 0.8rem 2.5rem;
+  font-size: 1.2rem;
+  border-radius: 50px;
   cursor: pointer;
-  width: 10rem;
-  height: 3rem;
-  border-radius: 8px;
-  transition: all 100ms ease-in;
-  margin: 0.6rem 0;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(65, 125, 255, 0.4);
+  font-weight: 600;
+}
+
+.logInBtn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(65, 125, 255, 0.6);
+}
+
+.logInBtn:active {
+  transform: translateY(1px);
+}
+
+.scroll-hint {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0.8;
+  animation: bounce 2s infinite;
+  cursor: pointer;
+  z-index: 30;
+}
+
+.scroll-hint:hover {
+  opacity: 1;
+}
+
+.arrow-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  fill: #5e9aff;
+  transition: all 0.3s ease;
+}
+
+.scroll-hint:hover .arrow-icon {
+  transform: scale(1.2);
+  filter: drop-shadow(0 0 8px rgba(160, 196, 255, 0.7));
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0) translateX(-50%);
+  }
+  40% {
+    transform: translateY(-20px) translateX(-50%);
+  }
+  60% {
+    transform: translateY(-10px) translateX(-50%);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.back-to-top-hint {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0.8;
+  animation: bounceReverse 2s infinite;
+  cursor: pointer;
+  z-index: 30;
+  width: 50px;
+  height: 50px;
+}
+
+.back-to-top-hint:hover {
+  opacity: 1;
+}
+
+.back-to-top-hint .arrow-up-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  fill: #5e9aff;
+  transition: all 0.3s ease;
+}
+
+.back-to-top-hint:hover .arrow-up-icon {
+  transform: scale(1.2);
+  filter: drop-shadow(0 0 8px rgba(160, 196, 255, 0.7));
+}
+
+/* 反向弹跳动画 */
+@keyframes bounceReverse {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0) translateX(-50%);
+  }
+  40% {
+    transform: translateY(20px) translateX(-50%);
+  }
+  60% {
+    transform: translateY(10px) translateX(-50%);
+  }
+}
+
+.feature-display {
+  width: 100%;
+  max-width: 900px;
+  margin: 80px auto 3rem;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.slide-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-right: 2rem;
+}
+
+.slide-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2rem;
+  min-height: 400px;
+}
+
+.slide-title {
+  font-size: 2.2rem;
+  margin-bottom: 1rem;
+  color: #a0c4ff;
+  font-weight: 700;
+}
+
+.slide-description {
+  font-size: 1.2rem;
+  max-width: 600px;
+  margin-bottom: 1rem;
+  line-height: 1.6;
+  opacity: 0.9;
+  text-align: center;
+  color: #f8f8f8;
+}
+
+.media-container {
+  width: 100%;
+  max-width: 800px;
+  height: 300px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.4);
+  background: #000;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.media-container img,
+.media-container video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  margin: 0 auto 0;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.feature-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 1.8rem 1.5rem;
+  text-align: center;
+  transition: all 0.4s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transform: translateY(30px);
+  opacity: 0;
+  color: #f8f8f8;
+}
+
+.scrolled .feature-card {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.feature-card:nth-child(1) {
+  transition-delay: 0.1s;
+}
+
+.feature-card:nth-child(2) {
+  transition-delay: 0.2s;
+}
+
+.feature-card:nth-child(3) {
+  transition-delay: 0.3s;
+}
+
+.feature-card:hover {
+  transform: translateY(-10px);
+  background: rgba(65, 125, 255, 0.15);
+  box-shadow: 0 8px 25px rgba(65, 125, 255, 0.2);
+}
+
+.feature-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1.2rem;
+  color: #5e9aff;
+  display: flex;
+  justify-content: center;
+}
+
+.brain-icon,
+.chart-icon,
+.comments-icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  fill: currentColor;
+}
+
+.feature-card h3 {
   font-size: 1.5rem;
-  padding: 0.5rem 0;
+  margin-bottom: 0.8rem;
+  font-weight: 600;
 }
 
-.logIn button:hover {
-  background-color: #417dffd8;
-
+.feature-card p {
+  font-size: 1rem;
+  margin-bottom: 0;
+  opacity: 0.8;
 }
 
-.logIn button:active {
-  transform: scale(0.95 0.95);
+.footer {
+  padding: 1.5rem;
+  text-align: center;
+  font-size: 0.9rem;
+  opacity: 0.7;
+  width: 100%;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f8f8f8;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .feature-display {
+    margin-top: 60px;
+    min-height: auto;
+  }
+
+  .slide-content {
+    padding: 1.5rem;
+    min-height: auto;
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .slide-text {
+    margin-right: 0;
+    margin-bottom: 1.5rem;
+  }
+
+  .media-container {
+    height: 200px;
+  }
+
+  .features-grid {
+    padding: 0 1rem;
+  }
+
+  .feature-card {
+    padding: 1.2rem;
+    margin-bottom: 1rem;
+  }
+
+  .back-to-top-hint {
+    top: 20px;
+  }
+  
+  .title {
+    font-size: 2.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .slide-title {
+    font-size: 1.8rem;
+  }
+
+  .slide-description {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .media-container {
+    height: 180px;
+  }
+
+  .feature-icon {
+    margin-bottom: 0.8rem;
+  }
+
+  .feature-card h3 {
+    font-size: 1.3rem;
+  }
+
+  .feature-card p {
+    font-size: 0.9rem;
+  }
+
+  .back-to-top-hint {
+    width: 40px;
+    height: 40px;
+    top: 15px;
+  }
+
+  .back-to-top-hint .arrow-up-icon {
+    width: 2rem;
+    height: 2rem;
+  }
+  
+  .title {
+    font-size: 2.2rem;
+  }
+  
+  .title-content {
+    font-size: 1.1rem;
+  }
+  
+  .logo {
+    font-size: 1.5rem;
+  }
 }
 </style>

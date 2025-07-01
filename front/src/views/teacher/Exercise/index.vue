@@ -21,65 +21,65 @@
       <div class="student-title">
         <h2>学生作答</h2>
       </div>
-      <div
-        class="student-item"
-        v-for="student in paginatedStudents"
-        :key="student.student_id"
-        @click="showAnalysis(student)"
-      >
-        <div class="student-name">{{ student.student_name }}</div>
-        <div class="student-answer">作答内容：{{ student.student_answer }}</div>
-        <div class="student-buttom">
-          <div class="answer-time">{{ student.answer_time }}</div>
-          <div class="buttom-right">
-          <div class="correction">
-              <span v-if="student.check === '0'"">✔️</span>
-              <span v-else-if="student.check === '1'">❌</span>
-              <span v-else-if="student.check === '2'">⭕</span>
-              <span v-else>❓</span>
-          </div>
-          <el-button type="primary" size="small" @click="ansChecker(student)" :disabled="student.is_checked === 1" class="check_btn">
-              批改习题
-          </el-button>
+
+      <div class="student-content">
+        <!-- 学生列表加载状态 -->
+
+
+        <div class="student-list">
+          <div class="student-item" v-for="student in paginatedStudents" :key="student.student_id"
+            @click="showAnalysis(student)">
+            <div class="student-name">{{ student.student_name }}</div>
+            <div class="student-answer">作答内容：{{ student.student_answer }}</div>
+            <div class="student-buttom">
+              <div class="answer-time">{{ student.answer_time }}</div>
+              <div class="buttom-right">
+                <div class="correction">
+                  <span v-if="student.check === '0'">✔️</span>
+                  <span v-else-if="student.check === '1'">❌</span>
+                  <span v-else-if="student.check === '2'">⭕</span>
+                  <span v-else>❓</span>
+                </div>
+                <el-button type="primary" size="small" @click.stop="ansChecker(student)"
+                  :disabled="student.check === '1' || student.check === '0' || student.check === '2'" class="check_btn"
+                  :loading="checkingId === student.student_id">
+                  批改习题
+                </el-button>
+              </div>
+            </div>
           </div>
         </div>
-
       </div>
-    <div class="pagination">
-      <el-pagination
-        layout="prev, pager, next"
-        :page-size="pageSize"
-        :current-page="currentPage"
-        :total="students.length"
-        @current-change="handlePageChange"
-        background
-      />
-    </div>
+
+      <div class="pagination-container">
+        <el-pagination layout="prev, pager, next" :page-size="pageSize" :current-page="currentPage"
+          :total="students.length" @current-change="handlePageChange" background />
+      </div>
     </div>
 
+    <!-- 批改结果分析弹窗 -->
+    <el-dialog v-model="analysisDialogVisible" title="批改结果分析" width="700px" class="analysis"
+      style="padding: 2rem; text-align: left;">
+      <p class="analysis-info"><strong style="color: #080808">学生：</strong>{{ selectedStudent?.student_name }}</p>
+      <p class="analysis-info"><strong style="color: #080808">作答内容：</strong>{{ selectedStudent?.student_answer }}</p>
+      <p class="analysis-info">
+        <strong style="color: #080808">批改结果：</strong>
+        <span v-if="selectedStudent?.check === '1'">❌错误</span>
+        <span v-else-if="selectedStudent?.check === '0'">✔️正确</span>
+        <span v-else-if="selectedStudent?.check === '2'">⭕半对半错</span>
+        <span v-else>❓未批改</span>
+      </p>
+      <div v-if="selectedStudent?.check != null && selectedStudent?.analyse">
+        <strong style="color: #080808">分析：</strong>
+        <div class="analysis-content" v-html="marked.parse(selectedStudent.analyse)"></div>
+      </div>
+
+    </el-dialog>
   </div>
-<el-dialog v-model="analysisDialogVisible" title="批改结果分析" width="700px" class="analysis" style="padding: 2rem; text-align: left;">
-  <p class="analysis-info"><strong style="color: #080808">学生：</strong>{{ selectedStudent?.student_name }}</p>
-  <p class="analysis-info"><strong style="color: #080808">作答内容：</strong>{{ selectedStudent?.student_answer }}</p>
-  <p class="analysis-info">
-    <strong style="color: #080808">批改结果：</strong>
-    <span v-if="selectedStudent?.check === '1'">❌错误</span>
-    <span v-else-if="selectedStudent?.check === '0'">✔️正确</span>
-    <span v-else-if="selectedStudent?.check === '2'">⭕半对半错</span> 
-    <span v-else>❓未批改</span>
-  </p>
-  <div v-if="selectedStudent?.check != null && selectedStudent?.analyse">
-    <strong style="color: #080808">分析：</strong>
-    <div class="analysis-content" v-html="marked.parse(selectedStudent.analyse)"></div>
-  </div>
-
-</el-dialog>
-
-
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { mainStore } from '../../../store/index.ts';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
@@ -93,12 +93,13 @@ const selectedStudent = ref<any>(null);
 const currentPage = ref(1);
 const pageSize = 4;
 const analysisDialogVisible = ref(false);
-
+const checkingId = ref<string | null>(null);
 
 const typeMap: Record<string, string> = {
   choices: '选择题',
   blanks: '填空题',
-  answers: '简答题'
+  answers: '简答题',
+  code: '代码题'
 };
 
 const getTypeLabel = (type: string): string => {
@@ -115,10 +116,9 @@ const getExercisesAns = () => {
     }
   }).then(res => {
     if (res.data.ret === 0) {
-      if (Array.isArray(res.data.students)){
-      students.value = res.data.students;
-        }
-      else{
+      if (Array.isArray(res.data.students)) {
+        students.value = res.data.students;
+      } else {
         students.value = [];
       }
     } else {
@@ -135,6 +135,7 @@ const ansChecker = (student: any) => {
     return;
   }
 
+  checkingId.value = student.student_id;
   const formData = new FormData();
   formData.append('Eno', exercise.value.id);
   formData.append('student_id', student.student_id);
@@ -153,9 +154,11 @@ const ansChecker = (student: any) => {
       } else {
         ElMessage.error('批改失败：' + res.data.msg);
       }
+      checkingId.value = null;
     })
     .catch(() => {
       ElMessage.error('批改失败：网络错误');
+      checkingId.value = null;
     });
 };
 
@@ -175,33 +178,144 @@ const showAnalysis = (student: any) => {
 
 const formatExerciseContent = (content: string, maxLength: number = 50): string => {
   if (!content) return '';
-  
+
   // 将 Markdown 转换为 HTML
   const html = marked.parse(content);
-  
+
   // 创建临时 DOM 元素来解析 HTML
   const tempDiv = document.createElement('div');
   tempDiv.innerHTML = html;
-  
+
   // 获取纯文本内容
   const plainText = tempDiv.textContent || tempDiv.innerText || '';
-  
+
   // 截取指定长度并添加省略号
   return plainText.length > maxLength ? plainText.substring(0, maxLength) + '...' : plainText;
 };
 
 onMounted(() => {
+  setTimeout(() => {
     exercise.value = JSON.parse(localStorage.getItem('selectedExercise') || '{}');
     if (exercise.value?.id) {
-    getExercisesAns();
+      getExercisesAns();
     }
+  }, 800);
 });
-
-
-
 </script>
 
 <style scoped>
+/* 新增加载动画样式 */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  border-radius: 8px;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(65, 125, 255, 0.2);
+  border-top: 5px solid #417dff;
+  border-radius: 50%;
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* 学生列表加载状态 */
+.loading-state {
+  padding: 10px;
+}
+
+.skeleton-item {
+  background: #f5f9ff;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.skeleton-name {
+  height: 20px;
+  width: 40%;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  animation: loading 1.5s infinite;
+}
+
+.skeleton-answer {
+  height: 16px;
+  width: 80%;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  animation: loading 1.5s infinite;
+}
+
+.skeleton-bottom {
+  height: 14px;
+  width: 60%;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  border-radius: 4px;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* 分析弹窗加载状态 */
+.analysis-loading {
+  text-align: center;
+  padding: 40px 0;
+  color: #417dff;
+}
+
+/* 按钮加载状态 */
+.check_btn.is-loading {
+  position: relative;
+}
+
+.check_btn.is-loading::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* 原有样式保持不变 */
 .main {
   display: flex;
   height: 100%;
@@ -226,6 +340,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   padding: 1rem;
+  position: relative;
 }
 
 
@@ -246,7 +361,8 @@ onMounted(() => {
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;
   background: var(--backgroundColor3);
-  word-wrap: normal;  
+  word-wrap: normal;
+  min-height: 200px;
 }
 
 .meta {
@@ -269,8 +385,6 @@ onMounted(() => {
   margin-right: 1rem;
 }
 
-
-
 .exercise-type {
   background-color: #417dff;
   color: white;
@@ -292,7 +406,8 @@ onMounted(() => {
   background: var(--backgroundColor3);
   padding-top: 1rem;
   padding-bottom: 1rem;
-  word-wrap: normal;  
+  word-wrap: normal;
+  overflow-y: auto;
 }
 
 .student-section {
@@ -303,6 +418,18 @@ onMounted(() => {
   padding: 1rem;
   background-color: var(--backgroundColor2);
   margin-bottom: 1rem;
+  position: relative;
+}
+
+.student-content {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 60px;
+  /* 为分页控件留出空间 */
+}
+
+.student-list {
+  height: 100%;
 }
 
 .student-item {
@@ -315,40 +442,55 @@ onMounted(() => {
   box-shadow: 0 1px 3px var(--shadowColor);
   margin-bottom: 1rem;
   text-align: left;
+  transition: all 0.3s ease;
+}
+
+.student-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(65, 125, 255, 0.15);
 }
 
 .student-name {
   font-size: 16px;
   color: var(--textColor);
   margin-bottom: 0.5rem;
-
+  font-weight: 600;
 }
+
 .student-answer {
   font-size: 14px;
   color: var(--textColor);
+  margin-bottom: 10px;
 }
+
 .answer-time {
   margin-bottom: 6px;
   font-size: 14px;
   color: var(--textColor2);
-  left: 1rem;
 }
 
-.pagination {
-  margin-top: auto;
-  margin-bottom: 1rem;
+.pagination-container {
+  position: absolute;
+  bottom: 15px;
+  left: 0;
+  right: 0;
+  padding: 0 15px;
   display: flex;
   justify-content: center;
+  z-index: 5;
+  background: transparent;
+  padding-top: 10px;
 }
 
 .correction {
   font-weight: bold;
   margin-right: 0.5rem;
+  font-size: 18px;
 }
 
-.check_btn  {
-  right: 1rem;
-  left: auto;
+.check_btn {
+  padding: 6px 12px;
+  border-radius: 6px;
 }
 
 .exercise-content p,
@@ -362,31 +504,39 @@ onMounted(() => {
   padding-left: 1.2em;
 }
 
-
 .student-buttom {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px dashed #e4e7ed;
 }
 
 .el-dialog__title {
   color: #080808;
   font-weight: bold;
 }
+
 .analysis-content {
   margin-left: 1rem;
   color: #080808;
+  padding: 12px;
+  background: #f5f9ff;
+  border-radius: 6px;
+  margin-top: 8px;
 }
+
 .analysis-info {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.8rem;
   color: #080808;
+  font-size: 15px;
 }
 
 .buttom-right {
   display: flex;
   flex-direction: row;
   justify-content: end;
+  align-items: center;
 }
-
-
 </style>

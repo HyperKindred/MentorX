@@ -6,7 +6,6 @@
         <h3 class="nav-title">课程章节</h3>
         <el-button type="primary" @click="dialogVisible = true" class="add-btn">＋</el-button>
         </div>
-
         <div class="sidebar">
           <div class="chapter-list">
             <el-space direction="vertical" fill>
@@ -71,11 +70,12 @@
     <el-dialog v-model="dialogVisible" title="新建章节" width="30%">
       <el-input v-model="Cname" placeholder="请输入章节名称" clearable />
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleAddChapter">新建</el-button>
+        <el-button @click="dialogVisible = false" :disabled="isGenerating">取消</el-button>
+        <el-button type="primary" @click="handleAddChapter" :loading="isGenerating">
+          {{ isGenerating ? '生成中...' : '新建' }}
+        </el-button>
       </template>
     </el-dialog>
-
     <el-dialog v-model="renameDialogVisible" title="重命名章节" width="30%">
       <el-input v-model="renameValue" placeholder="请输入新名称" clearable />
       <template #footer>
@@ -108,6 +108,9 @@ const renameDialogVisible = ref(false);
 const renameValue = ref('');
 const renameTargetId = ref(0);
 const activeChapter = ref<number | null>(null);
+const isGenerating = ref(false);
+const progress = ref(0);
+const progressInterval = ref(null);
 interface Chapter {
   id: number;
   name: string;
@@ -151,6 +154,18 @@ const handleAddChapter = () => {
     ElMessage.warning('请输入章节名称');
     return;
   }
+  
+  // 开始生成
+  isGenerating.value = true;
+  progress.value = 0;
+  
+  // 模拟进度条更新
+  progressInterval.value = setInterval(() => {
+    if (progress.value < 95) {
+      progress.value += Math.random() * 15;
+    }
+  }, 500);
+  
   const formData = new FormData();
   formData.append('chapter', Cname.value)
   formData.append('Cno', courseId.value)
@@ -165,16 +180,26 @@ const handleAddChapter = () => {
   })
     .then((response) => {
       const res = response.data;
-      if (res.ret === 0) {
-        ElMessage.success('课件生成成功！');
-        Cname.value = '';
-        dialogVisible.value = false;
-        getChapterList();
-      } else {
-        ElMessage.error('课件生成失败：' + res.msg);
-      }
+      clearInterval(progressInterval.value);
+      progress.value = 100;
+      
+      // 添加短暂延迟让用户看到完成状态
+      setTimeout(() => {
+        isGenerating.value = false;
+        
+        if (res.ret === 0) {
+          ElMessage.success('课件生成成功！');
+          Cname.value = '';
+          dialogVisible.value = false;
+          getChapterList();
+        } else {
+          ElMessage.error('课件生成失败：' + res.msg);
+        }
+      }, 500);
     })
     .catch(() => {
+      clearInterval(progressInterval.value);
+      isGenerating.value = false;
       ElMessage.error('请求失败，请稍后重试！');
     });
 };
@@ -333,8 +358,7 @@ onMounted(() => {
   width: 300px;
   background: var(--backgroundColor2);
   border-right: 1.5px solid transparent;
-  border-top-left-radius: 8px;
-  border-bottom-left-radius: 8px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
 }
@@ -365,6 +389,7 @@ onMounted(() => {
   border-radius: 5px;
   background-color: transparent;
   color: var(--textColor2);
+  width: 270px;
 }
 
 .chapter-item:hover {
@@ -406,7 +431,7 @@ onMounted(() => {
   color: var(--titleColor);
   margin-left: auto;
   margin-right: auto;
-  padding: 20px 20px 16px 20px;
+  padding: 20px 20px 28px 20px;
 }
 
 .add-btn {
@@ -471,6 +496,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
+  padding-bottom: 0;
   background: transparent;
 }
 
@@ -517,8 +543,8 @@ onMounted(() => {
   font-weight: 500;
   padding: 12px 20px;
   transition: all 0.3s ease;
-  border: 1px solid var(--textColor2);
-  background-color: var(--backgroundColor2);
+  border: 1.5px solid var(--textColor2);
+  background-color: var(--backgroundColor);
   color: var(--textColor2);
 }
 
@@ -526,7 +552,7 @@ onMounted(() => {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px var(--shadowColor2);
   color: var(--textColor);
-  border: 1px solid var(--textColor2);
+  border: 1.5px solid var(--textColor2);
 }
 
 .function-btn.active {
@@ -556,5 +582,111 @@ onMounted(() => {
   color: var(--textColor);
   padding: 2rem;
   border-radius: 6px;
+}
+
+.generating-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  backdrop-filter: blur(5px);
+}
+
+.loading-animation {
+  text-align: center;
+  padding: 30px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  width: 400px;
+}
+
+.loading-spinner {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 30px;
+}
+
+.spinner-circle {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 5px solid transparent;
+  mix-blend-mode: multiply;
+  animation: spinner 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+.spinner-circle:nth-child(1) {
+  border-top-color: #417dff;
+  animation-delay: -0.45s;
+}
+
+.spinner-circle:nth-child(2) {
+  border-top-color: #5e9aff;
+  animation-delay: -0.3s;
+}
+
+.spinner-circle:nth-child(3) {
+  border-top-color: #85b1ff;
+  animation-delay: -0.15s;
+}
+
+.spinner-circle:nth-child(4) {
+  border-top-color: #a0c4ff;
+}
+
+@keyframes spinner {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  font-size: 18px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.loading-progress {
+  height: 8px;
+  background: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #417dff, #5e9aff);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .loading-animation {
+    width: 300px;
+    padding: 20px;
+  }
+  
+  .loading-spinner {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .loading-text {
+    font-size: 16px;
+  }
 }
 </style>
