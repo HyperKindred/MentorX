@@ -957,6 +957,9 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   padding-bottom: 20px;
   padding-left: 5px;
   padding-right: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .chapter-item {
