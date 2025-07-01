@@ -267,6 +267,7 @@ onMounted(() => {
   border-radius: 5px;
   background-color: transparent;
   color: var(--textColor2);
+  width: 270px;
 }
 
 .chapter-item:hover {

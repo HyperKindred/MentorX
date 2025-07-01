@@ -21,18 +21,14 @@
       <div class="student-title">
         <h2>学生作答</h2>
       </div>
-      
+
       <div class="student-content">
         <!-- 学生列表加载状态 -->
 
-        
+
         <div class="student-list">
-          <div
-            class="student-item"
-            v-for="student in paginatedStudents"
-            :key="student.student_id"
-            @click="showAnalysis(student)"
-          >
+          <div class="student-item" v-for="student in paginatedStudents" :key="student.student_id"
+            @click="showAnalysis(student)">
             <div class="student-name">{{ student.student_name }}</div>
             <div class="student-answer">作答内容：{{ student.student_answer }}</div>
             <div class="student-buttom">
@@ -44,14 +40,9 @@
                   <span v-else-if="student.check === '2'">⭕</span>
                   <span v-else>❓</span>
                 </div>
-                <el-button 
-                  type="primary" 
-                  size="small" 
-                  @click.stop="ansChecker(student)" 
-                  :disabled="student.check === '1' || student.check === '0' || student.check === '2'" 
-                  class="check_btn"
-                  :loading="checkingId === student.student_id"
-                >
+                <el-button type="primary" size="small" @click.stop="ansChecker(student)"
+                  :disabled="student.check === '1' || student.check === '0' || student.check === '2'" class="check_btn"
+                  :loading="checkingId === student.student_id">
                   批改习题
                 </el-button>
               </div>
@@ -59,47 +50,30 @@
           </div>
         </div>
       </div>
-      
+
       <div class="pagination-container">
-        <el-pagination
-          layout="prev, pager, next"
-          :page-size="pageSize"
-          :current-page="currentPage"
-          :total="students.length"
-          @current-change="handlePageChange"
-          background
-        />
+        <el-pagination layout="prev, pager, next" :page-size="pageSize" :current-page="currentPage"
+          :total="students.length" @current-change="handlePageChange" background />
       </div>
     </div>
 
     <!-- 批改结果分析弹窗 -->
-    <el-dialog 
-      v-model="analysisDialogVisible" 
-      title="批改结果分析" 
-      width="700px" 
-      class="analysis" 
-      style="padding: 2rem; text-align: left;"
-    >
-      <div v-if="analysisLoading" class="analysis-loading">
-        <div class="loading-spinner"></div>
-        <div>正在生成分析结果...</div>
+    <el-dialog v-model="analysisDialogVisible" title="批改结果分析" width="700px" class="analysis"
+      style="padding: 2rem; text-align: left;">
+      <p class="analysis-info"><strong style="color: #080808">学生：</strong>{{ selectedStudent?.student_name }}</p>
+      <p class="analysis-info"><strong style="color: #080808">作答内容：</strong>{{ selectedStudent?.student_answer }}</p>
+      <p class="analysis-info">
+        <strong style="color: #080808">批改结果：</strong>
+        <span v-if="selectedStudent?.check === '1'">❌错误</span>
+        <span v-else-if="selectedStudent?.check === '0'">✔️正确</span>
+        <span v-else-if="selectedStudent?.check === '2'">⭕半对半错</span>
+        <span v-else>❓未批改</span>
+      </p>
+      <div v-if="selectedStudent?.check != null && selectedStudent?.analyse">
+        <strong style="color: #080808">分析：</strong>
+        <div class="analysis-content" v-html="marked.parse(selectedStudent.analyse)"></div>
       </div>
-      
-      <div v-else>
-        <p class="analysis-info"><strong style="color: #080808">学生：</strong>{{ selectedStudent?.student_name }}</p>
-        <p class="analysis-info"><strong style="color: #080808">作答内容：</strong>{{ selectedStudent?.student_answer }}</p>
-        <p class="analysis-info">
-          <strong style="color: #080808">批改结果：</strong>
-          <span v-if="selectedStudent?.check === '1'">❌错误</span>
-          <span v-else-if="selectedStudent?.check === '0'">✔️正确</span>
-          <span v-else-if="selectedStudent?.check === '2'">⭕半对半错</span> 
-          <span v-else>❓未批改</span>
-        </p>
-        <div v-if="selectedStudent?.check != null && selectedStudent?.analyse">
-          <strong style="color: #080808">分析：</strong>
-          <div class="analysis-content" v-html="marked.parse(selectedStudent.analyse)"></div>
-        </div>
-      </div>
+
     </el-dialog>
   </div>
 </template>
@@ -119,7 +93,6 @@ const selectedStudent = ref<any>(null);
 const currentPage = ref(1);
 const pageSize = 4;
 const analysisDialogVisible = ref(false);
-const analysisLoading = ref(false);
 const checkingId = ref<string | null>(null);
 
 const typeMap: Record<string, string> = {
@@ -142,7 +115,7 @@ const getExercisesAns = () => {
     }
   }).then(res => {
     if (res.data.ret === 0) {
-      if (Array.isArray(res.data.students)){
+      if (Array.isArray(res.data.students)) {
         students.value = res.data.students;
       } else {
         students.value = [];
@@ -200,29 +173,21 @@ const paginatedStudents = computed(() => {
 const showAnalysis = (student: any) => {
   selectedStudent.value = student;
   analysisDialogVisible.value = true;
-  
-  // 如果还没有分析内容，则模拟加载过程
-  if (!student.analyse) {
-    analysisLoading.value = true;
-    setTimeout(() => {
-      analysisLoading.value = false;
-    }, 1000);
-  }
 };
 
 const formatExerciseContent = (content: string, maxLength: number = 50): string => {
   if (!content) return '';
-  
+
   // 将 Markdown 转换为 HTML
   const html = marked.parse(content);
-  
+
   // 创建临时 DOM 元素来解析 HTML
   const tempDiv = document.createElement('div');
   tempDiv.innerHTML = html;
-  
+
   // 获取纯文本内容
   const plainText = tempDiv.textContent || tempDiv.innerText || '';
-  
+
   // 截取指定长度并添加省略号
   return plainText.length > maxLength ? plainText.substring(0, maxLength) + '...' : plainText;
 };
@@ -263,8 +228,13 @@ onMounted(() => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* 学生列表加载状态 */
@@ -310,8 +280,13 @@ onMounted(() => {
 }
 
 @keyframes loading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* 分析弹窗加载状态 */
@@ -385,7 +360,7 @@ onMounted(() => {
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;
   background: var(--backgroundColor3);
-  word-wrap: normal;  
+  word-wrap: normal;
   min-height: 200px;
 }
 
@@ -430,7 +405,7 @@ onMounted(() => {
   background: var(--backgroundColor3);
   padding-top: 1rem;
   padding-bottom: 1rem;
-  word-wrap: normal;  
+  word-wrap: normal;
   overflow-y: auto;
 }
 
@@ -448,7 +423,8 @@ onMounted(() => {
 .student-content {
   flex: 1;
   overflow-y: auto;
-  margin-bottom: 60px; /* 为分页控件留出空间 */
+  margin-bottom: 60px;
+  /* 为分页控件留出空间 */
 }
 
 .student-list {
@@ -511,7 +487,7 @@ onMounted(() => {
   font-size: 18px;
 }
 
-.check_btn  {
+.check_btn {
   padding: 6px 12px;
   border-radius: 6px;
 }

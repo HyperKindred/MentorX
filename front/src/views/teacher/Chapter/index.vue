@@ -390,6 +390,7 @@ onMounted(() => {
   border-radius: 5px;
   background-color: transparent;
   color: var(--textColor2);
+  width: 270px;
 }
 
 .chapter-item:hover {
@@ -496,6 +497,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
+  padding-bottom: 0;
   background: transparent;
 }
 
