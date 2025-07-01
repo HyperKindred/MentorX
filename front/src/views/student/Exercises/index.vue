@@ -666,8 +666,7 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   width: 300px;
   background: var(--backgroundColor2);
   border-right: 1.5px solid transparent;
-  border-top-left-radius: 8px;
-  border-bottom-left-radius: 8px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
 }
@@ -951,7 +950,7 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   font-weight: 600;
   color: var(--titleColor);
   margin: 0;
-  padding: 20px 20px 16px 20px;
+  padding: 20px 20px 28px 20px;
 }
 
 .chapter-list {
@@ -1002,7 +1001,6 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
 
 /* 功能按钮组样式 */
 .function-buttons {
-  border-bottom: 1.5px solid #e4e7ed;
   padding: 20px 24px;
   background: transparent;
 }
@@ -1018,8 +1016,8 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   font-weight: 500;
   padding: 12px 20px;
   transition: all 0.3s ease;
-  border: 1px solid var(--textColor2);
-  background-color: var(--backgroundColor2);
+  border: 1.5px solid var(--textColor2);
+  background-color: var(--backgroundColor);
   color: var(--textColor2);
 }
 
@@ -1027,7 +1025,7 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   transform: translateY(-2px);
   box-shadow: 0 4px 12px var(--shadowColor2);
   color: var(--textColor);
-  border: 1px solid var(--textColor2);
+  border: 1.5px solid var(--textColor2);
 }
 
 .function-btn.active {
