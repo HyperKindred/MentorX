@@ -6,7 +6,6 @@
         <h3 class="nav-title">课程章节</h3>
         <el-button type="primary" @click="dialogVisible = true" class="add-btn">＋</el-button>
         </div>
-
         <div class="sidebar">
           <div class="chapter-list">
             <el-space direction="vertical" fill>

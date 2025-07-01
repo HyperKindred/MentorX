@@ -248,7 +248,7 @@ onMounted(() => {
   text-align: center;
   z-index: 20;
   transition: transform 1.2s cubic-bezier(0.33, 1, 0.68, 1);
-  background: rgba(10, 26, 61, 0.92);
+  background: rgba(10, 26, 61, 0.1);
   backdrop-filter: blur(8px);
 }
 
@@ -265,8 +265,8 @@ onMounted(() => {
   padding: 2rem;
   transition: transform 1.2s cubic-bezier(0.33, 1, 0.68, 1);
   transform: translateY(0);
-  margin-top: 1.8rem;
-  background: rgba(10, 26, 61, 0.92);
+  padding-top: 1.8rem;
+  background: rgba(10, 26, 61, 0.1);
   backdrop-filter: blur(8px);
 }
 

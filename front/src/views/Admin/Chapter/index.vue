@@ -319,8 +319,6 @@ onMounted(() => {
   font-size: 15px;
 }
 
-.chapterBtn:hover {
-}
 .nav-title {
   font-size: 16px;
   font-weight: 600;
