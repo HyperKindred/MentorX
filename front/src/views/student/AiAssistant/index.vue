@@ -1103,28 +1103,6 @@ const handleShiftEnter = (event: KeyboardEvent) => {
   text-align: center;
 }
 
-/* 滚动条样式 */
-.history-list::-webkit-scrollbar,
-.message-list::-webkit-scrollbar {
-  width: 4px;
-}
-
-.history-list::-webkit-scrollbar-track,
-.message-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.history-list::-webkit-scrollbar-thumb,
-.message-list::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 2px;
-}
-
-.history-list::-webkit-scrollbar-thumb:hover,
-.message-list::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
-}
-
 /* 响应式设计 */
 @media (max-width: 768px) {
   .left-panel {

@@ -320,6 +320,7 @@ onMounted(() => {
 .tab-header :deep(.el-tabs__nav-wrap) {
   width: 100%;
   height: 100%;
+  margin-bottom: 0;
 }
 
 .tab-header :deep(.el-tabs__nav-scroll) {

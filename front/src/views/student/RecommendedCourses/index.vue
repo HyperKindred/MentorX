@@ -252,6 +252,7 @@ onMounted(async () => {
   padding: 20px;
   background-color: transparent;
   min-height: 100%;
+  overflow: auto;
 }
 
 .h2 {

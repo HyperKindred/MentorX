@@ -1130,28 +1130,6 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   font-size: 0.9rem;
 }
 
-/* 滚动条样式 */
-.chapter-navigation::-webkit-scrollbar,
-.content-area::-webkit-scrollbar {
-  width: 4px;
-}
-
-.chapter-navigation::-webkit-scrollbar-track,
-.content-area::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.chapter-navigation::-webkit-scrollbar-thumb,
-.content-area::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 2px;
-}
-
-.chapter-navigation::-webkit-scrollbar-thumb:hover,
-.content-area::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
-}
-
 /* 骨架屏自定义样式 - 适配深蓝色背景 */
 .loading-state :deep(.el-skeleton__item) {
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%);
