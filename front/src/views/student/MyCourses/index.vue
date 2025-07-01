@@ -164,8 +164,9 @@ onMounted(() => {
 .my-courses {
   padding: 24px;
   background-color: transparent;
-  min-height: 100%;
+  height: 100%;
   font-family: Arial, Helvetica, sans-serif;
+  overflow: auto;
 }
 
 /* 页面标题样式 */

@@ -489,28 +489,6 @@ const getChapterList = async (courseId: number) => {
   font-weight: 500;
 }
 
-/* 滚动条样式 */
-.chapter-navigation::-webkit-scrollbar,
-.content-area::-webkit-scrollbar {
-  width: 4px;
-}
-
-.chapter-navigation::-webkit-scrollbar-track,
-.content-area::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.chapter-navigation::-webkit-scrollbar-thumb,
-.content-area::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 2px;
-}
-
-.chapter-navigation::-webkit-scrollbar-thumb:hover,
-.content-area::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
-}
-
 /* 响应式设计 */
 @media (max-width: 768px) {
   .left-panel {

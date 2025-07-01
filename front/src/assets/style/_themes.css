@@ -10,6 +10,8 @@
     --backgroundColor3: #ffffff83;
     --backgroundColor4: #daecfc;
     --borderColor:#e4e7ed;
+    --scrollarColor:#a2a4a8;
+    --scrollarColorHover:#7c7e81;
 }
 
 :root[theme='dark']{
@@ -24,4 +26,6 @@
     --backgroundColor3: #00000045;
     --backgroundColor4: #2c3b51;
     --borderColor:#505d9e;
+    --scrollarColor:#d1d5db;
+    --scrollarColorHover:#a2a4a8;
 }
