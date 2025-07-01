@@ -77,21 +77,6 @@
         </el-button>
       </template>
     </el-dialog>
-    <div v-if="isGenerating" class="generating-overlay">
-      <div class="loading-animation">
-        <div class="loading-spinner">
-          <div class="spinner-circle"></div>
-          <div class="spinner-circle"></div>
-          <div class="spinner-circle"></div>
-          <div class="spinner-circle"></div>
-        </div>
-        <div class="loading-text">正在生成课件内容，请稍候...</div>
-        <div class="loading-progress">
-          <div class="progress-bar" :style="{ width: progress + '%' }"></div>
-        </div>
-      </div>
-    </div>
-
     <el-dialog v-model="renameDialogVisible" title="重命名章节" width="30%">
       <el-input v-model="renameValue" placeholder="请输入新名称" clearable />
       <template #footer>
@@ -374,8 +359,7 @@ onMounted(() => {
   width: 300px;
   background: var(--backgroundColor2);
   border-right: 1.5px solid transparent;
-  border-top-left-radius: 8px;
-  border-bottom-left-radius: 8px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
 }
@@ -447,7 +431,7 @@ onMounted(() => {
   color: var(--titleColor);
   margin-left: auto;
   margin-right: auto;
-  padding: 20px 20px 16px 20px;
+  padding: 20px 20px 28px 20px;
 }
 
 .add-btn {
@@ -558,8 +542,8 @@ onMounted(() => {
   font-weight: 500;
   padding: 12px 20px;
   transition: all 0.3s ease;
-  border: 1px solid var(--textColor2);
-  background-color: var(--backgroundColor2);
+  border: 1.5px solid var(--textColor2);
+  background-color: var(--backgroundColor);
   color: var(--textColor2);
 }
 
@@ -567,7 +551,7 @@ onMounted(() => {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px var(--shadowColor2);
   color: var(--textColor);
-  border: 1px solid var(--textColor2);
+  border: 1.5px solid var(--textColor2);
 }
 
 .function-btn.active {
