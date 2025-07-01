@@ -260,7 +260,7 @@ const handleCardClick = (id: number, name: string) => {
     width: 1.5rem;
     height: 1.5rem;
     border-radius: 8px;
-    font-size: 1.2rem;
+    font-size: 2rem;
     margin-left: 0.2rem;
     padding: 0%;
 }

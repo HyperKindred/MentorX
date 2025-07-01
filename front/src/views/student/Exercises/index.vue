@@ -728,6 +728,7 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   color: #909399;
   margin-right: 0.8rem;
   font-size: 0.9rem;
+  padding-top: 2px;
 }
 
 .exercise-type {
@@ -770,7 +771,6 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   padding: 20px;
   background: var(--backgroundColor3);
   border-radius: 8px;
-  border-left: 4px solid #409eff;
 }
 
 .question-header {
