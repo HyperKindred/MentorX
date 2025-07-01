@@ -7,7 +7,7 @@
       <div class="head-left">
         <div class="head-left-info">
       <el-dropdown trigger="click" @command="handleDropdownCommand">
-        <el-avatar shape="square" :size="40" :src="getUserAvatar()" fit="cover" style="cursor: pointer" />
+        <el-avatar shape="square" :size="40" :src="getUserAvatar()" fit="cover" style="cursor: pointer" class="avatar" />
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item command="information">个人信息</el-dropdown-item>
@@ -225,6 +225,10 @@ onMounted(() => {
 
 }
 
+.avatar {
+  margin-bottom: 6px;
+}
+
 .tab-content {
   flex: 1;
   overflow: auto;
@@ -236,6 +240,7 @@ onMounted(() => {
   margin-left: 0.5rem;
   color: #ffffff;
   letter-spacing: 0.1rem;
+  margin-bottom: 3px;
 }
 
 .tab-header-bar {
