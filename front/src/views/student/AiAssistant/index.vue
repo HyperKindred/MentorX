@@ -718,6 +718,7 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 .chapter-header {
   border-bottom: 2px solid var(--backgroundColor);
   background: var(--backgroundColor1);
+  height: 58px;
 }
 
 .current-chapter {
@@ -1005,14 +1006,12 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 .message-text {
   border-radius: 12px;
   word-wrap: break-word;
-  white-space: pre-wrap;
-  background: var(--titleColor2);
+  white-space: normal;
   padding: 0 20px;
   text-align: left;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   font-size: 16px;
-  line-height: 1.6;
-  color: var(--textColor);
+  /* 创建BFC以防止margin折叠 */
+  overflow: hidden;
 }
 
 .message-item.user .message-text {
@@ -1021,7 +1020,6 @@ const handleShiftEnter = (event: KeyboardEvent) => {
   text-align: left;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 16px;
-  line-height: 1.7;
   color: var(--textColor);
 }
 
