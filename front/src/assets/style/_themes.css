@@ -8,6 +8,7 @@
     --shadowColor2:rgba(0, 0, 0, 0.15);
     --backgroundColor2: #42a4ff24;
     --backgroundColor3: #ffffff83;
+    --backgroundColor4: #daecfc;
     --borderColor:#e4e7ed;
 }
 
@@ -21,5 +22,6 @@
     --shadowColor2:rgba(255, 255, 255, 0.4);
     --backgroundColor2: #d2e9ff34;
     --backgroundColor3: #00000045;
+    --backgroundColor4: #2c3b51;
     --borderColor:#505d9e;
 }

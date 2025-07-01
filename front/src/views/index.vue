@@ -21,11 +21,26 @@
       </el-dropdown>
       <div class="username">{{ store.name }}</div>
       </div>
-      <el-tabs v-model="store.activeTab" type="card" @tab-remove="store.removeTab" @tab-click="onTabClick"
-        class="tab-header">
-        <el-tab-pane v-for="tab in store.tabs" :key="tab.name" :label="tab.title" :name="tab.name"
-          :closable="tab.closable !== false" />
-      </el-tabs>
+      </div>
+      <div class="tab-container-flex">
+        <el-tabs v-model="store.activeTab" type="card" @tab-remove="store.removeTab" @tab-click="onTabClick"
+          class="tab-header">
+          <el-tab-pane v-for="tab in store.tabs" :key="tab.name" :name="tab.name"
+            :closable="false" class="fixed-width-tab">
+            <template #label>
+              <div class="tab-label-wrapper">
+                <span class="tab-title" :title="tab.title">{{ tab.title }}</span>
+                <el-icon 
+                  v-if="tab.closable !== false" 
+                  class="tab-close-btn" 
+                  @click.stop="store.removeTab(tab.name)"
+                >
+                  <Close />
+                </el-icon>
+              </div>
+            </template>
+          </el-tab-pane>
+        </el-tabs>
       </div>
       <div class="head-right">
         <el-switch
@@ -55,12 +70,12 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import { mainStore } from '../store/index.ts';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
-import { Sunny, Moon } from '@element-plus/icons-vue';
+import { Sunny, Moon, Close } from '@element-plus/icons-vue';
 import TeacherImg from '../assets/images/Teacher.jpg';
 import StudentImg from '../assets/images/Student.jpg';
 import ManagerImg from '../assets/images/Manager.jpg';
@@ -71,6 +86,7 @@ import A_learningInfo from './Admin/LearningState/index.vue'
 import S_myCourse from './Student/MyCourses/index.vue'
 import Home from './Home/index.vue';
 import Waves from './Background/Wave.vue'
+import Sortable from 'sortablejs';
 const store = mainStore();
 const router = useRouter();
 const activeTab = ref('home');
@@ -155,11 +171,40 @@ function onTabClick(tab: any) {
   activeTab.value = tab.name;
 }
 
+/**
+ * 初始化拖拽排序功能
+ */
+const initSortable = () => {
+  nextTick(() => {
+    const tabNav = document.querySelector('.tab-header .el-tabs__nav');
+    if (tabNav) {
+      Sortable.create(tabNav as HTMLElement, {
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        dragClass: 'sortable-drag',
+        filter: '.el-tabs__item[data-name="home"]', // 过滤首页标签，不允许拖拽
+        preventOnFilter: false,
+        onEnd: (evt) => {
+          const { oldIndex, newIndex } = evt;
+          if (oldIndex !== undefined && newIndex !== undefined && oldIndex !== newIndex) {
+            // 使用store中的方法重新排序
+            store.reorderTabs(oldIndex, newIndex);
+          }
+        }
+      });
+    }
+  });
+};
+
 onMounted(() => {
   store.getUserInfo();
   const savedTheme = localStorage.getItem('theme') || 'light';
   isDarkTheme.value = savedTheme === 'dark';
   document.documentElement.setAttribute('theme', savedTheme);
+  
+  // 初始化拖拽排序
+  initSortable();
 });
 
 
@@ -180,34 +225,8 @@ onMounted(() => {
 
 }
 
-.tab-header {
-  flex: none;
-  margin-left: 0.5rem;
-  margin-top: 1.6rem;
-  border: none;
-
-}
-
-.tab-header :deep(.el-tabs__item) {
-    background-color: white;
-    height: 3rem;
-    color: #417dff6e;
-    border-top-left-radius: 3px;
-    border-top-right-radius: 3px;
-    border-right: 1px solid #417dff;
-}
-
-.tab-header :deep(.el-tabs__item.is-active) {
-    color: #417dff;
-}
-
-
-.tab-header :deep(.el-tabs__nav) {
-  border: none !important;
-}
-
 .tab-content {
-  flex-grow: 1;
+  flex: 1;
   overflow: auto;
   padding: 16px;
   background-color: var(--backgroundColor);
@@ -218,7 +237,6 @@ onMounted(() => {
   color: #ffffff;
   letter-spacing: 0.1rem;
 }
-
 
 .tab-header-bar {
   display: flex;
@@ -262,4 +280,144 @@ onMounted(() => {
   align-items: center;
   padding-top: 1rem;
 }
+
+/* 标签页容器flex布局 */
+.tab-container-flex {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 20px;
+}
+
+.tab-header {
+  flex: none;
+  border: none;
+  width: 100%;
+  height: 100%;
+}
+
+.tab-header :deep(.el-tabs__item) {
+    background-color: white;
+    height: 3rem;
+    color: #417dff6e;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-right: 1px solid #417dff;
+}
+
+.tab-header :deep(.el-tabs__content) {
+  display: none;
+}
+
+.tab-header :deep(.el-tabs__header) {
+  width: 100%;
+  height: 100%;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.tab-header :deep(.el-tabs__nav-wrap) {
+  width: 100%;
+  height: 100%;
+}
+
+.tab-header :deep(.el-tabs__nav-scroll) {
+  width: 100%;
+  height: 100%;
+}
+
+.tab-header :deep(.el-tabs__item.is-active) {
+  color: #417dff;
+}
+
+
+.tab-header :deep(.el-tabs__nav) {
+  border: none;
+  height: 100%;
+  align-items: flex-end;
+}
+
+/* 自适应宽度标签页样式 - 使用deep穿透 */
+.tab-header :deep(.el-tabs__nav) {
+  display: flex;
+  width: 100%;
+}
+
+.tab-header :deep(.el-tabs__item) {
+  position: relative;
+  flex: 1;
+  max-width: 180px;
+  overflow: hidden;
+}
+
+/* 隐藏默认关闭按钮 */
+.tab-header :deep(.el-tabs__item .el-tabs__item__close) {
+  display: none;
+}
+
+/* 自定义标签包装器样式 */
+.tab-label-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 标签页标题样式 */
+.tab-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: auto;
+  font-size: 14px;
+  text-align: left;
+}
+
+/* 自定义关闭按钮样式 */
+.tab-close-btn {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 1;
+  transition: all 0.2s ease;
+  background-color: transparent;
+}
+
+.tab-close-btn:hover {
+  background-color: #b6c4e1;
+  color: white;
+}
+
+/* 拖拽相关样式 */
+.sortable-ghost {
+  opacity: 0.5;
+}
+
+.sortable-chosen {
+  background-color: var(--backgroundColor2);
+}
+
+.sortable-drag {
+  background-color: var(--backgroundColor2);
+  transform: rotate(5deg);
+}
+
+/* 确保首页标签不可拖拽的视觉提示 */
+.el-tabs__item[data-name="home"] {
+  cursor: default;
+}
+
+.el-tabs__item:not([data-name="home"]) {
+  cursor: move;
+}
+
+
 </style>
