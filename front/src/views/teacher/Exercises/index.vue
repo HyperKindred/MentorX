@@ -301,8 +301,7 @@ onMounted(() => {
   width: 300px;
   background: var(--backgroundColor2);  
   border-right: 1px solid transparent;
-  border-top-left-radius: 8px;
-  border-bottom-left-radius: 8px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
 }
@@ -387,7 +386,7 @@ onMounted(() => {
   font-size: 16px;
   font-weight: 600;
   color: var(--titleColor);
-  padding: 20px 20px 16px 20px;
+  padding: 20px 20px 28px 20px;
 }
 
 .right-panel {
@@ -786,8 +785,8 @@ onMounted(() => {
   font-weight: 500;
   padding: 12px 20px;
   transition: all 0.3s ease;
-  border: 1px solid var(--textColor2);
-  background-color: var(--backgroundColor2);
+  border: 1.5px solid var(--textColor2);
+  background-color: var(--backgroundColor);
   color: var(--textColor2);
 }
 
@@ -795,7 +794,7 @@ onMounted(() => {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px var(--shadowColor2);
   color: var(--textColor);
-  border: 1px solid var(--textColor2);
+  border: 1.5px solid var(--textColor2);
 }
 
 .function-btn.active {
