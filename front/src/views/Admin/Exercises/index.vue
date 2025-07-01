@@ -64,11 +64,12 @@ const activeChapter = ref<number | null>(null);
 const typeMap: Record<string, string> = {
   choices: '选择题',
   blanks: '填空题',
-  answers: '简答题'
+  answers: '简答题',
+  code: '代码题'
 };
 
 const getTypeLabel = (type: string): string => {
-  return typeMap[type] || '未知题型';
+  return typeMap[type] || '选择题';
 };
 
 const getExercisesList = () => {

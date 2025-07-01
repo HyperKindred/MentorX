@@ -98,7 +98,8 @@ const checkingId = ref<string | null>(null);
 const typeMap: Record<string, string> = {
   choices: '选择题',
   blanks: '填空题',
-  answers: '简答题'
+  answers: '简答题',
+  code: '代码题'
 };
 
 const getTypeLabel = (type: string): string => {
