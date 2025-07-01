@@ -439,7 +439,7 @@ onMounted(() => {
   height: 2rem;
   margin-top: 1rem;
   margin-left: 0.7rem;
-  font-size: 11px;
+  font-size: 1.3rem;
   color: var(--textColor2);
   border: transparent;
   background-color: transparent;
