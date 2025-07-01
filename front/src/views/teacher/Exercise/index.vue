@@ -386,6 +386,7 @@ onMounted(() => {
   border-top-right-radius: 5px;
   background: var(--backgroundColor3);
   word-wrap: normal;  
+  min-height: 200px;
 }
 
 .meta {
@@ -430,6 +431,7 @@ onMounted(() => {
   padding-top: 1rem;
   padding-bottom: 1rem;
   word-wrap: normal;  
+  overflow-y: auto;
 }
 
 .student-section {
