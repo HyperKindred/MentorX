@@ -304,6 +304,7 @@ onMounted(() => {
     border-top-left-radius: 3px;
     border-top-right-radius: 3px;
     border-right: 1px solid #417dff;
+    border-bottom: none;
 }
 
 .tab-header :deep(.el-tabs__content) {
@@ -320,6 +321,7 @@ onMounted(() => {
 .tab-header :deep(.el-tabs__nav-wrap) {
   width: 100%;
   height: 100%;
+  margin-bottom: 0;
 }
 
 .tab-header :deep(.el-tabs__nav-scroll) {
