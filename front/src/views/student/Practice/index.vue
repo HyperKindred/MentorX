@@ -949,7 +949,7 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 .question-section {
   margin-bottom: 30px;
   padding: 20px;
-  background: #f8f9fa;
+  background: var(--backgroundColor3);
   border-radius: 8px;
   border-left: 4px solid #409eff;
 }
@@ -963,7 +963,7 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 
 .question-header h2 {
   margin: 0;
-  color: #303133;
+  color: var(--textColor);
   font-size: 20px;
   font-weight: 600;
 }
@@ -974,21 +974,21 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 }
 
 .question-content {
-  background: white;
+  background: var(--backgroundColor3);
   padding: 20px;
   border-radius: 6px;
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--borderColor);
   line-height: 1.6;
-  color: #303133;
+  color: var(--textColor);
   text-align: left;
 }
 
 /* 作答区域样式 */
 .answer-section {
   padding: 20px;
-  background: #ffffff;
+  background: var(--backgroundColor3);
   border-radius: 8px;
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--borderColor);
 }
 
 .answer-header {
@@ -997,12 +997,12 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #e4e7ed;
+  border-bottom: 1px solid var(--borderColor);
 }
 
 .answer-header h3 {
   margin: 0;
-  color: #303133;
+  color: var(--textColor);
   font-size: 18px;
   font-weight: 600;
 }
@@ -1017,10 +1017,10 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 }
 
 .submitted-answer .answer-content {
-  background: #f5f7fa;
+  background: var(--backgroundColor3);
   padding: 15px;
   border-radius: 6px;
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--borderColor);
   margin-bottom: 15px;
 }
 
@@ -1029,20 +1029,20 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   white-space: pre-wrap;
   word-wrap: break-word;
   font-family: 'Courier New', monospace;
-  color: #303133;
+  color: var(--textColor);
   line-height: 1.5;
 }
 
 .answer-content h4 {
   margin: 0 0 12px 0;
   font-size: 14px;
-  color: #606266;
+  color: var(--textColor2);
   font-weight: 600;
 }
 
 .answer-content pre {
-  background: white;
-  border: 1px solid #e4e7ed;
+  background: var(--backgroundColor3);
+  border: 1px solid var(--borderColor);
   border-radius: 4px;
   padding: 12px;
   margin: 0 0 16px 0;
@@ -1056,7 +1056,7 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
 .check-result {
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid #e4e7ed;
+  border-top: 1px solid var(--borderColor);
 }
 
 .check-score {
@@ -1065,15 +1065,15 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   padding: 6px 12px;
   border-radius: 4px;
   margin-bottom: 12px;
-  background: white;
-  border: 1px solid #e4e7ed;
+  background: var(--backgroundColor3);
+  border: 1px solid var(--borderColor);
   box-sizing: border-box;
 }
 
 
 .check-analyse {
-  background: white;
-  border: 1px solid #e4e7ed;
+  background: var(--backgroundColor3);
+  border: 1px solid var(--borderColor);
   border-radius: 4px;
   padding: 12px;
   margin-top: 12px;

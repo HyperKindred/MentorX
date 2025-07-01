@@ -854,11 +854,11 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 }
 
 .conversation-item:hover {
-  background-color: var(--titleColor2);
+  background-color: var(--backgroundColor3);
 }
 
 .conversation-item.active {
-  background-color: var(--borderColor);
+  background-color: var(--backgroundColor);
   border-color: #3b82f6;
 }
 
