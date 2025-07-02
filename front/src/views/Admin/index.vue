@@ -36,7 +36,7 @@
               <el-icon><User /></el-icon>
               {{ course.student_num }}人学习
             </span>
-            <el-button type="primary" @click="deleteCourse(course.id)">删除</el-button>
+            <el-button type="primary" @click.stop="deleteCourse(course.id)">删除</el-button>
           </div>
         </div>
       </div>
