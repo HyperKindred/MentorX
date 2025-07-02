@@ -1,0 +1,2339 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "MentorX",
+    "description": "",
+    "version": "1.0.0"
+  },
+  "tags": [],
+  "paths": {
+    "/api/student/AIchat": {
+      "post": {
+        "summary": "AI聊天",
+        "deprecated": false,
+        "description": "##   需要JWT ",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": true,
+            "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc1MDY2NTI5MiwianRpIjoiMzMzNWFjNzQtMTIzYy00NDA0LWE1M2YtYzQyOTk2ZjM0MTcwIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjUiLCJuYmYiOjE3NTA2NjUyOTIsImNzcmYiOiI4YTBlY2UwMi1iMDIzLTRjZGYtYmU1My04MDdmOWY3NmNhMTUiLCJleHAiOjE3NTA2NjYxOTJ9.TyZWgdu87Yl-dHkc6nt5cnsR5jaYqdGD4buZSGD6ooU",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "chapter_id": {
+                    "type": "integer",
+                    "description": "章节序号",
+                    "example": 0
+                  },
+                  "content": {
+                    "description": "问题",
+                    "example": "",
+                    "type": "string"
+                  },
+                  "session_id": {
+                    "type": "integer",
+                    "description": "为-1是全新的会话，有值是在历史会话的基础上",
+                    "example": 0
+                  }
+                },
+                "required": [
+                  "chapter_id",
+                  "content"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "answer": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/student/generate_exercises": {
+      "post": {
+        "summary": "生成习题",
+        "deprecated": false,
+        "description": "## 需要JWT！！",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ChapterNo": {
+                    "type": "integer",
+                    "description": "章节序号",
+                    "example": 0
+                  },
+                  "difficulty": {
+                    "type": "integer",
+                    "description": "难度(4>3>2>1)（极难、困难、中等、容易）",
+                    "example": 0
+                  },
+                  "type": {
+                    "description": "题目类型(choices, blanks, answers, code)",
+                    "example": "",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "ChapterNo",
+                  "difficulty",
+                  "type"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/student/check_exercises": {
+      "post": {
+        "summary": "批改习题",
+        "deprecated": false,
+        "description": "## 需要JWT！！",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": true,
+            "example": "Bear eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc1MDY2NDMzMiwianRpIjoiOWZiZmRkOWYtNjM4Yy00MGI3LWEyOTQtOWY5NjU3ZGZkYTZlIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjUiLCJuYmYiOjE3NTA2NjQzMzIsImNzcmYiOiIwNmUzM2M4Zi02YTE1LTRlOWEtYTQxNC0yYjM5MGI1OGY5YmIiLCJleHAiOjE3NTA2NjUyMzJ9.1VCx-BSsbGisYbaFu2ITbfND2yl_yckTkuwEly13HWY",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Eno": {
+                    "type": "integer",
+                    "description": "习题序号",
+                    "example": 0
+                  }
+                },
+                "required": [
+                  "Eno"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/student/joinCourse": {
+      "post": {
+        "summary": "加入课程",
+        "deprecated": false,
+        "description": "需要jwt！！！",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": true,
+            "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc1MDIzNjQ3MiwianRpIjoiZDlhYzk3ODUtOWY5Yy00NmRkLTgwMDQtNzFmMzhkNzFjN2Q5IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjEiLCJuYmYiOjE3NTAyMzY0NzIsImNzcmYiOiJmMjVmY2U4ZS1iYzMxLTQ3ZmEtYmFkNi05NTNjODJjMzQ3NmQiLCJleHAiOjE3NTAyMzczNzJ9.ygvqm_gTJIf4RiDV4FUEQqnhpdULtj_BZhZJassu2tM",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "course_id": {
+                    "type": "integer",
+                    "example": 0
+                  }
+                },
+                "required": [
+                  "course_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/student/getExerciseHistory": {
+      "get": {
+        "summary": "获取练习历史",
+        "deprecated": true,
+        "description": "需要jwt！！！",
+        "tags": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "exercises": {
+                      "type": "object",
+                      "properties": {
+                        "exercise": {
+                          "type": "object",
+                          "properties": {
+                            "chapterId": {
+                              "type": "integer"
+                            },
+                            "exerciseId": {
+                              "type": "integer"
+                            },
+                            "content": {
+                              "type": "string"
+                            },
+                            "difficulty": {
+                              "type": "integer"
+                            },
+                            "type": {
+                              "type": "string"
+                            },
+                            "correct_answer": {
+                              "type": "string"
+                            },
+                            "answer": {
+                              "type": "string"
+                            },
+                            "check": {
+                              "type": "string"
+                            },
+                            "analyse": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      },
+      "post": {
+        "summary": "获取习题作答记录",
+        "deprecated": false,
+        "description": "## 需要JWT",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": true,
+            "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc1MDMwMzY3MiwianRpIjoiYThiZjc3YzMtNzM4Zi00MDkzLWJhODItYzQzZDZlYmFkY2E5IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjEiLCJuYmYiOjE3NTAzMDM2NzIsImNzcmYiOiJlYzFmMWI2MS00YTRlLTQ4ZTktYThjNS0zYmQ5YmZjMTFjZDkiLCJleHAiOjE3NTAzMDQ1NzJ9.wGUwVFy_MNRNpL3W8_qy0Ofqz2Rw6h5aGXI7oCUfqX8",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "exercise_id": {
+                    "type": "integer",
+                    "example": 0
+                  }
+                },
+                "required": [
+                  "exercise_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer",
+                      "description": "0习题已作答且批改，1错误，2习题未作答，3习题已作答但未批改"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "student_answer": {
+                      "type": "string"
+                    },
+                    "answer_time": {
+                      "type": "string"
+                    },
+                    "check": {
+                      "type": "integer"
+                    },
+                    "analyse": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/student/commitExercise": {
+      "post": {
+        "summary": "提交习题答案",
+        "deprecated": false,
+        "description": "## 需要JWT！！！",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": true,
+            "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc1MDI5NDE3OCwianRpIjoiNzVhM2Q0YzUtZDUzMS00NzY1LWI4Y2EtYmEyOTg2OGE0YWExIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjEiLCJuYmYiOjE3NTAyOTQxNzgsImNzcmYiOiJhYzJjYmY4Mi05MjUyLTRmNjEtYWU5OS0wZTExY2Q0ZmQ1ZWYiLCJleHAiOjE3NTAyOTUwNzh9.7KOdvR4EOXbSyrdi7tLTzvtn2ZYJkkQBLKtyjO7d-eg",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "exercise_id": {
+                    "type": "integer",
+                    "description": "习题号",
+                    "example": 0
+                  },
+                  "student_answer": {
+                    "description": "学生的作答",
+                    "example": "",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "exercise_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/student/getExercisesList": {
+      "post": {
+        "summary": "获取习题列表",
+        "deprecated": false,
+        "description": "## 需要JWT！！！",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": true,
+            "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc1MDMwMjMwOSwianRpIjoiMmNhYjljYWMtMGZkMC00MWVhLTg0NjgtYzc4MjE4N2ZlYjkwIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjEiLCJuYmYiOjE3NTAzMDIzMDksImNzcmYiOiIyMmI5YjlmNS03YjczLTRhZjktYjEyNS01MDhkOTY1NGYzOWYiLCJleHAiOjE3NTAzMDMyMDl9.nnYcNmUo4aUfG60Nzt0n2RmPcnycK-JTvXcA1dSXyOs",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "chapter_id": {
+                    "type": "integer",
+                    "example": 0
+                  }
+                },
+                "required": [
+                  "chapter_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "exercisesList": {
+                      "type": "object",
+                      "properties": {
+                        "exercise": {
+                          "type": "object",
+                          "properties": {
+                            "exercise_id": {
+                              "type": "integer"
+                            },
+                            "type": {
+                              "type": "string"
+                            },
+                            "difficulty": {
+                              "type": "integer"
+                            },
+                            "exercise_content": {
+                              "type": "string"
+                            },
+                            "is_official": {
+                              "type": "string"
+                            },
+                            "is_committed": {
+                              "type": "integer"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/student/getAiList": {
+      "post": {
+        "summary": "获取聊天记录章节列表",
+        "deprecated": false,
+        "description": "## 需要JWT！！！\n该学生目前有哪几章询问了问题，和所有有课件的章节列表不一样",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": true,
+            "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc1MDY3MDIwMiwianRpIjoiMjU5ODI3OGEtMGUwMC00YTllLTg3NjQtM2Y0ZjVjZjVlZTA1IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjUiLCJuYmYiOjE3NTA2NzAyMDIsImNzcmYiOiIyMDMxZGZjNi03N2I0LTQyMjctYmUyOC1jMDc1NjNkZTY1OWEiLCJleHAiOjE3NTA2NzExMDJ9.b8ievPh8fxQBv75hgSX4ZoZ5qMkym2Th42V7PE56b9o",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "course_id": {
+                    "type": "integer",
+                    "example": 0
+                  }
+                },
+                "required": [
+                  "course_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "chapters": {
+                      "type": "object",
+                      "properties": {
+                        "chapter": {
+                          "type": "object",
+                          "properties": {
+                            "chapter_id": {
+                              "type": "integer"
+                            },
+                            "chapter_name": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/student/getAiChat": {
+      "post": {
+        "summary": "获取聊天记录（按章节）",
+        "deprecated": false,
+        "description": "## 需要JWT",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": true,
+            "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc1MDY3MDIwMiwianRpIjoiMjU5ODI3OGEtMGUwMC00YTllLTg3NjQtM2Y0ZjVjZjVlZTA1IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjUiLCJuYmYiOjE3NTA2NzAyMDIsImNzcmYiOiIyMDMxZGZjNi03N2I0LTQyMjctYmUyOC1jMDc1NjNkZTY1OWEiLCJleHAiOjE3NTA2NzExMDJ9.b8ievPh8fxQBv75hgSX4ZoZ5qMkym2Th42V7PE56b9o",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "chapter_id": {
+                    "type": "integer",
+                    "example": 0
+                  }
+                },
+                "required": [
+                  "chapter_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "sessions": {
+                      "type": "object",
+                      "properties": {
+                        "session": {
+                          "type": "object",
+                          "properties": {
+                            "session_id": {
+                              "type": "integer"
+                            },
+                            "session_name": {
+                              "type": "string"
+                            },
+                            "type": {
+                              "type": "string",
+                              "description": "Q是用户的问题，A是Ai的回答"
+                            },
+                            "content": {
+                              "type": "string"
+                            },
+                            "time": {
+                              "type": "string"
+                            }
+                          },
+                          "description": "注意这里的session 同一id有多个，通过time排序展示先后顺序"
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/student/getCourseList": {
+      "get": {
+        "summary": "获取学生已选课程列表",
+        "deprecated": false,
+        "description": "## 需要学生的JWT信息",
+        "tags": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "courseList": {
+                      "type": "object",
+                      "properties": {
+                        "course": {
+                          "type": "object",
+                          "properties": {
+                            "course_id": {
+                              "type": "integer"
+                            },
+                            "course_name": {
+                              "type": "string"
+                            },
+                            "teacher_id": {
+                              "type": "integer"
+                            },
+                            "teacher_name": {
+                              "type": "string"
+                            },
+                            "student_num": {
+                              "type": "integer"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/teacher/generate_teachcontent": {
+      "post": {
+        "summary": "生成教学内容",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "chapter": {
+                    "description": "章节名",
+                    "example": "",
+                    "type": "string"
+                  },
+                  "Cno": {
+                    "type": "integer",
+                    "example": 0
+                  }
+                },
+                "required": [
+                  "chapter",
+                  "Cno"
+                ]
+              },
+              "examples": {}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/teacher/generate_tasks": {
+      "post": {
+        "summary": "生成习题及答案",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ChapterNo": {
+                    "type": "integer",
+                    "description": "章节号及教学内容序号",
+                    "example": 0
+                  },
+                  "difficulty": {
+                    "type": "integer",
+                    "description": "参照学生端难度等级",
+                    "example": 0
+                  },
+                  "type": {
+                    "description": "参照学生端生成习题",
+                    "example": "",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "ChapterNo",
+                  "difficulty",
+                  "type"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "res": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "res"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/teacher/check": {
+      "post": {
+        "summary": "批改习题",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Eno": {
+                    "type": "integer",
+                    "description": "习题序号",
+                    "example": 0
+                  },
+                  "student_id": {
+                    "type": "integer",
+                    "description": "学生序号",
+                    "example": 0
+                  }
+                },
+                "required": [
+                  "Eno",
+                  "student_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "res": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "res"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/teacher/addCourse": {
+      "post": {
+        "summary": "新建课程",
+        "deprecated": false,
+        "description": "# 需要JWT！！！",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": true,
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc1MDIzMzg3NCwianRpIjoiMTFmMzQ5MzktMTIwZS00YTM3LThjODQtY2YyMzcxMDU1MmQwIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6MywibmJmIjoxNzUwMjMzODc0LCJjc3JmIjoiNzkyOTQ5ZTctOWVmMy00OGY0LTk0OWUtOGUzY2UzOGNiYTRhIiwiZXhwIjoxNzUwMjM0Nzc0fQ.XvbYASyistpemj_nOhWjIEuvfYxtsA_HYEj93VAhVyM",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "description": "课程名",
+                    "example": "",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/teacher/updateExercise": {
+      "post": {
+        "summary": "修改习题以及答案",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "习题ID 编号",
+                    "example": 0
+                  },
+                  "content": {
+                    "example": "",
+                    "type": "string"
+                  },
+                  "answer": {
+                    "example": "",
+                    "type": "string"
+                  },
+                  "difficulty": {
+                    "example": 4,
+                    "type": "integer"
+                  },
+                  "type": {
+                    "example": "play",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "difficulty",
+                  "type"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/teacher/updateChapter": {
+      "post": {
+        "summary": "修改课件",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "章节课件的ID 编号",
+                    "example": 0
+                  },
+                  "name": {
+                    "example": "",
+                    "type": "string"
+                  },
+                  "content": {
+                    "example": "",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/teacher/getStudentExercises": {
+      "post": {
+        "summary": "获取学生习题作答",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "exercise_id": {
+                    "type": "integer",
+                    "description": "当前习题的ID编号",
+                    "example": 0
+                  }
+                },
+                "required": [
+                  "exercise_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "students": {
+                      "type": "object",
+                      "properties": {
+                        "student": {
+                          "type": "object",
+                          "properties": {
+                            "student_id": {
+                              "type": "integer"
+                            },
+                            "student_answer": {
+                              "type": "string"
+                            },
+                            "answer_time": {
+                              "type": "string"
+                            },
+                            "check": {
+                              "type": "integer",
+                              "description": "学生的对错，为空时该题目未批改"
+                            },
+                            "analyse": {
+                              "type": "string"
+                            },
+                            "student_name": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/teacher/getExercisesList": {
+      "post": {
+        "summary": "获取课件习题列表",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "章节ID 编号",
+                    "example": 0
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "exercisesList": {
+                      "type": "object",
+                      "properties": {
+                        "exercise": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "description": "ID 编号"
+                            },
+                            "content": {
+                              "type": "string"
+                            },
+                            "answer": {
+                              "type": "string"
+                            },
+                            "difficulty": {
+                              "type": "integer"
+                            },
+                            "type": {
+                              "type": "string"
+                            },
+                            "committed_num": {
+                              "type": "string"
+                            }
+                          },
+                          "description": "ID 编号",
+                          "required": [
+                            "committed_num"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/admin/getUserList": {
+      "post": {
+        "summary": "获取人员信息列表",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "description": "A:管理员；T:教师；S:学生",
+                    "example": "",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "userList": {
+                      "type": "object",
+                      "properties": {
+                        "user": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer"
+                            },
+                            "phone_number": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "gender": {
+                              "type": "string"
+                            },
+                            "frequence": {
+                              "type": "integer"
+                            },
+                            "sum_time": {
+                              "type": "number"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/admin/deleteUser": {
+      "post": {
+        "summary": "删除人员",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "ID 编号",
+                    "example": 0
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/admin/getSystemStats": {
+      "get": {
+        "summary": "获取系统板块统计信息",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "systemStats": {
+                      "type": "object",
+                      "properties": {
+                        "S_AiChat": {
+                          "type": "integer",
+                          "description": "学生AI聊天板块"
+                        },
+                        "S_exercises": {
+                          "type": "integer",
+                          "description": "学生生成习题板块"
+                        },
+                        "S_check": {
+                          "type": "integer",
+                          "description": "学生批改习题板块"
+                        },
+                        "T_courseware": {
+                          "type": "integer",
+                          "description": "教师生成课件板块"
+                        },
+                        "T_exercises": {
+                          "type": "integer",
+                          "description": "教师生成习题板块"
+                        },
+                        "T_check": {
+                          "type": "integer",
+                          "description": "教师批改习题板块"
+                        }
+                      }
+                    },
+                    "systemInfo": {
+                      "type": "object",
+                      "properties": {
+                        "exercise_num": {
+                          "type": "integer"
+                        },
+                        "user_num": {
+                          "type": "integer"
+                        },
+                        "course_num": {
+                          "type": "integer"
+                        },
+                        "female_num": {
+                          "type": "integer"
+                        },
+                        "male_num": {
+                          "type": "integer"
+                        },
+                        "chapter_num": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/signIn": {
+      "post": {
+        "summary": "登录",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "phone_number": {
+                    "description": "用户的手机号",
+                    "example": "",
+                    "type": "string"
+                  },
+                  "password": {
+                    "example": "",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "phone_number",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer",
+                      "description": "0成功，1返回错误信息msg"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "jwt": {
+                      "type": "string",
+                      "description": "后端生成的jwt，之后的请求需要加入请求头中"
+                    },
+                    "gender": {
+                      "type": "string",
+                      "description": "{male, female}"
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "{T:teacher, S:student, A:admin}"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/register": {
+      "post": {
+        "summary": "注册",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "phone_number": {
+                    "example": "",
+                    "type": "string"
+                  },
+                  "password": {
+                    "example": "",
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "注册账号的类型,{T:teacher, S:student, A:admin}",
+                    "example": ""
+                  },
+                  "name": {
+                    "example": "",
+                    "type": "string"
+                  },
+                  "gender": {
+                    "description": "{male, female}",
+                    "example": "",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "phone_number",
+                  "password",
+                  "type",
+                  "name",
+                  "gender"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/updateInfo": {
+      "post": {
+        "summary": "修改人员信息",
+        "deprecated": false,
+        "description": "需要jwt验证！！！",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "ID 编号，管理员修改其他人信息时需要传参，学生、教师和管理员自身修改信息，使用JWT无需传参",
+                    "example": 0
+                  },
+                  "password": {
+                    "example": "",
+                    "type": "string"
+                  },
+                  "name": {
+                    "example": "",
+                    "type": "string"
+                  },
+                  "gender": {
+                    "example": "",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/getLearningStatsByPerson": {
+      "post": {
+        "summary": "获取学习情况（按学生）",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "ID 编号，为空时获取所有学生的学习情况",
+                    "example": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "students": {
+                      "type": "object",
+                      "properties": {
+                        "student": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "courses": {
+                              "type": "object",
+                              "properties": {
+                                "course": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "chapters": {
+                                      "type": "object",
+                                      "properties": {
+                                        "chapter": {
+                                          "type": "object",
+                                          "properties": {
+                                            "id": {
+                                              "type": "string"
+                                            },
+                                            "name": {
+                                              "type": "string"
+                                            },
+                                            "AIFrequence": {
+                                              "type": "integer"
+                                            },
+                                            "correctness": {
+                                              "type": "number"
+                                            },
+                                            "sum_exercises": {
+                                              "type": "integer"
+                                            },
+                                            "right_exercises": {
+                                              "type": "integer"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/getLearningStatsByCourse": {
+      "post": {
+        "summary": "获取学习情况（按课程）",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "课程编号，为空时获取所有课程的学习情况",
+                    "example": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "courses": {
+                      "type": "object",
+                      "properties": {
+                        "course": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "chapters": {
+                              "type": "object",
+                              "properties": {
+                                "chapter": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "AIfrequence": {
+                                      "type": "integer"
+                                    },
+                                    "correctness": {
+                                      "type": "number"
+                                    },
+                                    "sum_exercises": {
+                                      "type": "integer"
+                                    },
+                                    "right_exercises": {
+                                      "type": "integer"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/getChapterList": {
+      "post": {
+        "summary": "获取课件列表",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "课程ID 编号",
+                    "example": 0
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "chapterList": {
+                      "type": "object",
+                      "properties": {
+                        "chapter": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "content": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/getCourseList": {
+      "get": {
+        "summary": "获取课程列表",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "courseList": {
+                      "type": "object",
+                      "properties": {
+                        "course": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "teacher_id": {
+                              "type": "integer"
+                            },
+                            "teacher_name": {
+                              "type": "string"
+                            },
+                            "student_num": {
+                              "type": "integer",
+                              "description": "课程中学生人数"
+                            }
+                          }
+                        }
+                      },
+                      "required": [
+                        "01JXV7WNRET9B0NFAXNMEWQ3NX"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/deleteCourse": {
+      "post": {
+        "summary": "删除课程",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "课程ID 编号",
+                    "example": 0
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/deleteChapter": {
+      "post": {
+        "summary": "删除章节课件",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "章节课件ID 编号",
+                    "example": 0
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/deleteExercise": {
+      "post": {
+        "summary": "删除习题",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "章节习题ID 编号",
+                    "example": 0
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/sumTime": {
+      "post": {
+        "summary": "增加使用时间",
+        "deprecated": false,
+        "description": "## 需要JWT！！",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "time",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ret": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ret"
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    }
+  },
+  "components": {
+    "schemas": {},
+    "securitySchemes": {}
+  },
+  "servers": [],
+  "security": []
+}
