@@ -439,7 +439,7 @@ onMounted(() => {
   height: 2rem;
   margin-top: 1rem;
   margin-left: 0.7rem;
-  font-size: 11px;
+  font-size: 1.3rem;
   color: var(--textColor2);
   border: transparent;
   background-color: transparent;
@@ -624,54 +624,7 @@ onMounted(() => {
   animation: spinner 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
 }
 
-.spinner-circle:nth-child(1) {
-  border-top-color: #417dff;
-  animation-delay: -0.45s;
-}
 
-.spinner-circle:nth-child(2) {
-  border-top-color: #5e9aff;
-  animation-delay: -0.3s;
-}
-
-.spinner-circle:nth-child(3) {
-  border-top-color: #85b1ff;
-  animation-delay: -0.15s;
-}
-
-.spinner-circle:nth-child(4) {
-  border-top-color: #a0c4ff;
-}
-
-@keyframes spinner {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.loading-text {
-  font-size: 18px;
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 20px;
-}
-
-.loading-progress {
-  height: 8px;
-  background: #e9ecef;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progress-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #417dff, #5e9aff);
-  border-radius: 4px;
-  transition: width 0.4s ease;
-}
 
 /* 响应式调整 */
 @media (max-width: 768px) {

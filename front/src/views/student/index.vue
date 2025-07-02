@@ -31,7 +31,6 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   background-color: transparent;
-  overflow: hidden;
+  overflow: auto;
 }
-
 </style>

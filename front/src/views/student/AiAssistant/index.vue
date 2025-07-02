@@ -718,6 +718,7 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 .chapter-header {
   border-bottom: 2px solid var(--backgroundColor);
   background: var(--backgroundColor1);
+  height: 58px;
 }
 
 .current-chapter {
@@ -1005,14 +1006,12 @@ const handleShiftEnter = (event: KeyboardEvent) => {
 .message-text {
   border-radius: 12px;
   word-wrap: break-word;
-  white-space: pre-wrap;
-  background: var(--titleColor2);
-  padding: 20px;
+  white-space: normal;
+  padding: 0 20px;
   text-align: left;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   font-size: 16px;
-  line-height: 1.6;
-  color: var(--textColor);
+  /* 创建BFC以防止margin折叠 */
+  overflow: hidden;
 }
 
 .message-item.user .message-text {
@@ -1021,7 +1020,6 @@ const handleShiftEnter = (event: KeyboardEvent) => {
   text-align: left;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 16px;
-  line-height: 1.7;
   color: var(--textColor);
 }
 
@@ -1103,28 +1101,6 @@ const handleShiftEnter = (event: KeyboardEvent) => {
   color: #9ca3af;
   margin-top: 8px;
   text-align: center;
-}
-
-/* 滚动条样式 */
-.history-list::-webkit-scrollbar,
-.message-list::-webkit-scrollbar {
-  width: 4px;
-}
-
-.history-list::-webkit-scrollbar-track,
-.message-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.history-list::-webkit-scrollbar-thumb,
-.message-list::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 2px;
-}
-
-.history-list::-webkit-scrollbar-thumb:hover,
-.message-list::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
 }
 
 /* 响应式设计 */

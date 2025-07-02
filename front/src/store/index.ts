@@ -63,6 +63,17 @@ export const mainStore = defineStore('main', {
         }
       }
     },
+    /**
+     * 重新排序标签页
+     * @param oldIndex 原索引
+     * @param newIndex 新索引
+     */
+    reorderTabs(oldIndex: number, newIndex: number) {
+      if (oldIndex !== newIndex && oldIndex >= 0 && newIndex >= 0 && oldIndex < this.tabs.length && newIndex < this.tabs.length) {
+        const movedTab = this.tabs.splice(oldIndex, 1)[0];
+        this.tabs.splice(newIndex, 0, movedTab);
+      }
+    },
     getUserInfo(){
       this.account = localStorage.getItem('account') || '';
       this.password = localStorage.getItem('password') || '';

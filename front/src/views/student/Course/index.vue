@@ -326,6 +326,9 @@ const getChapterList = async (courseId: number) => {
   padding-bottom: 20px;
   padding-left: 5px;
   padding-right: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .chapter-item {
@@ -484,28 +487,6 @@ const getChapterList = async (courseId: number) => {
   font-size: 16px;
   margin-top: 24px;
   font-weight: 500;
-}
-
-/* 滚动条样式 */
-.chapter-navigation::-webkit-scrollbar,
-.content-area::-webkit-scrollbar {
-  width: 4px;
-}
-
-.chapter-navigation::-webkit-scrollbar-track,
-.content-area::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.chapter-navigation::-webkit-scrollbar-thumb,
-.content-area::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 2px;
-}
-
-.chapter-navigation::-webkit-scrollbar-thumb:hover,
-.content-area::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
 }
 
 /* 响应式设计 */
