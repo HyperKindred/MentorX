@@ -109,7 +109,7 @@
           </div>
 
             <div class="info_time"><strong>在线时长：</strong>{{ formatDuration(item.sum_time) }}</div>
-        <el-button @click="deleteStudent(item.id)" class="delete-btn">删除</el-button>
+        <el-button @click="deleteTeacher(item.id)" class="delete-btn">删除</el-button>
       </div>
     </div>
   </div>
