@@ -1,5 +1,6 @@
 from X1_http import get_answer
-from database_utils import connectSQL, closeSQL
+from database_utils import connectSQL, closeSQL, commit_exercise_db
+from ocr import ocr
 from langchain.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
 
@@ -182,3 +183,8 @@ def ai_aichat(student_id, chapter_id, content, session_id):
         return False, "模型输出结果异常！"
     finally:
         closeSQL(conn, cursor)
+
+def ai_img2word(student_id, exercise_id, img_path):
+    student_answer = ocr(picFilePath = img_path)
+    success = commit_exercise_db(student_id, exercise_id, student_answer)
+    return success, None
