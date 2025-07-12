@@ -4,6 +4,9 @@ from flask_jwt_extended import  JWTManager, create_access_token, get_jwt_identit
 from database_utils import *
 from ai_model import *
 from datetime import timedelta
+import os
+import cv2
+import numpy as np
 
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = "secret key"
@@ -24,7 +27,7 @@ def signIn():
     
     if result is None:
         data = {"ret": 1, "msg": "手机号不存在！"}
-    elif password != result[0]:
+    elif not check_password_hash(result[0], password):
         data = {"ret": 1, "msg": "密码错误！"}
     else:
         access_token = create_access_token(identity=str(result[1]), expires_delta=expires)
@@ -382,6 +385,22 @@ def sumTime():
     time = request.form.get("time")
     user_id = int(get_jwt_identity())
     success, info = sum_time_db(user_id, time)
+    return jsonify({"ret": 0} if success else {"ret": 1, "msg": info})
+
+@app.route('/api/student/img2word', methods=["POST"])
+@jwt_required()
+def img2word():
+    student_id = int(get_jwt_identity())
+    exercise_id = request.form.get("exercise_id")
+    answer_image = request.files['answer_image']
+    picname=answer_image.filename
+    file = answer_image.read()
+    file = cv2.imdecode(np.frombuffer(file, np.uint8), cv2.IMREAD_COLOR)
+    imgfilePath = "./ocr_img/"
+    imgPath = os.path.join(imgfilePath, picname)
+    cv2.imwrite(filename=imgPath, img=file)
+    imgPath = imgfilePath + picname
+    success, info = ai_img2word(student_id, exercise_id, imgPath)
     return jsonify({"ret": 0} if success else {"ret": 1, "msg": info})
 
 if __name__ == '__main__':
