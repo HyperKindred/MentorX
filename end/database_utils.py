@@ -30,8 +30,7 @@ def init_redis_counters():
         row = cursor.fetchone()
         if row:
             for i, key in enumerate(redis_keys):
-                if not redis_client.exists(key):
-                    redis_client.set(key, row[i])
+                redis_client.set(key, row[i])
     finally:
         closeSQL(conn, cursor)
 
