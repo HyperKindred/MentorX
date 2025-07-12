@@ -27,7 +27,7 @@ def signIn():
     
     if result is None:
         data = {"ret": 1, "msg": "手机号不存在！"}
-    elif password != result[0]:
+    elif not check_password_hash(result[0], password):
         data = {"ret": 1, "msg": "密码错误！"}
     else:
         access_token = create_access_token(identity=str(result[1]), expires_delta=expires)

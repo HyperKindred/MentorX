@@ -1,5 +1,5 @@
 import pymysql
-
+from werkzeug.security import generate_password_hash, check_password_hash
 
 def connectSQL(p_user = 'root', p_db = 'mentorx'):
     f_conn = pymysql.connect(
@@ -116,8 +116,8 @@ def sign_in_db(phone_number):
     try:       
         sql = "SELECT password, user_id, type, name, gender FROM user WHERE phone_number = %s;"
         cursor.execute(sql, (phone_number,))  
-        password = cursor.fetchone() 
-        return password
+        info = cursor.fetchone() 
+        return info
     finally:
         closeSQL(conn, cursor)
 
@@ -139,8 +139,10 @@ def register_db(phone_number, password, user_type, name, gender):
         if existing_user:
             return False
         
+        hashed_password = generate_password_hash(password)
+
         sql = "INSERT INTO user(phone_number, password, type, name, gender) VALUES(%s, %s, %s, %s, %s);"
-        cursor.execute(sql, (phone_number, password, user_type, name, gender))
+        cursor.execute(sql, (phone_number, hashed_password, user_type, name, gender))
         return True
     finally:
         closeSQL(conn, cursor)
