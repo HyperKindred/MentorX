@@ -4,9 +4,13 @@ from flask_jwt_extended import  JWTManager, create_access_token, get_jwt_identit
 from database_utils import *
 from ai_model import *
 from datetime import timedelta
+from werkzeug.security import check_password_hash
 import os
 import cv2
 import numpy as np
+from apscheduler.schedulers.background import BackgroundScheduler
+from sync_utils import sync_redis_to_db, setup_exit_handler
+from database_utils import init_redis_counters
 
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = "secret key"
@@ -404,4 +408,9 @@ def img2word():
     return jsonify({"ret": 0} if success else {"ret": 1, "msg": info})
 
 if __name__ == '__main__':
+    init_redis_counters()
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(sync_redis_to_db, 'interval', minutes=10)
+    scheduler.start()
+    setup_exit_handler()
     app.run(host="0.0.0.0", debug=True, port=5000)
