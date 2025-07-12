@@ -6,7 +6,7 @@ def sync_redis_to_db():
     conn, cursor = connectSQL()
     try:
         values = [int(redis_client.get(key) or 0) for key in redis_keys]
-        sql = "UPDATE system_stats SET S_AiChat=%s, S_exercises=%s, S_check=%s, T_courseware=%s, T_exercises=%s, T_check=%s;"
+        sql = "UPDATE system_stats SET AIChat=%s, generate_exercises=%s, check_exercises=%s, generate_teachcontent=%s, generate_tasks=%s, check=%s;"
         cursor.execute(sql, values)
     finally:
         closeSQL(conn, cursor)

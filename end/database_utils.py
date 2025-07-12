@@ -4,7 +4,7 @@ import redis
 
 # Redis连接
 redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
-redis_keys = ["S_AiChat", "S_exercises", "S_check", "T_courseware", "T_exercises", "T_check"]
+redis_keys = ["AIChat", "generate_exercises", "check_exercises", "generate_teachcontent", "generate_tasks", "check"]
 
 def connectSQL(p_user = 'root', p_db = 'mentorx'):
     f_conn = pymysql.connect(
@@ -435,13 +435,18 @@ def delete_user_db(user_id):
         closeSQL(conn, cursor)
 
 def get_system_stats_db():
-    conn, cursor = connectSQL()
     try:
-        sql = "SELECT * FROM system_stats;"
-        cursor.execute(sql)
-        return cursor.fetchone()
-    finally:
-        closeSQL(conn, cursor)
+        systemStats = [int(redis_client.get(key) or 0) for key in redis_keys]
+        return systemStats
+    except Exception as e:
+        print("Redis获取系统统计失败，降级MySQL", e)
+        conn, cursor = connectSQL()
+        try:
+            sql = "SELECT * FROM system_stats;"
+            cursor.execute(sql)
+            return cursor.fetchone()
+        finally:
+            closeSQL(conn, cursor)
 
 def get_exercise_history_db(student_id, exercise_id):
     conn, cursor = connectSQL()
@@ -521,10 +526,6 @@ def get_system_info_db():
     systemInfo = {}
     tables = ["user", "course", "chapter"]
     try:
-        for key in redis_keys:
-            value = redis_client.get(key)
-            systemInfo[key] = int(value) if value is not None else 0
-
         cursor.execute("SELECT COUNT(*) FROM exercise WHERE is_official = 1;")
         systemInfo["exercise_num"] = cursor.fetchone()[0]
 
