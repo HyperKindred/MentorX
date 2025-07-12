@@ -12,6 +12,7 @@
           <el-dropdown-menu>
             <el-dropdown-item command="information">个人信息</el-dropdown-item>
             <el-dropdown-item v-if="store.type === 'S'" command="courses">我的课程</el-dropdown-item>
+            <el-dropdown-item v-if="store.type === 'S'" command="daily">每日练习</el-dropdown-item>
             <el-dropdown-item v-if="store.type === 'A'" command="users">用户管理</el-dropdown-item>
             <el-dropdown-item v-if="store.type === 'A'" command="learningInfo">学习情况</el-dropdown-item>
             <el-dropdown-item v-if="store.type === 'A'" command="stats">统计信息</el-dropdown-item>
@@ -84,6 +85,7 @@ import A_user from './Admin/Users/index.vue'
 import A_stats from './Admin/Statistic/index.vue'
 import A_learningInfo from './Admin/LearningState/index.vue'
 import S_myCourse from './Student/MyCourses/index.vue'
+import S_dailyPractice from './Student/DailyPractice/index.vue'
 import Home from './Home/index.vue';
 import Waves from './Background/Wave.vue'
 import Sortable from 'sortablejs';
@@ -101,6 +103,9 @@ const handleDropdownCommand = (command: string) => {
       break;
     case 'courses':
       store.addTab('我的课程', S_myCourse);
+      break;
+    case 'daily':
+      store.addTab('每日练习',S_dailyPractice);
       break;
     case 'users':
       store.addTab('用户管理', A_user);
