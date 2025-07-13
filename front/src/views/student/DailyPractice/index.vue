@@ -3,6 +3,9 @@
     <div class="left-panel">
       <div class="left-title">往日习题</div>
       <div class="practice-list">
+        <div v-if="isGenerating" class="practice-item generating">
+          <span class="practice-date">{{ todayDate }} (生成中...)</span>
+        </div>
         <div 
           v-for="practice in practices" 
           :key="practice.exercise_id" 
@@ -10,7 +13,8 @@
           :class="{active: activePractice === practice.exercise_id}" 
           @click="selectPractice(practice)"
         >
-          <span class="practice-date">{{ practice.date }}</span>
+          <span class="practice-date">{{ formatDate(practice.date) }}</span>
+          <div class="status-indicator" :class="getStatusClass(practice.check)"></div>
         </div>
       </div>
       <div class="practice-calendar">
@@ -52,8 +56,14 @@
     </div>
     <div class="right-panel">
       <div class="right-title">每日一题</div>
+      <div v-if="activePractice === -1" class="generating-message">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>每日习题正在生成中，请稍候...</p>
+        <p>这可能需要几分钟时间</p>
+      </div>
+      <div v-else>
       <div class="content-area">
-      <div class="practice-content" v-html="marked.parse( activePractice.exercise_content || '')"></div>
+        <div class="practice-content" v-html="marked.parse( activePractice.exercise_content || '')"></div>
           <div class="answer-section">           
             <!-- 已批改状态：显示历史答案和批改结果 -->
             <div v-if="activePractice.is_committed" class="submitted-answer">
@@ -91,6 +101,7 @@
             </div>
           </div>
       </div>
+      </div>
     </div>
   </div>
 </template>
@@ -109,6 +120,7 @@ const currentYear = ref(currentDate.value.getFullYear());
 const currentMonth = ref(currentDate.value.getMonth());
 const currentAnswer = ref<string>('');
 const checking = ref(false);
+const todayDate = new Date().toISOString().split('T')[0];
 const checkMap: Record<string, string> = {
   0:'✔️正确',
   1: '❌错误',
@@ -119,6 +131,35 @@ const getCheckLabel = (type: string): string => {
   return checkMap[type] || '❓未批改';
 };
 
+const hasTodayPractice = computed(() => {
+  return practices.value.some(p => p.date === todayDate);
+});
+
+const generatingPractice = computed(() => {
+  return {
+    exercise_id: -1, // 特殊ID，表示生成中
+    date: todayDate,
+    check: -1,
+    isGenerating: true
+  };
+});
+
+const sortedPractices = computed(() => {
+  let list = [...practices.value];
+  
+  // 按日期倒序排序
+  list.sort((a, b) => {
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
+  });
+  
+  // 添加生成中项（如果需要）
+  if (isGenerating.value && !hasTodayPractice.value) {
+    return [generatingPractice.value, ...list];
+  }
+  
+  return list;
+});
+
 const getPracticeList = () => {
   axios.post(`${store.ip}/api/student/getDailyPracticeList`, {
     headers: {
@@ -127,43 +168,60 @@ const getPracticeList = () => {
     }
   }).then(res => {
     const data = res.data;
-      if (data.ret === 0) {
-        practices.value = Array.isArray(data.chapterList) ? data.chapterList : [data.chapterList];
-      } else {
-        practices.value = [];
-        ElMessage({
-          message: '获取每日练习列表失败：' + data.msg,
-          type: 'error',
-        });
+    if (data.ret === 0) {
+      practices.value = Array.isArray(data.chapterList) 
+        ? data.chapterList 
+        : [data.chapterList];
+      
+      // 按日期倒序排序
+      practices.value.sort((a, b) => {
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
+      
+      // 如果生成了今日的练习，清除生成状态
+      if (hasTodayPractice.value) {
+        localStorage.removeItem('generatingStatus');
       }
+      if (practices.value.length > 0) {
+        selectPractice(practices.value[0]);
+      }
+    } else {
+      practices.value = [];
+      ElMessage.error('获取练习列表失败：' + data.msg);
+    }
   }).catch(() => {
-    ElMessage.error('获取每日练习列表失败：网络错误');
+    ElMessage.error('获取练习列表失败：网络错误');
   });
-}
+};
 
 const selectPractice = (practice: any) => {
-  activePractice.value = practice.exercise_id;
-  const formData = new FormData();
-  formData.append('exercise_id', activePractice.value.exercise_id);
+  if (practice.isGenerating) {
+    activePractice.value = -1;
+  } else {
+    activePractice.value = practice.exercise_id;
+    const formData = new FormData();
+    formData.append('exercise_id', activePractice.value.exercise_id);
 
-  axios.post(`${store.ip}/api/student/getExerciseHistory`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    }
-  }).then(res => {
-    const data = res.data;
-    if (data.ret === 0) {
-      activePractice.student_answer = data.student_answer;
-      activePractice.answer_time = data.answer_time;
-      activePractice.check = data.check;
-      activePractice.analyse = data.analyse;
-    } else {
-      ElMessage.error('获取作答情况失败：' + data.msg);
-    }
-  }).catch(() => {
-    ElMessage.error('获取作答情况失败：网络错误');
-  });
+    axios.post(`${store.ip}/api/student/getExerciseHistory`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      }
+    }).then(res => {
+      const data = res.data;
+      if (data.ret === 0) {
+        activePractice.student_answer = data.student_answer;
+        activePractice.answer_time = data.answer_time;
+        activePractice.check = data.check;
+        activePractice.analyse = data.analyse;
+      } else {
+        ElMessage.error('获取作答情况失败：' + data.msg);
+      }
+    }).catch(() => {
+      ElMessage.error('获取作答情况失败：网络错误');
+    });
+  }
+
 };
 
 const submitAndCheck = async () => {
@@ -337,29 +395,36 @@ const selectDay = (day: any) => {
 
 // 初始化
 onMounted(() => {
-  // 这里可以加载练习数据
-  // 模拟数据
-  practices.value = [
-    { exercise_id: 1, date: '2025-07-15', is_committed:0 },
-    { exercise_id: 2, date: '2025-07-16', check: 0, is_committed:1 },
-    { exercise_id: 3, date: '2025-07-17', check: 1, is_committed:1 },
-    { exercise_id: 4, date: '2025-07-18', check: 2, is_committed:1 },
-    { exercise_id: 5, date: '2025-07-19', check: 0, is_committed:1 },
-    { exercise_id: 6, date: '2025-07-20', check: 1, is_committed:1 },
-    { exercise_id: 7, date: '2025-07-21', check: 0, is_committed:1 },
-    { exercise_id: 8, date: '2025-07-22', check: 2, is_committed:1 },
-    { exercise_id: 9, date: '2025-07-23', check: 0, is_committed:1 },
-    { exercise_id: 10, date: '2025-07-24', check: 0, is_committed:1 },
-  ];
-  
-  // 默认选择第一个练习
-  if (practices.value.length > 0) {
-    selectPractice(practices.value[0]);
+  getPracticeList();
+  if (isGenerating.value) {
+    const pollInterval = setInterval(() => {
+      getPracticeList();
+      
+      // 如果生成了今日练习或超过5分钟，停止轮询
+      if (hasTodayPractice.value) {
+        clearInterval(pollInterval);
+      }
+    }, 10000); // 每10秒检查一次
   }
 });
+
+// 格式化日期显示
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return `${date.getMonth() + 1}月${date.getDate()}日`;
+};
+
+// 根据状态获取类名
+const getStatusClass = (status: number) => {
+  switch(status) {
+    case 0: return 'correct';
+    case 1: return 'wrong';
+    case 2: return 'c-w';
+    default: return '';
+  }
+};
 </script>
 <style scoped>
-/* 保留您原有的样式 */
 .main {
   display: flex;
   height: 100%;
@@ -683,7 +748,51 @@ onMounted(() => {
   margin-right: 1rem;
 }
 
+.practice-item.generating {
+  background-color: rgba(255, 193, 7, 0.1);
+  color: #ffc107;
+  border-left: 3px solid #ffc107;
+}
 
+.generating-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: #ffc107;
+  padding: 20px;
+}
+
+.generating-message i {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+.generating-message p {
+  margin: 5px 0;
+  font-size: 16px;
+}
+
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-left: 8px;
+}
+
+.status-indicator.correct {
+  background-color: #28a745;
+}
+
+.status-indicator.wrong {
+  background-color: #dc3545;
+}
+
+.status-indicator.c-w {
+  background-color: #ffc107;
+}
 /* 骨架屏自定义样式 - 适配深蓝色背景 */
 .loading-state :deep(.el-skeleton__item) {
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%);
