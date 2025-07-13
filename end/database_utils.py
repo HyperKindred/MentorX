@@ -1,5 +1,10 @@
 import pymysql
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import generate_password_hash
+import redis
+
+# Redis连接
+redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+redis_keys = ["AIchat", "generate_exercises", "check_exercises", "generate_teachcontent", "generate_tasks", "check"]
 
 def connectSQL(p_user = 'root', p_db = 'mentorx'):
     f_conn = pymysql.connect(
@@ -17,6 +22,17 @@ def connectSQL(p_user = 'root', p_db = 'mentorx'):
 def closeSQL(p_conn, p_cursor):
     p_cursor.close()
     p_conn.close()
+
+def init_redis_counters():
+    conn, cursor = connectSQL()
+    try:
+        cursor.execute("SELECT * FROM system_stats;")
+        row = cursor.fetchone()
+        if row:
+            for i, key in enumerate(redis_keys):
+                redis_client.set(key, row[i])
+    finally:
+        closeSQL(conn, cursor)
 
 def f_getLearningStatsByPerson(user_id):
     student = {}
@@ -418,13 +434,18 @@ def delete_user_db(user_id):
         closeSQL(conn, cursor)
 
 def get_system_stats_db():
-    conn, cursor = connectSQL()
     try:
-        sql = "SELECT * FROM system_stats;"
-        cursor.execute(sql)
-        return cursor.fetchone()
-    finally:
-        closeSQL(conn, cursor)
+        systemStats = [int(redis_client.get(key) or 0) for key in redis_keys]
+        return systemStats
+    except Exception as e:
+        print("Redis获取系统统计失败，降级MySQL", e)
+        conn, cursor = connectSQL()
+        try:
+            sql = "SELECT * FROM system_stats;"
+            cursor.execute(sql)
+            return cursor.fetchone()
+        finally:
+            closeSQL(conn, cursor)
 
 def get_exercise_history_db(student_id, exercise_id):
     conn, cursor = connectSQL()
@@ -477,13 +498,18 @@ def delete_exercise_db(exercise_id):
         closeSQL(conn, cursor)
 
 def increase_count(name):
-    conn, cursor = connectSQL()
     try:
-        sql = f"UPDATE system_stats SET `{name}` = `{name}` + 1;"
-        cursor.execute(sql)
+        redis_client.incr(name)
         return True
-    finally:
-        closeSQL(conn, cursor)
+    except Exception as e:
+        print("Redis计数失败，降级MySQL", e)
+        conn, cursor = connectSQL()
+        try:
+            sql = f"UPDATE system_stats SET `{name}` = `{name}` + 1;"
+            cursor.execute(sql)
+            return True
+        finally:
+            closeSQL(conn, cursor)
 
 def sum_time_db(user_id, time):
     conn, cursor = connectSQL()
