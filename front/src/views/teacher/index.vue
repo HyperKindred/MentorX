@@ -91,15 +91,6 @@ onMounted(() => {
 });
 
 const filteredCourses = computed(() => {
-  // 获取当前登录教师的姓名
-  const currentTeacherName = localStorage.getItem('name') || '';
-  
-  // 先过滤出当前教师的课程
-  const teacherCourses = courses.value.filter(course => 
-    course.teacher_name === currentTeacherName
-  );
-  
-  // 再根据搜索条件过滤
   if (!searchQuery.value.trim()) {
     return teacherCourses;
   }
@@ -115,7 +106,7 @@ const getCourseList = () => {
   loading.value = true;
   axios({
     method: 'get',
-    url: `${store.ip}/api/getCourseList`,
+    url: `${store.ip}/api/teacher/getCourseList`,
     headers: {
       Authorization: `Bearer ${localStorage.getItem('token')}`,
     },
