@@ -179,6 +179,18 @@ def getExercisesList_student():
     data = {"ret": 0, "msg": "获取习题列表成功！", "exercisesList": exercisesList}
     return jsonify(data)
 
+@app.route('/api/student/getDailyPracticeList', methods=["POST"])
+@jwt_required()
+def getExercisesList_daily():
+    student_id = int(get_jwt_identity())
+    rows = get_exercises_list_daily_db(student_id)
+    
+    keys = ["exercise_id", "exercise_content", "date", "is_committed", "check"]
+    exercisesList = [{k:row[i] for i, k in enumerate(keys)} for row in rows]
+    
+    data = {"ret": 0, "msg": "获取习题列表成功！", "exercisesList": exercisesList}
+    return jsonify(data)
+
 @app.route('/api/student/getExerciseHistory', methods=["POST"])
 @jwt_required()
 def getExerciseHistory():
@@ -316,6 +328,14 @@ def deleteExercise():
     id = request.form.get("id")
     success = delete_exercise_db(id)
     return jsonify({"ret": 0} if success else {"ret": 1, "msg": "删除失败"})
+
+@app.route('/api/sumTime', methods=['POST'])
+@jwt_required()
+def sumTime():
+    time = request.form.get("time")
+    user_id = int(get_jwt_identity())
+    success, info = sum_time_db(user_id, time)
+    return jsonify({"ret": 0} if success else {"ret": 1, "msg": info})
     
 # 与大模型交互相关联
 @app.route('/api/student/AIchat', methods=['POST'])
@@ -343,6 +363,14 @@ def generate_exercises():
         increase_count("generate_exercises")
     return jsonify({"ret": 0} if success else {"ret": 1, "msg": "习题生成失败！"})
     
+@app.route('/api/student/generateDailyPractice', methods=['POST'])
+@jwt_required()
+def generate_daily_practice():
+    student_id = int(get_jwt_identity())
+    success = ai_generate_daily_tasks(student_id)
+    if success:
+        increase_count("generate_exercises")
+    return jsonify({"ret": 0} if success else {"ret": 1, "msg": "每日练习生成失败！"})
 
 @app.route('/api/student/check_exercises', methods=['POST'])
 @jwt_required()
@@ -381,14 +409,6 @@ def check_answer():
     success, info = ai_check_answer(Eno, student_id)
     if success:
         increase_count("check")
-    return jsonify({"ret": 0} if success else {"ret": 1, "msg": info})
-
-@app.route('/api/sumTime', methods=['POST'])
-@jwt_required()
-def sumTime():
-    time = request.form.get("time")
-    user_id = int(get_jwt_identity())
-    success, info = sum_time_db(user_id, time)
     return jsonify({"ret": 0} if success else {"ret": 1, "msg": info})
 
 @app.route('/api/student/img2word', methods=["POST"])
