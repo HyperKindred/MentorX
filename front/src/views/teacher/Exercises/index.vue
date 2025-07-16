@@ -126,7 +126,7 @@ const getTypeLabel = (type: string): string => {
 };
 
 const getExercisesList = () => {
-   loading.value = true;
+  loading.value = true;
   const formData = new FormData();
   formData.append('id', chapter.value.id);
 
@@ -138,12 +138,15 @@ const getExercisesList = () => {
   }).then(res => {
     const data = res.data;
 
-    if (data.ret === 0 && Array.isArray(data.exercisesList)) {
-      exercises.value = data.exercisesList;
-    } else {
-      exercises.value = []; 
-      ElMessage.error('获取习题列表失败：' + data.msg);
-    }
+      if (data.ret === 0) {
+        exercises.value = Array.isArray(data.chapterList) ? data.chapterList : [data.chapterList];
+      } else {
+        exercises.value = [];
+        ElMessage({
+          message: '获取习题列表失败：' + data.msg,
+          type: 'error',
+        });
+      }
   }).catch(() => {
     ElMessage.error('获取习题列表失败：网络错误');
   });
