@@ -134,7 +134,7 @@
         </div>
 
         <div class="footer">
-          © 2023 MENTOR X - 用AI改变教育
+          © 2025 MENTOR X - 用AI改变教育
         </div>
       </div>
     </div>
