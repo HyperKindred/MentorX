@@ -299,7 +299,7 @@ def get_course_list_db(student_id = None):
 def get_exercises_list_teacher_db(chapter_id):
     conn, cursor = connectSQL()
     try:
-        sql = "SELECT id, exercise_content, answer, difficulty, type FROM exercise WHERE chapter_id = %s AND is_official = 1;"
+        sql = "SELECT id, exercise_content, answer, difficulty, type FROM exercise WHERE chapter_id = %s AND is_official = 1 AND is_daily = 0;"
         cursor.execute(sql, (chapter_id,))
         rows =  cursor.fetchall()
 
@@ -317,7 +317,7 @@ def get_exercises_list_teacher_db(chapter_id):
 def get_exercises_list_student_db(student_id, chapter_id):
     conn, cursor = connectSQL()
     try:
-        sql = "SELECT id, type, difficulty, exercise_content, is_official FROM exercise WHERE chapter_id = %s AND (is_official = 1 OR student_id = %s);"
+        sql = "SELECT id, type, difficulty, exercise_content, is_official FROM exercise WHERE chapter_id = %s AND (is_official = 1 OR student_id = %s) AND is_daily = 0;"
         cursor.execute(sql, (chapter_id, student_id))
         rows =  cursor.fetchall()
 
@@ -327,6 +327,24 @@ def get_exercises_list_student_db(student_id, chapter_id):
             cursor.execute(sql, (row[0], student_id))
             result = cursor.fetchone()
             new_rows.append( (*row, 1 if result else 0) )   
+        rows = new_rows  
+        return rows
+    finally:
+        closeSQL(conn, cursor)
+
+def get_exercises_list_daily_db(student_id):
+    conn, cursor = connectSQL()
+    try:
+        sql = "SELECT id, exercise_content, exercise_date FROM exercise WHERE is_daily = 1 AND student_id = %s;"
+        cursor.execute(sql, (student_id))
+        rows =  cursor.fetchall()
+
+        new_rows = []
+        for row in rows:
+            sql = "SELECT student_answer, check FROM practice_history WHERE exercise_id = %s AND student_id = %s;"
+            cursor.execute(sql, (row[0], student_id))
+            result = cursor.fetchone()
+            new_rows.append( (*row, 1 if result[0] else 0, result[1]) )   
         rows = new_rows  
         return rows
     finally:
@@ -542,3 +560,33 @@ def get_system_info_db():
     finally:
         closeSQL(conn, cursor)
     
+
+def search_worst_chapter(student_id):
+    conn, cursor = connectSQL()
+    try:
+        sql = '''
+        SELECT chapter_id, 
+        SUM(CASE WHEN `check` = '0' THEN 1 ELSE 0 END) / COUNT(*) AS correctness
+        FROM practice_history
+        WHERE student_id = %s
+        GROUP BY chapter_id
+        ORDER BY correctness ASC;
+        '''
+        cursor.execute(sql, (student_id,))
+        rows = cursor.fetchall()
+        return rows[0][0]
+    finally:
+        closeSQL(conn, cursor)
+
+def get_chapter_practice_history_db(student_id, chapter_id):
+    conn, cursor = connectSQL()
+    try:
+        sql = '''
+        SELECT exercise_content, student_answer, analyse, `check`
+        FROM practice_history, exercise
+        WHERE practice_history.student_id = %s AND practice_history.chapter_id = %s AND practice_history.exercise_id = exercise.id;
+        '''
+        cursor.execute(sql, (student_id, chapter_id))
+        return cursor.fetchall()
+    finally:
+        closeSQL(conn, cursor)

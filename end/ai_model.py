@@ -1,5 +1,5 @@
 from X1_http import get_answer
-from database_utils import connectSQL, closeSQL, commit_exercise_db
+from database_utils import connectSQL, closeSQL, commit_exercise_db, search_worst_chapter, get_chapter_practice_history_db
 from ocr import ocr
 from langchain.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
@@ -89,15 +89,51 @@ def ai_generate_tasks(ChapterNo, difficulty, type, student_id = None):
 
         answer = get_answer(new_prompt)
         if student_id:
-            sql = '''INSERT INTO exercise(exercise_content, answer, difficulty, type, chapter_id, is_official, student_id)
-            VALUES(%s, %s, %s, %s, %s, 0, %s);
+            sql = '''INSERT INTO exercise(exercise_content, answer, difficulty, type, chapter_id, is_official, student_id, is_daily)
+            VALUES(%s, %s, %s, %s, %s, 0, %s, 0);
             '''
             cursor.execute(sql, (exercise, answer, difficulty, type, ChapterNo, student_id))
         else:
-            sql = '''INSERT INTO exercise(exercise_content, answer, difficulty, type, chapter_id, is_official)
-            VALUES(%s, %s, %s, %s, %s, 1);
+            sql = '''INSERT INTO exercise(exercise_content, answer, difficulty, type, chapter_id, is_official, is_daily)
+            VALUES(%s, %s, %s, %s, %s, 1, 0);
             '''
             cursor.execute(sql, (exercise, answer, difficulty, type, ChapterNo))
+        return True
+    except:
+        return False
+    finally:
+        closeSQL(conn, cursor)
+
+def ai_generate_daily_tasks(student_id):
+    conn, cursor = connectSQL()
+    chapter_id = search_worst_chapter(student_id)
+
+    cursor.execute("SELECT content FROM chapter WHERE id = %s;", (chapter_id,))
+    result = cursor.fetchone()
+    content = result[0] if result else "无内容"
+
+    practice_history_rows = get_chapter_practice_history_db(student_id, chapter_id)
+    keys = ["exercise_content", "student_answer", "analyse", "check"]
+    practice_history_dicts = [dict(zip(keys, row)) for row in practice_history_rows]
+    full_prompt = f"""请根据以下课件内容和学生做题历史记录设计一道针对性的练习题目，只用生成一道， 仅生成题目，不需要答案，涉及知识覆盖学生的错误点；
+    课件内容：
+    {content}
+    学生历史做题记录，其中“check”字段，0代表正确，1代表错误，2代表部分正确：
+    {practice_history_dicts}
+    """
+    try:
+        exercise = get_answer(full_prompt)
+        new_prompt = f"""请根据以下课件内容，给出练习题目的答案，要求去掉分析；
+        课件内容：
+        {content}
+        题目：
+        {exercise}
+        """
+        answer = get_answer(new_prompt)     
+        sql = '''INSERT INTO exercise(exercise_content, answer, chapter_id, student_id, is_daily, exercise_date)
+        VALUES(%s, %s, %s, %s, 1, CURRENT_DATE);
+        '''
+        cursor.execute(sql, (exercise, answer, chapter_id, student_id))
         return True
     except:
         return False
