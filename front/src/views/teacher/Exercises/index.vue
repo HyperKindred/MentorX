@@ -21,7 +21,14 @@
       <h2 class="course-name">题目列表</h2>
       </div>
       <div class="head-btn">
-      <el-button type="primary" @click="dialogVisible = true" class="function-btn">生成习题</el-button>
+      <el-button 
+        type="primary" 
+        @click="dialogVisible = true" 
+        class="function-btn"
+        :loading="generating"
+      >
+        生成习题
+      </el-button>
       </div>
     <div class="content-area">
     <div v-if="loading" class="loading-state">
@@ -72,7 +79,7 @@
       </div>
       
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button @click="dialogVisible = false" :disabled="generating">取消</el-button>
         <el-button 
           type="primary" 
           @click="createExercise"
@@ -289,9 +296,6 @@ onMounted(() => {
     activeChapter.value = chapter.value.id; 
   }
 });
-
-
-
 </script>
 
 <style scoped>

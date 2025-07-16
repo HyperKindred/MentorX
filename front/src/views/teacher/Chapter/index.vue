@@ -3,8 +3,15 @@
     <div class="left-panel">
       <div class="chapter-navigation">
         <div class="chapter-head">
-        <h3 class="nav-title">课程章节</h3>
-        <el-button type="primary" @click="dialogVisible = true" class="add-btn">＋</el-button>
+          <h3 class="nav-title">课程章节</h3>
+          <el-button 
+            type="primary" 
+            @click="dialogVisible = true" 
+            class="add-btn"
+            :loading="isGenerating"
+          >
+            <template v-if="!isGenerating">＋</template>
+          </el-button>
         </div>
         <div class="sidebar">
           <div class="chapter-list">
@@ -22,49 +29,48 @@
       </div>
     </div>
     <div class="right-panel">
-    <div class="content-area" v-if="selectedChapter">
-      <div class="header">
-        <h3 class="chapterTitle">{{ selectedChapter.name }}</h3>
-      </div>
-      <!-- 功能按钮组 -->
-      <div class="function-buttons">
-        <div class="button-group">
-          <el-button 
-             type="primary" 
-             :icon="Document" 
-             class="function-btn active"
-             disabled
-           >
-             课件学习
-           </el-button>
-           <el-button 
-             type="default" 
-             :icon="Edit" 
-             class="function-btn"
-             @click="showExercises"
-           >
-             章节习题
-           </el-button>
+      <div class="content-area" v-if="selectedChapter">
+        <div class="header">
+          <h3 class="chapterTitle">{{ selectedChapter.name }}</h3>
         </div>
-        <div class="edit-buttons">
-          <el-button type="primary" class='function-btn' @click="toggleEditContent">
-            {{ isEditing ? '保存' : '修改' }}
-          </el-button>
-          <el-button type="primary" @click="exportToWord" class='function-btn'>导出为 Word</el-button>
+        <!-- 功能按钮组 -->
+        <div class="function-buttons">
+          <div class="button-group">
+            <el-button 
+              type="primary" 
+              :icon="Document" 
+              class="function-btn active"
+              disabled
+            >
+              课件学习
+            </el-button>
+            <el-button 
+              type="default" 
+              :icon="Edit" 
+              class="function-btn"
+              @click="showExercises"
+            >
+              章节习题
+            </el-button>
+          </div>
+          <div class="edit-buttons">
+            <el-button type="primary" class='function-btn' @click="toggleEditContent">
+              {{ isEditing ? '保存' : '修改' }}
+            </el-button>
+            <el-button type="primary" @click="exportToWord" class='function-btn'>导出为 Word</el-button>
+          </div>
+        </div>
+
+        <div class="chapter-content">
+          <el-input v-if="isEditing" type="textarea" class='edit-content' v-model="editedContent" rows="20" resize="none" />
+          <el-scrollbar v-else class="read-only-content">
+            <div v-html="renderedHtml"></div>
+          </el-scrollbar>
         </div>
       </div>
-
-
-      <div class="chapter-content">
-        <el-input v-if="isEditing" type="textarea" class='edit-content' v-model="editedContent" rows="20" resize="none" />
-        <el-scrollbar v-else class="read-only-content">
-          <div v-html="renderedHtml"></div>
-        </el-scrollbar>
+      <div class="content-area" v-else>
+        <p style="text-align: center; margin-top: 100px; color: #999;">请先选择一个章节</p>
       </div>
-    </div>
-    <div class="content-area" v-else>
-      <p style="text-align: center; margin-top: 100px; color: #999;">请先选择一个章节</p>
-    </div>
     </div>
 
     <el-dialog v-model="dialogVisible" title="新建章节" width="30%">
@@ -109,8 +115,6 @@ const renameValue = ref('');
 const renameTargetId = ref(0);
 const activeChapter = ref<number | null>(null);
 const isGenerating = ref(false);
-const progress = ref(0);
-const progressInterval = ref(null);
 interface Chapter {
   id: number;
   name: string;
@@ -146,9 +150,6 @@ const exportToWord = () => {
   a.click();
 };
 
-
-
-
 const handleAddChapter = () => {
   if (!Cname.value.trim()) {
     ElMessage.warning('请输入章节名称');
@@ -157,14 +158,8 @@ const handleAddChapter = () => {
   
   // 开始生成
   isGenerating.value = true;
-  progress.value = 0;
-  
-  // 模拟进度条更新
-  progressInterval.value = setInterval(() => {
-    if (progress.value < 95) {
-      progress.value += Math.random() * 15;
-    }
-  }, 500);
+  // 立即关闭弹窗
+  dialogVisible.value = false;
   
   const formData = new FormData();
   formData.append('chapter', Cname.value)
@@ -180,30 +175,21 @@ const handleAddChapter = () => {
   })
     .then((response) => {
       const res = response.data;
-      clearInterval(progressInterval.value);
-      progress.value = 100;
+      isGenerating.value = false;
       
-      // 添加短暂延迟让用户看到完成状态
-      setTimeout(() => {
-        isGenerating.value = false;
-        
-        if (res.ret === 0) {
-          ElMessage.success('课件生成成功！');
-          Cname.value = '';
-          dialogVisible.value = false;
-          getChapterList();
-        } else {
-          ElMessage.error('课件生成失败：' + res.msg);
-        }
-      }, 500);
+      if (res.ret === 0) {
+        ElMessage.success('课件生成成功！');
+        Cname.value = '';
+        getChapterList();
+      } else {
+        ElMessage.error('课件生成失败：' + res.msg);
+      }
     })
     .catch(() => {
-      clearInterval(progressInterval.value);
       isGenerating.value = false;
       ElMessage.error('请求失败，请稍后重试！');
     });
 };
-
 
 const getChapterList = () => {
   const formData = new FormData();
@@ -241,8 +227,6 @@ const getChapterList = () => {
       });
     });
 };
-
-
 
 const deleteChapter = (id: number) => {
   const formData = new FormData();
@@ -342,8 +326,6 @@ onMounted(() => {
   courseName.value = localStorage.getItem('selectedCourseName');
   getChapterList();
 });
-
-
 </script>
 
 <style scoped>
@@ -583,48 +565,6 @@ onMounted(() => {
   padding: 2rem;
   border-radius: 6px;
 }
-
-.generating-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(255, 255, 255, 0.85);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
-  backdrop-filter: blur(5px);
-}
-
-.loading-animation {
-  text-align: center;
-  padding: 30px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-  width: 400px;
-}
-
-.loading-spinner {
-  position: relative;
-  width: 100px;
-  height: 100px;
-  margin: 0 auto 30px;
-}
-
-.spinner-circle {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  border: 5px solid transparent;
-  mix-blend-mode: multiply;
-  animation: spinner 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-}
-
-
 
 /* 响应式调整 */
 @media (max-width: 768px) {
