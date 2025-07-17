@@ -89,10 +89,10 @@ onMounted(() => {
 
 const filteredCourses = computed(() => {
   if (!searchQuery.value.trim()) {
-    return teacherCourses;
+    return courses.value;
   }
   
-  return teacherCourses.filter(course => 
+  return courses.value.filter(course => 
     course.name.toLowerCase().includes(searchQuery.value.toLowerCase())
   );
 });
@@ -302,7 +302,6 @@ const handleCardClick = (id: number, name: string) => {
   margin: 0 0 8px 0;
   line-height: 1.4;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
