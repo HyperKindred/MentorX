@@ -350,10 +350,13 @@ def get_exercises_list_daily_db(student_id):
 
         new_rows = []
         for row in rows:
-            sql = "SELECT student_answer, check FROM practice_history WHERE exercise_id = %s AND student_id = %s;"
+            sql = "SELECT student_answer, `check` FROM practice_history WHERE exercise_id = %s AND student_id = %s;"
             cursor.execute(sql, (row[0], student_id))
             result = cursor.fetchone()
-            new_rows.append( (*row, 1 if result[0] else 0, result[1]) )   
+            if result:
+                new_rows.append( (*row, 1 if result[0] else 0, result[1]) ) 
+            else:
+                new_rows.append( (*row, 0, None) )  
         rows = new_rows  
         return rows
     finally:
