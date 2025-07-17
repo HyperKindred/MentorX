@@ -128,7 +128,7 @@ def getCourseList():
 @jwt_required()
 def getCourseList_student():
     student_id = int(get_jwt_identity())
-    courses = get_course_list_db(student_id)
+    courses = get_course_list_db(student_id=student_id)
     data = {"ret": 0, "msg": "获取已选课程列表成功！", "courseList": courses}
     return jsonify(data)
 
@@ -253,6 +253,14 @@ def addCourse():
     if not success:
         return jsonify({"ret": 1, "msg": "添加课程失败"})
     return jsonify({"ret": 0})
+
+@app.route('/api/teacher/getCourseList', methods=["GET"])
+@jwt_required()
+def getCourseList_teacher():
+    teacher_id = int(get_jwt_identity())
+    courses = get_course_list_db(teacher_id=teacher_id)
+    data = {"ret": 0, "msg": "获取已选课程列表成功！", "courseList": courses}
+    return jsonify(data)
 
 @app.route('/api/teacher/updateExercise', methods=["POST"])
 def updateExercise():

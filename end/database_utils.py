@@ -259,12 +259,15 @@ def get_ai_chat_db(student_id, chapter_id):
     finally:
         closeSQL(conn, cursor)
 
-def get_course_list_db(student_id = None):
+def get_course_list_db(student_id = None, teacher_id = None):
     conn, cursor = connectSQL()
     try:
         if student_id is None:
             sql = "SELECT DISTINCT id FROM course;"
             cursor.execute(sql)
+        elif teacher_id is not None:
+            sql = "SELECT DISTINCT id FROM course WHERE teacher = %s);"
+            cursor.execute(sql, (teacher_id))
         else:
             sql = "SELECT DISTINCT course_id FROM course_student WHERE student_id = %s;"
             cursor.execute(sql, (student_id))
@@ -284,14 +287,20 @@ def get_course_list_db(student_id = None):
             cursor.execute(sql, (course_id,))
             student_count = cursor.fetchone()[0]
             
-            courses.append({
-                "id": course_id,
-                "name": course_info[0],
-                "teacher_id": course_info[1],
-                "teacher_name": teacher_name,
-                "student_num": student_count
-            })
-        
+            if teacher_id is not None:
+                courses.append({
+                    "id": course_id,
+                    "name": course_info[0],
+                    "teacher_id": course_info[1],
+                    "teacher_name": teacher_name,
+                    "student_num": student_count
+                })
+            else:
+                courses.append({
+                    "id": course_id,
+                    "name": course_info[0],
+                    "student_num": student_count
+                })   
         return courses
     finally:
         closeSQL(conn, cursor)
