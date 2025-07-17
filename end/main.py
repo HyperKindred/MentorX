@@ -425,7 +425,11 @@ def img2word():
     student_id = int(get_jwt_identity())
     exercise_id = request.form.get("exercise_id")
     answer_image = request.files['answer_image']
-    picname=answer_image.filename
+    picname = answer_image.filename
+    pic_format = os.path.splitext(picname)[1]
+    if pic_format not in ['.jpg', '.jpeg', '.png', '.bmp']:
+        return jsonify({"ret": 1, "msg": "图片格式不支持，请上传jpg、bmp或png格式的图片！"})
+    picname = "ocr" + pic_format
     file = answer_image.read()
     file = cv2.imdecode(np.frombuffer(file, np.uint8), cv2.IMREAD_COLOR)
     imgfilePath = "./ocr_img/"
