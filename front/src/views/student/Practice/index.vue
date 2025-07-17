@@ -955,7 +955,7 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   padding: 20px;
   background: var(--backgroundColor3);
   border-radius: 8px;
-  border-left: 4px solid #409eff;
+  border-left: 4px solid transparent;
 }
 
 .question-header {

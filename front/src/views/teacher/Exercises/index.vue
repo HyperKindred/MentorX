@@ -21,14 +21,7 @@
       <h2 class="course-name">题目列表</h2>
       </div>
       <div class="head-btn">
-      <el-button 
-        type="primary" 
-        @click="dialogVisible = true" 
-        class="function-btn"
-        :loading="generating"
-      >
-        生成习题
-      </el-button>
+      <el-button type="primary" @click="dialogVisible = true" class="function-btn" :loading="generating">{{ generating ? '生成中...' : '生成习题' }}</el-button>
       </div>
     <div class="content-area">
     <div v-if="loading" class="loading-state">
@@ -64,7 +57,7 @@
           <el-option label="较难" value="3" />
           <el-option label="困难" value="4" />
         </el-select>
-        
+
         <h3 class="dialog-title">请选择题目类型</h3>
         <el-select 
           v-model="type" 
@@ -77,13 +70,12 @@
           <el-option label="代码题" value="code" />
         </el-select>
       </div>
-      
+
       <template #footer>
-        <el-button @click="dialogVisible = false" :disabled="generating">取消</el-button>
+        <el-button @click="dialogVisible = false">取消</el-button>
         <el-button 
           type="primary" 
-          @click="createExercise"
-          :loading="generating">
+          @click="createExercise">
           生成
         </el-button>
       </template>
@@ -133,7 +125,7 @@ const getTypeLabel = (type: string): string => {
 };
 
 const getExercisesList = () => {
-  loading.value = true;
+   loading.value = true;
   const formData = new FormData();
   formData.append('id', chapter.value.id);
 
@@ -145,15 +137,15 @@ const getExercisesList = () => {
   }).then(res => {
     const data = res.data;
 
-      if (data.ret === 0) {
-        exercises.value = Array.isArray(data.chapterList) ? data.chapterList : [data.chapterList];
-      } else {
-        exercises.value = [];
-        ElMessage({
-          message: '获取习题列表失败：' + data.msg,
-          type: 'error',
-        });
-      }
+    if (data.ret === 0 && Array.isArray(data.exercisesList)) {
+      exercises.value = data.exercisesList;
+    } else {
+      exercises.value = []; 
+      ElMessage.error('获取习题列表失败：' + data.msg);
+    }
+
+
+
   }).catch(() => {
     ElMessage.error('获取习题列表失败：网络错误');
   });
@@ -208,9 +200,8 @@ const createExercise = async () => {
     ElMessage.warning('请先选择章节');
     return;
   }
-  
+  dialogVisible.value = false;
   generating.value = true;
-  
   const formData = new FormData();
   formData.append('ChapterNo', chapter.value.id.toString());
   formData.append('difficulty', difficulty.value);
@@ -227,7 +218,6 @@ const createExercise = async () => {
     const data = res.data;
     if (data.ret === 0) {
       ElMessage.success('习题生成成功');
-      dialogVisible.value = false;
       await getExercisesList();
     } else {
       ElMessage.error('新建习题失败：' + (data.msg || '未知错误'));
@@ -296,6 +286,9 @@ onMounted(() => {
     activeChapter.value = chapter.value.id; 
   }
 });
+
+
+
 </script>
 
 <style scoped>

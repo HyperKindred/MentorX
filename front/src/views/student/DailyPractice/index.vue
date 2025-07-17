@@ -8,9 +8,9 @@
         </div>
         <div 
           v-for="practice in practices" 
-          :key="practice.exercise_id" 
+          :key="practice?.exercise_id || index" 
           class="practice-item" 
-          :class="{active: activePractice === practice.exercise_id}" 
+          :class="{active: activePracticeId === (practice?.exercise_id || '')}" 
           @click="selectPractice(practice)"
         >
           <span class="practice-date">{{ formatDate(practice.date) }}</span>
@@ -22,11 +22,11 @@
         <div class="calendar-container">
           <div class="calendar-header">
             <button class="nav-btn" @click="prevMonth">
-              <i class="fas fa-chevron-left"></i>
+              <p><</p>
             </button>
             <h3>{{ currentYear }}年{{ currentMonth + 1 }}月</h3>
             <button class="nav-btn" @click="nextMonth">
-              <i class="fas fa-chevron-right"></i>
+              <p>></p>
             </button>
           </div>
           <div class="calendar-weekdays">
@@ -42,9 +42,9 @@
               :class="{
                 'current-month': day.isCurrentMonth,
                 'has-practice': day.hasPractice,
-                'correct': day.check === 0,
-                'wrong': day.check === 1,
-                'c-w': day.check === 2
+                'correct': day.check === '0',
+                'wrong': day.check === '1',
+                'c-w': day.check === '2'
               }"
               @click="selectDay(day)"
             >
@@ -56,28 +56,22 @@
     </div>
     <div class="right-panel">
       <div class="right-title">每日一题</div>
-      <div v-if="activePractice === -1" class="generating-message">
-        <i class="fas fa-spinner fa-spin"></i>
-        <p>每日习题正在生成中，请稍候...</p>
-        <p>这可能需要几分钟时间</p>
-      </div>
-      <div v-else>
-      <div class="content-area">
-        <div class="practice-content" v-html="marked.parse( activePractice.exercise_content || '')"></div>
+      <div v-if="currentPractice" class="content-area">
+        <div class="practice-content" v-html="marked.parse( currentPractice.exercise_content || '')"></div>
           <div class="answer-section">           
             <!-- 已批改状态：显示历史答案和批改结果 -->
-            <div v-if="activePractice.is_committed" class="submitted-answer">
+            <div v-if="currentPractice.is_committed" class="submitted-answer">
               <div class="answer-content">
                 <h4>学生答案：</h4>
-                <pre>{{ activePractice.student_answer }}</pre>
-                <div v-if="activePractice.check" class="check-result">
+                <pre>{{ currentPractice.student_answer }}</pre>
+                <div v-if="currentPractice.check" class="check-result">
                   <h4>批改结果：</h4>
                   <div class="check-score">
-                    <div class="markdown-content" v-html="getCheckLabel(activePractice.check)"></div>
+                    <div class="markdown-content" v-html="getCheckLabel(currentPractice.check)"></div>
                   </div>
-                  <div v-if="activePractice.analyse" class="check-analyse">
+                  <div v-if="currentPractice.analyse" class="check-analyse">
                     <h4>详细分析：</h4>
-                    <div class="markdown-content" v-html="marked.parse(activePractice.analyse)"></div>
+                    <div class="markdown-content" v-html="marked.parse(currentPractice.analyse)"></div>
                   </div>
                 </div>
               </div>
@@ -101,8 +95,11 @@
             </div>
           </div>
       </div>
+      <div v-else class="loading-state">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>加载习题内容中...</p>
       </div>
-    </div>
+      </div>
   </div>
 </template>
 <script lang="ts" setup>
@@ -114,13 +111,18 @@ import { active } from 'sortablejs';
 import { marked } from 'marked';
 const store = mainStore();
 const practices = ref([]);
-const activePractice = ref('');
+const activePracticeId = ref('');
+const currentPractice = ref<any>(null);
 const currentDate = ref(new Date());
 const currentYear = ref(currentDate.value.getFullYear());
 const currentMonth = ref(currentDate.value.getMonth());
 const currentAnswer = ref<string>('');
 const checking = ref(false);
 const todayDate = new Date().toISOString().split('T')[0];
+const token = localStorage.getItem('token');
+const isGenerating = computed(() => {
+  return localStorage.getItem('generatingStatus') === 'true' && !hasTodayPractice.value;
+});
 const checkMap: Record<string, string> = {
   0:'✔️正确',
   1: '❌错误',
@@ -135,53 +137,25 @@ const hasTodayPractice = computed(() => {
   return practices.value.some(p => p.date === todayDate);
 });
 
-const generatingPractice = computed(() => {
-  return {
-    exercise_id: -1, // 特殊ID，表示生成中
-    date: todayDate,
-    check: -1,
-    isGenerating: true
-  };
-});
-
-const sortedPractices = computed(() => {
-  let list = [...practices.value];
-  
-  // 按日期倒序排序
-  list.sort((a, b) => {
-    return new Date(b.date).getTime() - new Date(a.date).getTime();
-  });
-  
-  // 添加生成中项（如果需要）
-  if (isGenerating.value && !hasTodayPractice.value) {
-    return [generatingPractice.value, ...list];
-  }
-  
-  return list;
-});
-
 const getPracticeList = () => {
-  axios.post(`${store.ip}/api/student/getDailyPracticeList`, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    }
+  axios.get(`${store.ip}/api/student/getDailyPracticeList`, {
+    headers: { 'Authorization': `Bearer ${token}` }
   }).then(res => {
     const data = res.data;
     if (data.ret === 0) {
-      practices.value = Array.isArray(data.chapterList) 
-        ? data.chapterList 
-        : [data.chapterList];
+      // 确保获取到的是有效数组
+      const list = Array.isArray(data.exercisesList) ? data.exercisesList : [data.exercisesList];
+      console.log('返回数据：', data);
+      // 过滤无效项并排序
+      practices.value = list
+        .filter(p => p && p.date && p.exercise_id) // 确保必要字段存在
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       
-      // 按日期倒序排序
-      practices.value.sort((a, b) => {
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
-      });
-      
-      // 如果生成了今日的练习，清除生成状态
+      // 如果生成了今日练习，清除生成状态
       if (hasTodayPractice.value) {
         localStorage.removeItem('generatingStatus');
       }
+      // 安全选择第一项
       if (practices.value.length > 0) {
         selectPractice(practices.value[0]);
       }
@@ -189,43 +163,40 @@ const getPracticeList = () => {
       practices.value = [];
       ElMessage.error('获取练习列表失败：' + data.msg);
     }
-  }).catch(() => {
-    ElMessage.error('获取练习列表失败：网络错误');
+  }).catch(err => {
+    console.error('请求失败', err);
+    practices.value = []; // 确保设置为空数组
   });
 };
 
 const selectPractice = (practice: any) => {
-  if (practice.isGenerating) {
-    activePractice.value = -1;
-  } else {
-    activePractice.value = practice.exercise_id;
-    const formData = new FormData();
-    formData.append('exercise_id', activePractice.value.exercise_id);
-
-    axios.post(`${store.ip}/api/student/getExerciseHistory`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        Authorization: `Bearer ${localStorage.getItem('token')}`,
-      }
-    }).then(res => {
-      const data = res.data;
-      if (data.ret === 0) {
-        activePractice.student_answer = data.student_answer;
-        activePractice.answer_time = data.answer_time;
-        activePractice.check = data.check;
-        activePractice.analyse = data.analyse;
-      } else {
-        ElMessage.error('获取作答情况失败：' + data.msg);
-      }
-    }).catch(() => {
-      ElMessage.error('获取作答情况失败：网络错误');
-    });
+  // 确保 practice 有效
+  if (!practice || !practice.exercise_id) {
+    ElMessage.warning('无效的练习项');
+    return;
+  }
+  
+  activePracticeId.value = practice.exercise_id;
+  currentPractice.value = practice;
+  if (practice.is_committed)
+  {
+        getPracticeHistory(currentPractice.value.exercise_id);
+        
+        // 更新本地数据
+        currentPractice.value.student_answer = currentAnswer.value;
+        currentPractice.value.is_committed = 1;
+        
+        // 更新practices列表中的对应项
+        const practiceIndex = practices.value.findIndex(ex => ex.exercise_id === currentPractice.value!.exercise_id);
+        if (practiceIndex !== -1) {
+          practices.value[practiceIndex] = { ...currentPractice.value };
+        }
   }
 
 };
 
 const submitAndCheck = async () => {
-  if (!activePractice.value || !currentAnswer.value.trim()) {
+  if (!currentPractice.value || !currentAnswer.value.trim()) {
     ElMessage.warning('请填写答案后再提交');
     return;
   }
@@ -234,12 +205,12 @@ const submitAndCheck = async () => {
   try {
     // 先提交答案
     const submitFormData = new FormData();
-    submitFormData.append('exercise_id', activePractice.value.exercise_id.toString());
+    submitFormData.append('exercise_id', currentPractice.value.exercise_id.toString());
     submitFormData.append('student_answer', currentAnswer.value);
     
     const submitResponse = await axios.post(`${store.ip}/api/student/commitExercise`, submitFormData, {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        'Authorization': `Bearer ${token}`
       },
       timeout: 5000
     }); 
@@ -247,28 +218,27 @@ const submitAndCheck = async () => {
     if (submitResponse.data.ret === 0) {
       // 提交成功后进行批改
       const checkFormData = new FormData();
-      checkFormData.append('Eno', activePractice.value.exercise_id.toString());
+      checkFormData.append('Eno', currentPractice.value.exercise_id.toString());
       
       const checkResponse = await axios.post(`${store.ip}/api/student/check_exercises`, checkFormData, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         timeout: 120000 // 批改可能需要较长时间
       });
       
       if (checkResponse.data.ret === 0) {
         // 批改成功，获取批改结果
-        await getPracticeHistory(selectedPractice.value.exercise_id);
+        await getPracticeHistory(currentPractice.value.exercise_id);
         
         // 更新本地数据
-        activePractice.value.student_answer = currentAnswer.value;
-        activePractice.value.submitted_at = new Date().toISOString();
-        activePractice.value.is_committed = 1;
+        currentPractice.value.student_answer = currentAnswer.value;
+        currentPractice.value.is_committed = 1;
         
         // 更新practices列表中的对应项
-        const practiceIndex = practices.value.findIndex(ex => ex.exercise_id === activePractice.value!.exercise_id);
+        const practiceIndex = practices.value.findIndex(ex => ex.exercise_id === currentPractice.value!.exercise_id);
         if (practiceIndex !== -1) {
-          practices.value[practiceIndex] = { ...activePractice.value };
+          practices.value[practiceIndex] = { ...currentPractice.value };
         }
         
         // 清空当前答案输入
@@ -286,6 +256,41 @@ const submitAndCheck = async () => {
     ElMessage.error('提交并批改失败，请重试');
   } finally {
     checking.value = false;
+  }
+};
+
+const getPracticeHistory = async (exerciseId: number) => {
+  try {
+    const formData = new FormData();
+    formData.append('exercise_id', exerciseId.toString());
+    
+    const response = await axios.post(`${store.ip}/api/student/getExerciseHistory`, formData, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      timeout: 5000
+    });
+    
+    if (response.data.ret === 0) {
+      // 习题已作答且批改
+      if (currentPractice.value) {
+        currentPractice.value.student_answer = response.data.student_answer;
+        currentPractice.value.check_result = response.data.check;
+        currentPractice.value.analyse = response.data.analyse;
+      }
+    } else if (response.data.ret === 2) {
+      // 习题未作答
+      if (currentPractice.value) {
+        currentPractice.value.is_committed = 0;
+      }
+    } else if (response.data.ret === 3) {
+      // 习题已作答但未批改
+      if (currentPractice.value) {
+        currentPractice.value.student_answer = response.data.student_answer;
+      }
+    }
+  } catch (error) {
+    console.error('获取练习历史记录失败:', error);
   }
 };
 
@@ -308,14 +313,12 @@ const calendarDays = computed(() => {
     const date = new Date(year, month - 1, prevMonthDate);
     
     // 查找当天的练习状态
-    const practice = practices.value.find(p => {
-      const practiceDate = new Date(p.date);
-      return (
-        practiceDate.getFullYear() === date.getFullYear() &&
-        practiceDate.getMonth() === date.getMonth() &&
-        practiceDate.getDate() === date.getDate()
-      );
-    });
+  const practice = practices.value.find(p => 
+    p?.date && 
+    new Date(p.date).getFullYear() === date.getFullYear() &&
+    new Date(p.date).getMonth() === date.getMonth() &&
+    new Date(p.date).getDate() === date.getDate()
+  );
     
     days.push({
       date: prevMonthDate,
@@ -409,13 +412,17 @@ onMounted(() => {
 });
 
 // 格式化日期显示
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return `${date.getMonth() + 1}月${date.getDate()}日`;
-};
+function formatDate(dateStr) {
+  const d = new Date(dateStr);
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1; // 月份是从0开始的，要加1
+  const day = d.getDate();
+  return `${year}-${month}-${day}`;
+}
 
 // 根据状态获取类名
-const getStatusClass = (status: number) => {
+const getStatusClass = (status: number | null) => {
+  if (status === null || status === undefined) return '';
   switch(status) {
     case 0: return 'correct';
     case 1: return 'wrong';
@@ -504,6 +511,7 @@ const getStatusClass = (status: number) => {
   display: flex;
   flex-direction: column;
   background: transparent;
+  overflow: hidden;
 }
 
 .right-title {
@@ -548,7 +556,7 @@ const getStatusClass = (status: number) => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: var(--textColor2);
+  color: var(--titleColor);
   transition: all 0.2s;
 }
 
@@ -603,13 +611,13 @@ const getStatusClass = (status: number) => {
 }
 
 .day.wrong {
-  background: rgba(255, 193, 7, 0.2);
-  color: #ffc107;
+  background: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
 }
 
 .day.c-w {
-  background: rgba(220, 53, 69, 0.2);
-  color: #dc3545;
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
 }
 
 .day:hover {
@@ -618,21 +626,19 @@ const getStatusClass = (status: number) => {
 
 .content-area {
   flex: 1;
-  overflow-y: hidden;
+  overflow-y: auto;
   padding: 24px;
 }
 
 .practice-content {
-  font-size: 16px;
-  margin-bottom: 8px;
-  overflow-y: auto;
-  text-overflow: ellipsis;
-  line-height: 1.4;
-  flex: 1;
-  width: 100%;
-  max-width: 100%;
-  color: #303133;
-  font-weight: 500;
+  background: var(--backgroundColor3);
+  padding: 20px;
+  border-radius: 6px;
+  border: 1px solid var(--borderColor);
+  line-height: 1.6;
+  color: var(--textColor);
+  text-align: left;
+  margin-bottom: 1rem;
 }
 
 .answer-section {
@@ -804,6 +810,24 @@ const getStatusClass = (status: number) => {
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%);
   background-size: 200% 100%;
   animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: var(--textColor2);
+}
+
+.loading-state i {
+  font-size: 40px;
+  margin-bottom: 20px;
+}
+
+.loading-state p {
+  font-size: 16px;
 }
 
 @keyframes skeleton-loading {

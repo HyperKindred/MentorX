@@ -425,6 +425,13 @@ onMounted(() => {
   color: var(--textColor2);
   border: transparent;
   background-color: transparent;
+  padding: 0;
+}
+.is-loading {
+  width: 2rem;
+  height: 2rem;
+  margin-right: 1rem;
+  padding-left: 5px;
 }
 
 .add-btn:hover {
