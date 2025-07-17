@@ -128,7 +128,7 @@ def getCourseList():
 @jwt_required()
 def getCourseList_student():
     student_id = int(get_jwt_identity())
-    courses = get_course_list_db(student_id)
+    courses = get_course_list_db(student_id=student_id)
     data = {"ret": 0, "msg": "获取已选课程列表成功！", "courseList": courses}
     return jsonify(data)
 
@@ -179,7 +179,7 @@ def getExercisesList_student():
     data = {"ret": 0, "msg": "获取习题列表成功！", "exercisesList": exercisesList}
     return jsonify(data)
 
-@app.route('/api/student/getDailyPracticeList', methods=["POST"])
+@app.route('/api/student/getDailyPracticeList', methods=["GET"])
 @jwt_required()
 def getExercisesList_daily():
     student_id = int(get_jwt_identity())
@@ -253,6 +253,14 @@ def addCourse():
     if not success:
         return jsonify({"ret": 1, "msg": "添加课程失败"})
     return jsonify({"ret": 0})
+
+@app.route('/api/teacher/getCourseList', methods=["GET"])
+@jwt_required()
+def getCourseList_teacher():
+    teacher_id = int(get_jwt_identity())
+    courses = get_course_list_db(teacher_id=teacher_id)
+    data = {"ret": 0, "msg": "获取已选课程列表成功！", "courseList": courses}
+    return jsonify(data)
 
 @app.route('/api/teacher/updateExercise', methods=["POST"])
 def updateExercise():
@@ -363,7 +371,7 @@ def generate_exercises():
         increase_count("generate_exercises")
     return jsonify({"ret": 0} if success else {"ret": 1, "msg": "习题生成失败！"})
     
-@app.route('/api/student/generateDailyPractice', methods=['POST'])
+@app.route('/api/student/generateDailyPractice', methods=['GET'])
 @jwt_required()
 def generate_daily_practice():
     student_id = int(get_jwt_identity())

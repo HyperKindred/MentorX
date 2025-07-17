@@ -1,6 +1,7 @@
 import pymysql
 from werkzeug.security import generate_password_hash
 import redis
+from datetime import date
 
 # Redis连接
 redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
@@ -259,12 +260,15 @@ def get_ai_chat_db(student_id, chapter_id):
     finally:
         closeSQL(conn, cursor)
 
-def get_course_list_db(student_id = None):
+def get_course_list_db(student_id = None, teacher_id = None):
     conn, cursor = connectSQL()
     try:
         if student_id is None:
             sql = "SELECT DISTINCT id FROM course;"
             cursor.execute(sql)
+        elif teacher_id is not None:
+            sql = "SELECT DISTINCT id FROM course WHERE teacher = %s);"
+            cursor.execute(sql, (teacher_id))
         else:
             sql = "SELECT DISTINCT course_id FROM course_student WHERE student_id = %s;"
             cursor.execute(sql, (student_id))
@@ -284,14 +288,20 @@ def get_course_list_db(student_id = None):
             cursor.execute(sql, (course_id,))
             student_count = cursor.fetchone()[0]
             
-            courses.append({
-                "id": course_id,
-                "name": course_info[0],
-                "teacher_id": course_info[1],
-                "teacher_name": teacher_name,
-                "student_num": student_count
-            })
-        
+            if teacher_id is not None:
+                courses.append({
+                    "id": course_id,
+                    "name": course_info[0],
+                    "teacher_id": course_info[1],
+                    "teacher_name": teacher_name,
+                    "student_num": student_count
+                })
+            else:
+                courses.append({
+                    "id": course_id,
+                    "name": course_info[0],
+                    "student_num": student_count
+                })   
         return courses
     finally:
         closeSQL(conn, cursor)
@@ -341,10 +351,13 @@ def get_exercises_list_daily_db(student_id):
 
         new_rows = []
         for row in rows:
-            sql = "SELECT student_answer, check FROM practice_history WHERE exercise_id = %s AND student_id = %s;"
+            sql = "SELECT student_answer, `check` FROM practice_history WHERE exercise_id = %s AND student_id = %s;"
             cursor.execute(sql, (row[0], student_id))
             result = cursor.fetchone()
-            new_rows.append( (*row, 1 if result[0] else 0, result[1]) )   
+            if result:
+                new_rows.append( (row[0], row[1], format_date(row[2]), 1 if result[0] else 0, result[1]) ) 
+            else:
+                new_rows.append( (row[0], row[1], format_date(row[2]), 0, None) )  
         rows = new_rows  
         return rows
     finally:
@@ -590,3 +603,8 @@ def get_chapter_practice_history_db(student_id, chapter_id):
         return cursor.fetchall()
     finally:
         closeSQL(conn, cursor)
+
+def format_date(val):
+    if isinstance(val, (date)):
+        return val.strftime('%Y-%m-%d')
+    return val
