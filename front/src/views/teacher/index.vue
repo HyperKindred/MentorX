@@ -45,7 +45,6 @@
       >
         <div class="course-content">
           <h3 class="course-title">{{ course.name }}</h3>
-          <p class="course-teacher">讲师：{{ course.teacher_name }}</p>
           <div class="course-meta">
             <span class="course-students">
               <el-icon><User /></el-icon>
@@ -82,8 +81,6 @@ const searchQuery = ref('');
 interface Course {
   id: number;
   name: string;
-  teacher_id: number;
-  teacher_name: string;
   student_num: number;
 }
 onMounted(() => {
@@ -92,11 +89,11 @@ onMounted(() => {
 
 const filteredCourses = computed(() => {
   if (!searchQuery.value.trim()) {
-    return courses.value;
+    return teacherCourses;
   }
-  return courses.value.filter(course => 
-    course.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-    course.teacher_name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  
+  return teacherCourses.filter(course => 
+    course.name.toLowerCase().includes(searchQuery.value.toLowerCase())
   );
 });
 
@@ -105,7 +102,7 @@ const getCourseList = () => {
   loading.value = true;
   axios({
     method: 'get',
-    url: `${store.ip}/api/getCourseList`,
+    url: `${store.ip}/api/teacher/getCourseList`,
     headers: {
       Authorization: `Bearer ${localStorage.getItem('token')}`,
     },
