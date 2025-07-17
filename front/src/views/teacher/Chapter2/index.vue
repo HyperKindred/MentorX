@@ -4,24 +4,12 @@
       <div class="chapter-navigation">
         <div class="chapter-head">
           <h3 class="nav-title">课程章节</h3>
-          <el-button 
-            type="primary" 
-            @click="dialogVisible = true" 
-            class="add-btn"
-            :loading="isGenerating"
-          >
-            <template v-if="!isGenerating">＋</template>
-          </el-button>
         </div>
         <div class="sidebar">
           <div class="chapter-list">
             <el-space direction="vertical" fill>
               <div v-for="chapter in chapters" :key="chapter.id" @click="handleChapterClick(chapter)" class="chapter-item" :class="{ active: activeChapter === chapter.id }"  >
                 <span class="chapter-title">{{ chapter.name }}</span>
-                <div class="chapter-actions">
-                  <el-button size="small" type="primary" plain class="function-btn-left chapter-btn" :icon="Edit" @click.stop="renameChapter(chapter)"></el-button>
-                  <el-button size="small" type="primary" plain class="function-btn-left chapter-btn" :icon="Delete" @click.stop="deleteChapter(chapter.id)"></el-button>
-                </div>
               </div>
             </el-space>
           </div>
@@ -35,28 +23,7 @@
         </div>
         <!-- 功能按钮组 -->
         <div class="function-buttons">
-          <div class="button-group">
-            <el-button 
-              type="primary" 
-              :icon="Document" 
-              class="function-btn active"
-              disabled
-            >
-              课件学习
-            </el-button>
-            <el-button 
-              type="default" 
-              :icon="Edit" 
-              class="function-btn"
-              @click="showExercises"
-            >
-              章节习题
-            </el-button>
-          </div>
           <div class="edit-buttons">
-            <el-button type="primary" class='function-btn' @click="toggleEditContent">
-              {{ isEditing ? '保存' : '修改' }}
-            </el-button>
             <el-button type="primary" @click="exportToWord" class='function-btn'>导出为 Word</el-button>
           </div>
         </div>
@@ -72,23 +39,6 @@
         <p style="text-align: center; margin-top: 100px; color: #999;">请先选择一个章节</p>
       </div>
     </div>
-
-    <el-dialog v-model="dialogVisible" title="新建章节" width="30%">
-      <el-input v-model="Cname" placeholder="请输入章节名称" clearable />
-      <template #footer>
-        <el-button @click="dialogVisible = false" :disabled="isGenerating">取消</el-button>
-        <el-button type="primary" @click="handleAddChapter" :loading="isGenerating">
-          {{ isGenerating ? '生成中...' : '新建' }}
-        </el-button>
-      </template>
-    </el-dialog>
-    <el-dialog v-model="renameDialogVisible" title="重命名章节" width="30%">
-      <el-input v-model="renameValue" placeholder="请输入新名称" clearable />
-      <template #footer>
-        <el-button @click="renameDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmRename">确认</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -100,20 +50,11 @@ import axios from 'axios';
 import { marked } from 'marked';
 import { ElMessage } from 'element-plus';
 import { Document, Edit, Delete } from '@element-plus/icons-vue';
-import T_Exercises from '../Exercises/index.vue'
 const store = mainStore();
 const courseId = ref('');
 const chapters = ref([]);
-const dialogVisible = ref(false);
-const Cname = ref('');
 const selectedChapter = ref<any>(null);
-const isEditing = ref(false);
-const editedContent = ref('');
-const renameDialogVisible = ref(false);
-const renameValue = ref('');
-const renameTargetId = ref(0);
 const activeChapter = ref<number | null>(null);
-const isGenerating = ref(false);
 interface Chapter {
   id: number;
   name: string;
@@ -149,46 +90,6 @@ const exportToWord = () => {
   a.click();
 };
 
-const handleAddChapter = () => {
-  if (!Cname.value.trim()) {
-    ElMessage.warning('请输入章节名称');
-    return;
-  }
-  
-  // 开始生成
-  isGenerating.value = true;
-  // 立即关闭弹窗
-  dialogVisible.value = false;
-  
-  const formData = new FormData();
-  formData.append('chapter', Cname.value)
-  formData.append('Cno', courseId.value)
-  axios({
-    method: 'post',
-    url: `${store.ip}/api/teacher/generate_teachcontent`,
-    headers: {
-      'Content-Type': 'multipart/form-data',
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    },
-    data: formData,
-  })
-    .then((response) => {
-      const res = response.data;
-      isGenerating.value = false;
-      
-      if (res.ret === 0) {
-        ElMessage.success('课件生成成功！');
-        Cname.value = '';
-        getChapterList();
-      } else {
-        ElMessage.error('课件生成失败：' + res.msg);
-      }
-    })
-    .catch(() => {
-      isGenerating.value = false;
-      ElMessage.error('请求失败，请稍后重试！');
-    });
-};
 
 const getChapterList = () => {
   const formData = new FormData();
@@ -227,29 +128,7 @@ const getChapterList = () => {
     });
 };
 
-const deleteChapter = (id: number) => {
-  const formData = new FormData();
-  formData.append('id', id.toString());
-  axios.post(`${store.ip}/api/deleteChapter`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    }
-  }).then(res => {
-    if (res.data.ret === 0) {
-      ElMessage.success('删除成功');
-      getChapterList();
-      if (selectedChapter.value?.id === id) {
-        selectedChapter.value = null;
-        activeChapter.value = null;
-      }
-    } else {
-      ElMessage.error('删除失败：' + res.data.msg);
-    }
-  }).catch(() => {
-    ElMessage.error('删除失败：网络错误');
-  });
-};
+
 
 const handleChapterClick = (chapter: any) => {
   selectedChapter.value = { ...chapter };
@@ -258,70 +137,10 @@ const handleChapterClick = (chapter: any) => {
   editedContent.value = chapter.content;
 };
 
-const toggleEditContent = () => {
-  if (!selectedChapter.value) return;
-  if (isEditing.value) {
-    const formData = new FormData();
-    formData.append('id', selectedChapter.value.id);
-    formData.append('content', editedContent.value);
-    axios.post(`${store.ip}/api/teacher/updateChapter`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        Authorization: `Bearer ${localStorage.getItem('token')}`,
-      }
-    }).then(res => {
-      if (res.data.ret === 0) {
-        ElMessage.success('保存成功');
-        selectedChapter.value.content = editedContent.value;
-        isEditing.value = false;
-      } else {
-        ElMessage.error('保存失败：' + res.data.msg);
-      }
-    }).catch(() => {
-      ElMessage.error('保存失败：网络错误');
-    });
-  } else {
-    isEditing.value = true;
-  }
-};
 
-const renameChapter = (chapter: any) => {
-  renameTargetId.value = chapter.id;
-  renameValue.value = chapter.name;
-  renameDialogVisible.value = true;
-};
-
-const confirmRename = () => {
-  const formData = new FormData();
-  formData.append('id', renameTargetId.value.toString());
-  formData.append('name', renameValue.value);
-
-  axios.post(`${store.ip}/api/teacher/updateChapter`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    }
-  }).then(res => {
-    if (res.data.ret === 0) {
-      ElMessage.success('重命名成功');
-      getChapterList();
-      renameDialogVisible.value = false;
-    } else {
-      ElMessage.error('重命名失败：' + res.data.msg);
-    }
-  }).catch(() => {
-    ElMessage.error('重命名失败：网络错误');
-  });
-};
-
-const showExercises = () => {
-  localStorage.setItem('selectedChapter', JSON.stringify(selectedChapter.value));
-
-  store.addTab('习题列表', T_Exercises);
-}
 
 onMounted(() => {
-  courseId.value = localStorage.getItem('selectedCourseID');
+  courseId.value = localStorage.getItem('selectedCourseId');
   getChapterList();
 });
 </script>
@@ -444,7 +263,6 @@ onMounted(() => {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  padding-left: 4rem;
 }
 
 
