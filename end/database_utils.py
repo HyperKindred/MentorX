@@ -1,6 +1,7 @@
 import pymysql
 from werkzeug.security import generate_password_hash
 import redis
+from datetime import date
 
 # Redis连接
 redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
@@ -354,9 +355,9 @@ def get_exercises_list_daily_db(student_id):
             cursor.execute(sql, (row[0], student_id))
             result = cursor.fetchone()
             if result:
-                new_rows.append( (*row, 1 if result[0] else 0, result[1]) ) 
+                new_rows.append( (row[0], row[1], format_date(row[2]), 1 if result[0] else 0, result[1]) ) 
             else:
-                new_rows.append( (*row, 0, None) )  
+                new_rows.append( (row[0], row[1], format_date(row[2]), 0, None) )  
         rows = new_rows  
         return rows
     finally:
@@ -602,3 +603,8 @@ def get_chapter_practice_history_db(student_id, chapter_id):
         return cursor.fetchall()
     finally:
         closeSQL(conn, cursor)
+
+def format_date(val):
+    if isinstance(val, (date)):
+        return val.strftime('%Y-%m-%d')
+    return val
