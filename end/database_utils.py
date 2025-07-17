@@ -267,7 +267,7 @@ def get_course_list_db(student_id = None, teacher_id = None):
             sql = "SELECT DISTINCT id FROM course;"
             cursor.execute(sql)
         elif teacher_id is not None:
-            sql = "SELECT DISTINCT id FROM course WHERE teacher = %s);"
+            sql = "SELECT DISTINCT id FROM course WHERE teacher = %s;"
             cursor.execute(sql, (teacher_id))
         elif student_id is not None:
             sql = "SELECT DISTINCT course_id FROM course_student WHERE student_id = %s;"
