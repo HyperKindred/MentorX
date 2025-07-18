@@ -1,11 +1,11 @@
 import pymysql
 from werkzeug.security import generate_password_hash
 import redis
-from datetime import date
+from datetime import date, datetime
 
 # Redis连接
 redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
-redis_keys = ["AIchat", "generate_exercises", "check_exercises", "generate_teachcontent", "generate_tasks", "check"]
+redis_keys = ["AIchat", "generate_exercises", "check_exercises", "generate_teachcontent", "generate_tasks", "check", "generate_suggestion"]
 
 def connectSQL(p_user = 'root', p_db = 'mentorx'):
     f_conn = pymysql.connect(
@@ -54,7 +54,7 @@ def f_getLearningStatsByPerson(user_id, teacher_id = None):
         sql = "SELECT course_id FROM course_student WHERE student_id = %s;"
         cursor.execute(sql, (user_id))
         course_ids = cursor.fetchall()
-        
+
     for course_id in course_ids:
         course = f_getLearningStatsByCourse(course_id, user_id)
         courses.append(course)
@@ -618,7 +618,20 @@ def get_chapter_practice_history_db(student_id, chapter_id):
     finally:
         closeSQL(conn, cursor)
 
+def get_suggestion_db(chapter_id):
+    conn, cursor = connectSQL()
+    sql = "SELECT suggestion, suggestion_time FROM chapter WHERE id = %s;"
+    cursor.execute(sql, (chapter_id,))
+    result = cursor.fetchone()  
+    closeSQL(conn, cursor)
+    if result:
+        result = (result[0], format_date(result[1]))
+    return result if result else None
+    
+
 def format_date(val):
-    if isinstance(val, (date)):
+    if isinstance(val, datetime):
+        return val.strftime('%Y-%m-%d %H:%M:%S')
+    elif isinstance(val, (date)):
         return val.strftime('%Y-%m-%d')
     return val

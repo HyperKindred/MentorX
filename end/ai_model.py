@@ -220,6 +220,47 @@ def ai_aichat(student_id, chapter_id, content, session_id):
     finally:
         closeSQL(conn, cursor)
 
+def ai_generate_suggestion(chapter_id):
+    conn, cursor = connectSQL()
+    cursor.execute("SELECT content FROM chapter WHERE id = %s;", (chapter_id,))
+    result = cursor.fetchone()
+    if result:
+        content = result[0]
+    else:
+        return False, "该章节无内容！"
+    sql = '''
+    SELECT exercise_content, answer, student_answer, analyse, `check`
+    FROM exercise, practice_history
+    WHERE exercise.chapter_id = %s
+    AND exercise.id = practice_history.exercise_id
+    AND student_answer IS NOT NULL
+    AND analyse IS NOT NULL;
+    '''
+    cursor.execute(sql, (chapter_id,))
+    practice_history_rows = cursor.fetchall()
+    keys = ["exercise_content", "right_answer", "student_answer", "analyse", "check"]
+    practice_history_dicts = [dict(zip(keys, row)) for row in practice_history_rows]
+    full_prompt = f"""请根据以下课件内容和学生做题历史记录，总结学生知识掌握情况，给出教学建议，要求包括：
+    1. 详细具体的知识点掌握情况
+    2. 学习难点和易错点
+    3. 针对性的练习建议
+    4. 下一阶段的教学重点 
+    课件内容：
+    {content}
+    学生历史做题记录，其中“analyse”字段表示对学生该题作答的分析，“check”字段，0代表正确，1代表错误，2代表部分正确：
+    {practice_history_dicts}
+    """
+    try:
+        suggestion = get_answer(full_prompt)
+        sql = "INSERT INTO chapter(suggestion, suggestion_time) VALUES(%s, CURRENT_TIMESTAMP) WHERE id = %s;"
+        cursor.execute(sql, (suggestion, chapter_id))
+        return True, None
+    except Exception as e:
+        print(f"ERROR: {e}")
+        return False, e
+    finally:
+        closeSQL(conn, cursor)
+
 def ai_img2word(student_id, exercise_id, img_path):
     student_answer = ocr(picFilePath = img_path)
     success = commit_exercise_db(student_id, exercise_id, student_answer)

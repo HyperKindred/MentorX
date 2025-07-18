@@ -343,11 +343,18 @@ def getSystemStats():
     if not result:
         return jsonify({"ret": 1, "msg": "未找到系统统计信息"})
     
-    keys = ["S_AiChat", "S_exercises", "S_check", "T_courseware", "T_exercises", "T_check"]
+    keys = ["S_AiChat", "S_exercises", "S_check", "T_courseware", "T_exercises", "T_check", "T_suggestion"]
     systemStats = {k: result[i] for i, k in enumerate(keys)}
     
     systemInfo = get_system_info_db()
     data = {"ret": 0, "systemStats": systemStats, "systemInfo": systemInfo}
+    return jsonify(data)
+
+@app.route('/api/teacher/getSuggestion', methods=["POST"])
+def getSuggestion():
+    chapter_id = request.form.get("chapter_id")
+    result = get_suggestion_db(chapter_id)
+    data = {"ret": 0, "msg": "获取建议成功！", "suggestion": result[0], "datetime": result[1]} if result else {"ret": 1, "msg": "未找到建议"}
     return jsonify(data)
 
 @app.route('/api/deleteCourse', methods=["POST"])
@@ -430,6 +437,14 @@ def generate_teachcontent():
     if success:
         increase_count("generate_teachcontent")
     return jsonify({"ret": 0} if success else {"ret": 1, "msg": "课件生成失败！"})
+
+@app.route('/api/teacher/generateSuggestion', methods=['POST'])
+def generate_suggestion():
+    chapter_id = request.form.get("chapter_id")
+    success, msg = ai_generate_suggestion(chapter_id)
+    if success:
+        increase_count("generate_suggestion")
+    return jsonify({"ret": 0} if success else {"ret": 1, "msg": "教学建议生成失败！"})
 
 @app.route('/api/teacher/generate_tasks', methods=['POST'])
 def generate_tasks():
