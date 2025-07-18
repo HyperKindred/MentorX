@@ -166,6 +166,7 @@ const toggleTheme = () => {
   const theme = isDarkTheme.value ? 'dark' : 'light';
   document.documentElement.setAttribute('theme', theme);
   localStorage.setItem('theme', theme);
+  window.dispatchEvent(new CustomEvent('theme-changed'));
 };
 
 // 获取用户头像
