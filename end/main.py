@@ -105,6 +105,37 @@ def getLearningStatsByCourse():
         data = {"ret": 0, "msg": "获取信息成功！", "courses": courses}
     return jsonify(data)
 
+@app.route('/api/teacher/getLearningStatsByPerson', methods=["POST"])
+@jwt_required()
+def getLearningStatsByPerson_teacher():
+    teacher_id = int(get_jwt_identity())
+    user_ids = get_learning_stats_by_person_db(None, teacher_id)
+    students = []
+    if user_ids is None:
+        data = {"ret": 1, "msg": "该用户不存在！"}
+    else:
+        for uid in user_ids:
+            student = f_getLearningStatsByPerson(uid, teacher_id)
+            students.append(student)
+        data = {"ret": 0, "msg": "获取信息成功！", "students": students}
+    return jsonify(data)
+
+@app.route('/api/teacher/getLearningStatsByCourse', methods=["POST"])
+@jwt_required()
+def getLearningStatsByCourse_teacher():
+    teacher_id = int(get_jwt_identity())
+    course_ids = get_learning_stats_by_course_db(None, teacher_id)
+    
+    courses = []
+    if course_ids is None:
+        data = {"ret": 1, "msg": "该课程不存在！"}
+    else:
+        for cid in course_ids:
+            course = f_getLearningStatsByCourse(cid)
+            courses.append(course)
+        data = {"ret": 0, "msg": "获取信息成功！", "courses": courses}
+    return jsonify(data)
+
 @app.route('/api/getChapterList', methods=["POST"])
 def getChapterList():
     course_id = request.form.get("id")
