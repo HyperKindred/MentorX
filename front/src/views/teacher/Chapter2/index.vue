@@ -25,6 +25,7 @@
         <div class="function-buttons">
           <div class="edit-buttons">
             <el-button type="primary" @click="exportToWord" class='function-btn'>导出为 Word</el-button>
+            <el-button type="primary" @click="exportToPPT" class='function-btn'>导出为 PPT</el-button>
           </div>
         </div>
 
@@ -55,6 +56,8 @@ const courseId = ref('');
 const chapters = ref([]);
 const selectedChapter = ref<any>(null);
 const activeChapter = ref<number | null>(null);
+const isEditing = ref(false);
+const editedContent = ref('');
 interface Chapter {
   id: number;
   name: string;
@@ -88,6 +91,40 @@ const exportToWord = () => {
   a.href = url;
   a.download = `${selectedChapter.value.name}.docx`;
   a.click();
+};
+
+const exportToPPT = () => {
+  if (!selectedChapter.value) {
+    ElMessage.warning('请先选择章节');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('chapter_id', selectedChapter.value.id.toString());
+  
+  ElMessage.info('正在生成PPT，请稍候...');
+  
+  axios({
+    method: 'post',
+    url: `${store.ip}/api/generatePPT`,
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
+    },
+    data: formData,
+  })
+    .then((response) => {
+      const res = response.data;
+      if (res.ret === 0) {
+        ElMessage.success('PPT生成成功，下载即将开始');
+      } else {
+        ElMessage.error('PPT生成失败：' + (res.msg || '未知错误'));
+      }
+    })
+    .catch((error) => {
+      console.error('PPT生成失败:', error);
+      ElMessage.error('PPT生成失败：网络错误，请稍后重试！');
+    });
 };
 
 
