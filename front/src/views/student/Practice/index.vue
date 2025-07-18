@@ -169,6 +169,29 @@
                 maxlength="2000"
                 show-word-limit
               />
+              <div class="upload-section">
+                <div class="upload-button-wrapper">
+                  <el-upload
+                    ref="uploadRef"
+                    :auto-upload="false"
+                    :show-file-list="false"
+                    accept="image/*"
+                    :on-change="handleImageUpload"
+                    :before-upload="beforeUpload"
+                    :disabled="checking"
+                  >
+                    <el-button 
+                      type="info" 
+                      :icon="Picture" 
+                      :loading="ocrLoading && !checking"
+                      :disabled="checking"
+                    >
+                      {{ ocrLoading ? 'OCR识别中...' : '上传图片识别文字' }}
+                    </el-button>
+                  </el-upload>
+                </div>
+                <span class="upload-tip">支持JPG、BMP、PNG格式</span>
+              </div>
               <div class="answer-actions">
                 <el-button @click="submitAndCheck" type="primary" :loading="checking">
                   {{ checking ? '批改中...' : '提交并批改' }}
@@ -184,8 +207,8 @@
 
 <script lang="ts" setup>
 import { ref, onMounted, watch, onActivated } from 'vue';
-import { ElMessage } from 'element-plus';
-import { Document, Edit, Notebook, ChatDotRound } from '@element-plus/icons-vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import { Document, Edit, Notebook, ChatDotRound, Picture } from '@element-plus/icons-vue';
 import { mainStore } from '../../../store/index.ts';
 import axios from 'axios';
 import { marked } from 'marked';
@@ -251,6 +274,8 @@ const generateForm = ref<GenerateForm>({
   type: '',
   difficulty: null
 });
+const ocrLoading = ref(false);
+const uploadRef = ref();
 
 
 
@@ -426,6 +451,9 @@ const selectPractice = async (practice: Practice) => {
   if (practice.is_committed === 1) {
     await getPracticeHistory(practice.exercise_id);
   }
+
+  // 打印习题id
+  console.log('习题id:', practice.exercise_id);
 };
 
 const backToList = () => {
@@ -453,7 +481,7 @@ const generateExercise = async () => {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       },
-      timeout: 120000 // 生成习题可能需要较长时间
+      timeout: 180000 // 生成习题可能需要较长时间
     });
     
     if (response.data.ret === 0) {
@@ -508,7 +536,7 @@ const submitAndCheck = async () => {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        timeout: 120000 // 批改可能需要较长时间
+        timeout: 180000 // 批改可能需要较长时间
       });
       
       if (checkResponse.data.ret === 0) {
@@ -683,6 +711,110 @@ marked.setOptions({
   breaks: true,
   sanitize: false
 });
+
+/**
+ * 图片上传前的验证
+ */
+const beforeUpload = (file: File) => {
+  const isImage = file.type.startsWith('image/');
+
+  if (!isImage) {
+    ElMessage.error('只能上传图片文件!');
+    return false;
+  }
+  return true;
+};
+
+/**
+ * 处理图片上传并调用OCR识别
+ */
+const handleImageUpload = async (file: any) => {
+  if (!selectedPractice.value) {
+    ElMessage.error('请先选择一道练习题');
+    return;
+  }
+
+  const uploadFile = file.raw;
+  if (!beforeUpload(uploadFile)) {
+    return;
+  }
+
+  ocrLoading.value = true;
+  try {
+    const formData = new FormData();
+    formData.append('exercise_id', selectedPractice.value.exercise_id.toString());
+    formData.append('answer_image', uploadFile);
+
+    const response = await axios.post(`${store.ip}/api/student/img2word`, formData, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'multipart/form-data'
+      },
+      timeout: 30000 // OCR可能需要较长时间
+    });
+
+    if (response.data.ret === 0) {
+      // OCR识别成功，文字已添加到数据库的作答内容区域
+      
+      // 对个人练习进行自动批改
+      if (selectedPractice.value) {
+        try {
+          checking.value = true;
+          
+          const checkFormData = new FormData();
+          checkFormData.append('Eno', selectedPractice.value.exercise_id.toString());
+          
+          const checkResponse = await axios.post(`${store.ip}/api/student/check_exercises`, checkFormData, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            timeout: 180000
+          });
+
+          if (checkResponse.data.ret === 0) {
+            // 批改成功，更新练习状态
+            selectedPractice.value.is_committed = 1;
+            selectedPractice.value.student_answer = checkResponse.data.student_answer;
+            selectedPractice.value.check_result = checkResponse.data.check_result;
+            selectedPractice.value.analyse = checkResponse.data.analyse;
+            selectedPractice.value.submitted_at = new Date().toISOString();
+            
+            // 更新practices列表中的对应项
+            const practiceIndex = practices.value.findIndex(p => p.exercise_id === selectedPractice.value!.exercise_id);
+            if (practiceIndex !== -1) {
+              practices.value[practiceIndex] = { ...selectedPractice.value };
+            }
+            
+            // 重新获取答题记录以确保数据同步
+            await getPracticeHistory(selectedPractice.value.exercise_id);
+            
+            // 清空当前答案输入
+            currentAnswer.value = '';
+            
+          } else {
+            ElMessage.error(checkResponse.data.msg || '批改失败，请重试');
+          }
+        } catch (checkError) {
+          console.error('批改失败:', checkError);
+          ElMessage.error('批改失败，请重试');
+        } finally {
+          checking.value = false;
+        }
+      }
+    } else {
+      ElMessage.error(response.data.msg || 'OCR识别失败');
+    }
+  } catch (error) {
+    console.error('OCR识别失败:', error);
+    ElMessage.error('OCR识别失败，请重试');
+  } finally {
+    ocrLoading.value = false;
+    // 清空上传组件的文件列表
+    if (uploadRef.value) {
+      uploadRef.value.clearFiles();
+    }
+  }
+};
 
 /**
  * 将 Markdown 内容转换为纯文本并截取指定长度
@@ -955,7 +1087,7 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   padding: 20px;
   background: var(--backgroundColor3);
   border-radius: 8px;
-  border-left: 4px solid transparent;
+  border-left: 4px solid #409eff;
 }
 
 .question-header {
@@ -1152,6 +1284,36 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
   }
 }
 
+/* 上传区域样式 */
+.upload-section {
+  margin: 16px 0;
+  padding: 12px;
+  background: #f8f9fa;
+  border: 1px dashed #d0d7de;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.upload-button-wrapper {
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+.upload-button-wrapper :deep(.el-upload) {
+  display: inline-block;
+}
+
+.upload-button-wrapper :deep(.el-upload-dragger) {
+  display: none;
+}
+
+.upload-tip {
+  display: block;
+  font-size: 12px;
+  color: #6a737d;
+  margin-top: 4px;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .left-panel {
@@ -1170,7 +1332,5 @@ const formatPracticeContent = (content: string, maxLength: number = 50): string 
     padding: 16px 20px;
   }
 }
-
-
 
 </style>

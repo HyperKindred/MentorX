@@ -136,6 +136,23 @@
                 maxlength="2000"
                 show-word-limit
               />
+              <div class="upload-section">
+                <div class="upload-button-wrapper">
+                  <el-upload
+                    ref="uploadRef"
+                    :auto-upload="false"
+                    :show-file-list="false"
+                    accept="image/*"
+                    :on-change="handleImageUpload"
+                    :before-upload="beforeUpload"
+                  >
+                    <el-button type="info" :icon="Picture" :loading="ocrLoading">
+                      {{ ocrLoading ? 'OCR识别中...' : '上传图片识别文字' }}
+                    </el-button>
+                  </el-upload>
+                </div>
+                <span class="upload-tip">支持JPG、BMP、PNG格式</span>
+              </div>
               <div class="answer-actions">
                 <el-button @click="submitAnswer" type="primary" :loading="submitting">
                   {{ submitting ? '提交中...' : '提交答案' }}
@@ -153,8 +170,8 @@
 
 <script lang="ts" setup>
 import { ref, onMounted, watch, onActivated } from 'vue';
-import { ElMessage } from 'element-plus';
-import { Document, Edit, Notebook, ChatDotRound } from '@element-plus/icons-vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import { Document, Edit, Notebook, ChatDotRound, Picture } from '@element-plus/icons-vue';
 import { mainStore } from '../../../store/index.ts';
 import axios from 'axios';
 import { marked } from 'marked';
@@ -210,6 +227,8 @@ const loading = ref(false);
 const selectedExercise = ref<Exercise | null>(null);
 const currentAnswer = ref<string>('');
 const submitting = ref(false);
+const ocrLoading = ref(false);
+const uploadRef = ref();
 
 
 
@@ -421,6 +440,9 @@ const selectExercise = async (exercise: Exercise) => {
   if (exercise.is_committed === 1) {
     await getExerciseHistory(exercise.exercise_id);
   }
+
+  // 打印习题id
+  console.log('习题id:', exercise.exercise_id);
 };
 
 const backToList = () => {
@@ -570,6 +592,86 @@ const getScoreClass = (score: number): string => {
   if (score >= 80) return 'good';
   if (score >= 60) return 'pass';
   return 'fail';
+};
+
+/**
+ * 图片上传前的验证
+ */
+const beforeUpload = (file: File) => {
+  const isImage = file.type.startsWith('image/');
+  const isLt5M = file.size / 1024 / 1024 < 5;
+
+  if (!isImage) {
+    ElMessage.error('只能上传图片文件!');
+    return false;
+  }
+  if (!isLt5M) {
+    ElMessage.error('图片大小不能超过 5MB!');
+    return false;
+  }
+  return true;
+};
+
+/**
+ * 处理图片上传并调用OCR识别
+ */
+const handleImageUpload = async (file: any) => {
+  if (!selectedExercise.value) {
+    ElMessage.error('请先选择一道习题');
+    return;
+  }
+
+  const uploadFile = file.raw;
+  if (!beforeUpload(uploadFile)) {
+    return;
+  }
+
+  ocrLoading.value = true;
+  try {
+    const formData = new FormData();
+    formData.append('exercise_id', selectedExercise.value.exercise_id.toString());
+    formData.append('answer_image', uploadFile);
+
+    const response = await axios.post(`${store.ip}/api/student/img2word`, formData, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'multipart/form-data'
+      },
+      timeout: 30000 // OCR可能需要较长时间
+    });
+
+    if (response.data.ret === 0) {
+      // OCR识别成功，文字已添加到数据库的作答内容区域
+      ElMessage.success('图片文字识别成功，内容已保存！');
+      
+      // 重新获取习题历史记录以显示更新的作答内容
+      if (selectedExercise.value) {
+        await getExerciseHistory(selectedExercise.value.exercise_id);
+        
+        // 如果习题已提交，更新本地状态
+        if (selectedExercise.value.student_answer) {
+          selectedExercise.value.is_committed = 1;
+          
+          // 更新exercises列表中的对应项
+          const exerciseIndex = exercises.value.findIndex(ex => ex.exercise_id === selectedExercise.value!.exercise_id);
+          if (exerciseIndex !== -1) {
+            exercises.value[exerciseIndex] = { ...selectedExercise.value };
+          }
+        }
+      }
+    } else {
+      ElMessage.error(response.data.msg || 'OCR识别失败');
+    }
+  } catch (error) {
+    console.error('OCR识别失败:', error);
+    ElMessage.error('OCR识别失败，请重试');
+  } finally {
+    ocrLoading.value = false;
+    // 清空上传组件的文件列表
+    if (uploadRef.value) {
+      uploadRef.value.clearFiles();
+    }
+  }
 };
 
 /**
@@ -1078,6 +1180,36 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
   }
 }
 
+/* 上传区域样式 */
+.upload-section {
+  margin: 16px 0;
+  padding: 12px;
+  background: #f8f9fa;
+  border: 1px dashed #d0d7de;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.upload-button-wrapper {
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+.upload-button-wrapper :deep(.el-upload) {
+  display: inline-block;
+}
+
+.upload-button-wrapper :deep(.el-upload-dragger) {
+  display: none;
+}
+
+.upload-tip {
+  display: block;
+  font-size: 12px;
+  color: #6a737d;
+  margin-top: 4px;
+}
+
 @media (max-width: 768px) {
   .left-panel {
     width: 240px;
@@ -1095,7 +1227,5 @@ const formatExerciseContent = (content: string, maxLength: number = 50): string 
     padding: 16px 20px;
   }
 }
-
-
 
 </style>

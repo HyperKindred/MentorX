@@ -1,11 +1,11 @@
 import pymysql
 from werkzeug.security import generate_password_hash
 import redis
-from datetime import date
+from datetime import date, datetime
 
 # Redis连接
 redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
-redis_keys = ["AIchat", "generate_exercises", "check_exercises", "generate_teachcontent", "generate_tasks", "check"]
+redis_keys = ["AIchat", "generate_exercises", "check_exercises", "generate_teachcontent", "generate_tasks", "check", "generate_suggestion", "generate_ppt"]
 
 def connectSQL(p_user = 'root', p_db = 'mentorx'):
     f_conn = pymysql.connect(
@@ -35,7 +35,7 @@ def init_redis_counters():
     finally:
         closeSQL(conn, cursor)
 
-def f_getLearningStatsByPerson(user_id):
+def f_getLearningStatsByPerson(user_id, teacher_id = None):
     student = {}
     courses = []
     conn, cursor = connectSQL()
@@ -46,9 +46,15 @@ def f_getLearningStatsByPerson(user_id):
     student["id"] = user_id
     student["name"] = name
 
-    sql = "SELECT course_id FROM course_student WHERE student_id = %s;"
-    cursor.execute(sql, (user_id))
-    course_ids = cursor.fetchall()
+    if teacher_id:
+        sql = "SELECT course_id FROM course, course_student WHERE course.id = course_student.course_id AND student_id = %s AND teacher = %s;"
+        cursor.execute(sql, (user_id, teacher_id))
+        course_ids = cursor.fetchall()
+    else:
+        sql = "SELECT course_id FROM course_student WHERE student_id = %s;"
+        cursor.execute(sql, (user_id))
+        course_ids = cursor.fetchall()
+
     for course_id in course_ids:
         course = f_getLearningStatsByCourse(course_id, user_id)
         courses.append(course)
@@ -188,7 +194,7 @@ def update_info_db(user_id, password, name, gender):
     finally:
         closeSQL(conn, cursor)
 
-def get_learning_stats_by_person_db(user_id):
+def get_learning_stats_by_person_db(user_id, teacher_id = None):
     conn, cursor = connectSQL()
     try:
         if user_id:
@@ -196,6 +202,10 @@ def get_learning_stats_by_person_db(user_id):
             cursor.execute(sql, (user_id,))
             result = cursor.fetchone()
             return [user_id] if result else None
+        elif teacher_id:
+            sql = "SELECT student_id FROM course, course_student WHERE course.id = course_student.course_id AND teacher = %s;"
+            cursor.execute(sql, (teacher_id,))
+            return [row[0] for row in cursor.fetchall()]
         else:
             sql = "SELECT user_id FROM user WHERE type = 'S';"
             cursor.execute(sql)
@@ -218,7 +228,7 @@ def get_learning_stats_by_chapter_db(chapter_id):
     finally:
         closeSQL(conn, cursor)
 
-def get_learning_stats_by_course_db(course_id):
+def get_learning_stats_by_course_db(course_id, teacher_id = None):
     conn, cursor = connectSQL()
     try:
         if course_id:
@@ -226,6 +236,10 @@ def get_learning_stats_by_course_db(course_id):
             cursor.execute(sql, (course_id,))
             result = cursor.fetchone()
             return [course_id] if result else None
+        elif teacher_id:
+            sql = "SELECT id FROM course WHERE teacher = %s;"
+            cursor.execute(sql, (teacher_id,))
+            return [row[0] for row in cursor.fetchall()]
         else:
             sql = "SELECT DISTINCT id FROM course;"
             cursor.execute(sql)
@@ -267,7 +281,7 @@ def get_course_list_db(student_id = None, teacher_id = None):
             sql = "SELECT DISTINCT id FROM course;"
             cursor.execute(sql)
         elif teacher_id is not None:
-            sql = "SELECT DISTINCT id FROM course WHERE teacher = %s);"
+            sql = "SELECT DISTINCT id FROM course WHERE teacher = %s;"
             cursor.execute(sql, (teacher_id))
         elif student_id is not None:
             sql = "SELECT DISTINCT course_id FROM course_student WHERE student_id = %s;"
@@ -604,7 +618,20 @@ def get_chapter_practice_history_db(student_id, chapter_id):
     finally:
         closeSQL(conn, cursor)
 
+def get_suggestion_db(chapter_id):
+    conn, cursor = connectSQL()
+    sql = "SELECT suggestion, suggestion_time FROM chapter WHERE id = %s;"
+    cursor.execute(sql, (chapter_id,))
+    result = cursor.fetchone()  
+    closeSQL(conn, cursor)
+    if result:
+        result = (result[0], format_date(result[1]))
+    return result if result else None
+    
+
 def format_date(val):
-    if isinstance(val, (date)):
+    if isinstance(val, datetime):
+        return val.strftime('%Y-%m-%d %H:%M:%S')
+    elif isinstance(val, (date)):
         return val.strftime('%Y-%m-%d')
     return val

@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from flask_jwt_extended import  JWTManager, create_access_token, get_jwt_identity, jwt_required
 from database_utils import *
@@ -11,6 +11,7 @@ import numpy as np
 from apscheduler.schedulers.background import BackgroundScheduler
 from sync_utils import sync_redis_to_db, setup_exit_handler
 from database_utils import init_redis_counters
+from aiPPT import ai_generate_ppt
 
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = "secret key"
@@ -94,6 +95,37 @@ def getLearningStatsByPerson():
 def getLearningStatsByCourse():
     course_id = request.form.get("id")
     course_ids = get_learning_stats_by_course_db(course_id)
+    
+    courses = []
+    if course_ids is None:
+        data = {"ret": 1, "msg": "该课程不存在！"}
+    else:
+        for cid in course_ids:
+            course = f_getLearningStatsByCourse(cid)
+            courses.append(course)
+        data = {"ret": 0, "msg": "获取信息成功！", "courses": courses}
+    return jsonify(data)
+
+@app.route('/api/teacher/getLearningStatsByPerson', methods=["POST"])
+@jwt_required()
+def getLearningStatsByPerson_teacher():
+    teacher_id = int(get_jwt_identity())
+    user_ids = get_learning_stats_by_person_db(None, teacher_id)
+    students = []
+    if user_ids is None:
+        data = {"ret": 1, "msg": "该用户不存在！"}
+    else:
+        for uid in user_ids:
+            student = f_getLearningStatsByPerson(uid, teacher_id)
+            students.append(student)
+        data = {"ret": 0, "msg": "获取信息成功！", "students": students}
+    return jsonify(data)
+
+@app.route('/api/teacher/getLearningStatsByCourse', methods=["POST"])
+@jwt_required()
+def getLearningStatsByCourse_teacher():
+    teacher_id = int(get_jwt_identity())
+    course_ids = get_learning_stats_by_course_db(None, teacher_id)
     
     courses = []
     if course_ids is None:
@@ -312,11 +344,18 @@ def getSystemStats():
     if not result:
         return jsonify({"ret": 1, "msg": "未找到系统统计信息"})
     
-    keys = ["S_AiChat", "S_exercises", "S_check", "T_courseware", "T_exercises", "T_check"]
+    keys = ["S_AiChat", "S_exercises", "S_check", "T_courseware", "T_exercises", "T_check", "T_suggestion", "T_ppt"]
     systemStats = {k: result[i] for i, k in enumerate(keys)}
     
     systemInfo = get_system_info_db()
     data = {"ret": 0, "systemStats": systemStats, "systemInfo": systemInfo}
+    return jsonify(data)
+
+@app.route('/api/teacher/getSuggestion', methods=["POST"])
+def getSuggestion():
+    chapter_id = request.form.get("chapter_id")
+    result = get_suggestion_db(chapter_id)
+    data = {"ret": 0, "msg": "获取建议成功！", "suggestion": result[0], "datetime": result[1]} if result else {"ret": 1, "msg": "未找到建议"}
     return jsonify(data)
 
 @app.route('/api/deleteCourse', methods=["POST"])
@@ -400,6 +439,14 @@ def generate_teachcontent():
         increase_count("generate_teachcontent")
     return jsonify({"ret": 0} if success else {"ret": 1, "msg": "课件生成失败！"})
 
+@app.route('/api/teacher/generateSuggestion', methods=['POST'])
+def generate_suggestion():
+    chapter_id = request.form.get("chapter_id")
+    success, msg = ai_generate_suggestion(chapter_id)
+    if success:
+        increase_count("generate_suggestion")
+    return jsonify({"ret": 0} if success else {"ret": 1, "msg": "教学建议生成失败！"})
+
 @app.route('/api/teacher/generate_tasks', methods=['POST'])
 def generate_tasks():
     ChapterNo = request.form.get("ChapterNo")   
@@ -425,7 +472,11 @@ def img2word():
     student_id = int(get_jwt_identity())
     exercise_id = request.form.get("exercise_id")
     answer_image = request.files['answer_image']
-    picname=answer_image.filename
+    picname = answer_image.filename
+    pic_format = os.path.splitext(picname)[1]
+    if pic_format not in ['.jpg', '.jpeg', '.png', '.bmp']:
+        return jsonify({"ret": 1, "msg": "图片格式不支持，请上传jpg、bmp或png格式的图片！"})
+    picname = "ocr" + pic_format
     file = answer_image.read()
     file = cv2.imdecode(np.frombuffer(file, np.uint8), cv2.IMREAD_COLOR)
     imgfilePath = "./ocr_img/"
@@ -434,6 +485,14 @@ def img2word():
     imgPath = imgfilePath + picname
     success, info = ai_img2word(student_id, exercise_id, imgPath)
     return jsonify({"ret": 0} if success else {"ret": 1, "msg": info})
+
+@app.route('/api/generate_ppt', methods=["POST"])
+def generate_ppt():
+    chapter_id = request.form.get("chapter_id")
+    success, ppt_path, ppt_filename, msg = ai_generate_ppt(chapter_id)
+    if success:
+        increase_count("generate_ppt")
+        return send_file(ppt_path, as_attachment=True, download_name=ppt_filename)
 
 if __name__ == '__main__':
     init_redis_counters()
