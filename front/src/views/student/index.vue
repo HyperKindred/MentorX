@@ -49,7 +49,6 @@ const getPracticeList = () => {
   }).then(res => {
     const data = res.data;
     if (data.ret === 0) {
-      // 确保获取到的是有效数组
       const list = Array.isArray(data.exercisesList) ? data.exercisesList : [data.exercisesList];
       console.log('返回数据：', data);
       // 过滤无效项并排序
@@ -101,7 +100,7 @@ onMounted(() => {
     if (!hasGeneratedToday() && !getGeneratingStatus()) {
       generateDailyPractice();
     }
-  }, 500);
+  }, 2000);
 });
 </script>
 

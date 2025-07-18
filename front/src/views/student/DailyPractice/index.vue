@@ -229,7 +229,7 @@ const submitAndCheck = async () => {
       
       if (checkResponse.data.ret === 0) {
         // 批改成功，获取批改结果
-        await getPracticeHistory(currentPractice.value.exercise_id);
+        getPracticeHistory(currentPractice.value.exercise_id);
         
         // 更新本地数据
         currentPractice.value.student_answer = currentAnswer.value;
@@ -275,7 +275,7 @@ const getPracticeHistory = async (exerciseId: number) => {
       // 习题已作答且批改
       if (currentPractice.value) {
         currentPractice.value.student_answer = response.data.student_answer;
-        currentPractice.value.check_result = response.data.check;
+        currentPractice.value.check = response.data.check;
         currentPractice.value.analyse = response.data.analyse;
       }
     } else if (response.data.ret === 2) {
