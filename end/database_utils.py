@@ -5,7 +5,7 @@ from datetime import date, datetime
 
 # Redis连接
 redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
-redis_keys = ["AIchat", "generate_exercises", "check_exercises", "generate_teachcontent", "generate_tasks", "check", "generate_suggestion"]
+redis_keys = ["AIchat", "generate_exercises", "check_exercises", "generate_teachcontent", "generate_tasks", "check", "generate_suggestion", "generate_ppt"]
 
 def connectSQL(p_user = 'root', p_db = 'mentorx'):
     f_conn = pymysql.connect(

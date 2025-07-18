@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from flask_jwt_extended import  JWTManager, create_access_token, get_jwt_identity, jwt_required
 from database_utils import *
@@ -11,6 +11,7 @@ import numpy as np
 from apscheduler.schedulers.background import BackgroundScheduler
 from sync_utils import sync_redis_to_db, setup_exit_handler
 from database_utils import init_redis_counters
+from aiPPT import ai_generate_ppt
 
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = "secret key"
@@ -343,7 +344,7 @@ def getSystemStats():
     if not result:
         return jsonify({"ret": 1, "msg": "未找到系统统计信息"})
     
-    keys = ["S_AiChat", "S_exercises", "S_check", "T_courseware", "T_exercises", "T_check", "T_suggestion"]
+    keys = ["S_AiChat", "S_exercises", "S_check", "T_courseware", "T_exercises", "T_check", "T_suggestion", "T_ppt"]
     systemStats = {k: result[i] for i, k in enumerate(keys)}
     
     systemInfo = get_system_info_db()
@@ -484,6 +485,14 @@ def img2word():
     imgPath = imgfilePath + picname
     success, info = ai_img2word(student_id, exercise_id, imgPath)
     return jsonify({"ret": 0} if success else {"ret": 1, "msg": info})
+
+@app.route('/api/generate_ppt', methods=["POST"])
+def generate_ppt():
+    chapter_id = request.form.get("chapter_id")
+    success, ppt_path, ppt_filename, msg = ai_generate_ppt(chapter_id)
+    if success:
+        increase_count("generate_ppt")
+        return send_file(ppt_path, as_attachment=True, download_name=ppt_filename)
 
 if __name__ == '__main__':
     init_redis_counters()
