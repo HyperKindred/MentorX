@@ -13,6 +13,8 @@
             <el-dropdown-item command="information">个人信息</el-dropdown-item>
             <el-dropdown-item v-if="store.type === 'S'" command="courses">我的课程</el-dropdown-item>
             <el-dropdown-item v-if="store.type === 'S'" command="daily">每日练习</el-dropdown-item>
+            <el-dropdown-item v-if="store.type === 'T'" command="studyInfo">学习情况</el-dropdown-item>
+            <el-dropdown-item v-if="store.type === 'T'" command="allCourses">全部课程</el-dropdown-item>
             <el-dropdown-item v-if="store.type === 'A'" command="users">用户管理</el-dropdown-item>
             <el-dropdown-item v-if="store.type === 'A'" command="learningInfo">学习情况</el-dropdown-item>
             <el-dropdown-item v-if="store.type === 'A'" command="stats">统计信息</el-dropdown-item>
@@ -84,6 +86,8 @@ import information from './Infomation/index.vue'
 import A_user from './Admin/Users/index.vue'
 import A_stats from './Admin/Statistic/index.vue'
 import A_learningInfo from './Admin/LearningState/index.vue'
+import T_learningInfo from './Teacher/LearningState/index.vue'
+import T_courses from './Teacher/Courses/index.vue'
 import S_myCourse from './Student/MyCourses/index.vue'
 import S_dailyPractice from './Student/DailyPractice/index.vue'
 import Home from './Home/index.vue';
@@ -112,6 +116,12 @@ const handleDropdownCommand = (command: string) => {
       break;
     case 'learningInfo':
       store.addTab('学习情况', A_learningInfo);
+      break;
+    case 'studyInfo':
+      store.addTab('学习情况', T_learningInfo);
+      break;
+    case 'allCourses':
+      store.addTab('全部课程', T_courses);
       break;
     case 'stats':
       store.addTab('统计信息', A_stats);
@@ -156,6 +166,7 @@ const toggleTheme = () => {
   const theme = isDarkTheme.value ? 'dark' : 'light';
   document.documentElement.setAttribute('theme', theme);
   localStorage.setItem('theme', theme);
+  window.dispatchEvent(new CustomEvent('theme-changed'));
 };
 
 // 获取用户头像
