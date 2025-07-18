@@ -21,17 +21,40 @@
         <div class="header">
           <h3 class="chapterTitle">{{ selectedChapter.name }}</h3>
         </div>
-        <!-- 功能按钮组 -->
         <div class="function-buttons">
+          <div class="button-group">
+            <el-button 
+              type="primary" 
+              :icon="Document" 
+              class="function-btn"
+              disabled
+            >
+              课件学习
+            </el-button>
+            <el-button 
+              type="default" 
+              :icon="Edit" 
+              class="function-btn"
+              @click="showExercises"
+            >
+              章节习题
+            </el-button>
+            <el-button 
+              type="default" 
+              :icon="HelpFilled" 
+              class="function-btn active"
+              disabled
+            >
+              教学建议
+            </el-button>
+          </div>
           <div class="edit-buttons">
-            <el-button type="primary" @click="exportToWord" class='function-btn'>导出为 Word</el-button>
-            <el-button type="primary" @click="exportToPPT" class='function-btn'>导出为 PPT</el-button>
+            <el-button type="primary" @click="generateSuggestion()" class='function-btn'>生成教学建议</el-button>
           </div>
         </div>
 
         <div class="chapter-content">
-          <el-input v-if="isEditing" type="textarea" class='edit-content' v-model="editedContent" rows="20" resize="none" />
-          <el-scrollbar v-else class="read-only-content">
+          <el-scrollbar class="read-only-content">
             <div v-html="renderedHtml"></div>
           </el-scrollbar>
         </div>
@@ -50,14 +73,16 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { marked } from 'marked';
 import { ElMessage } from 'element-plus';
-import { Document, Edit, Delete } from '@element-plus/icons-vue';
+import { Document, Edit, Delete, HelpFilled } from '@element-plus/icons-vue';
+import T_Exercises from '../Exercises/index.vue'
 const store = mainStore();
 const courseId = ref('');
 const chapters = ref([]);
+const dialogVisible = ref(false);
+const Cname = ref('');
 const selectedChapter = ref<any>(null);
 const activeChapter = ref<number | null>(null);
-const isEditing = ref(false);
-const editedContent = ref('');
+const isGenerating = ref(false);
 interface Chapter {
   id: number;
   name: string;
@@ -68,96 +93,6 @@ const renderedHtml = computed(() => {
   return marked(selectedChapter.value.content || '');
 });
 
-const exportToWord = () => {
-  if (!selectedChapter.value) {
-    ElMessage.warning('请先选择章节');
-    return;
-  }
-
-  const markdown = selectedChapter.value.content || '';
-  const htmlContent = marked(markdown);
-
-  const fullHtml = `
-  <!DOCTYPE html>
-  <html>
-  <head><meta charset="utf-8"><title>${selectedChapter.value.name}</title></head>
-  <body>${htmlContent}</body>
-  </html>
-  `;
-
-  const blob = (window as any).htmlDocx.asBlob(fullHtml);
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${selectedChapter.value.name}.docx`;
-  a.click();
-};
-
-/**
- * 导出PPT功能
- * 调用后端API生成PPT并自动下载
- */
-const exportToPPT = () => {
-  if (!selectedChapter.value) {
-    ElMessage.warning('请先选择章节');
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append('chapter_id', selectedChapter.value.id.toString());
-  
-  ElMessage.info('正在生成PPT，请稍候...');
-  
-  axios({
-    method: 'post',
-    url: `${store.ip}/api/generatePPT`,
-    headers: {
-      'Content-Type': 'multipart/form-data',
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    },
-    data: formData,
-    responseType: 'blob' // 设置响应类型为blob以处理文件下载
-  })
-    .then((response) => {
-      // 检查响应头中的内容类型
-      const contentType = response.headers['content-type'];
-      
-      if (contentType && contentType.includes('application/json')) {
-        // 如果返回的是JSON，说明可能有错误
-        const reader = new FileReader();
-        reader.onload = function() {
-          try {
-            const result = JSON.parse(reader.result);
-            if (result.ret !== 0) {
-              ElMessage.error('PPT生成失败：' + (result.msg || '未知错误'));
-            }
-          } catch (e) {
-            ElMessage.error('PPT生成失败：响应解析错误');
-          }
-        };
-        reader.readAsText(response.data);
-      } else {
-        // 如果返回的是文件，直接下载
-        const blob = new Blob([response.data], { 
-          type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' 
-        });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${selectedChapter.value.name}.pptx`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        
-        ElMessage.success('PPT生成成功，下载完成！');
-      }
-    })
-    .catch((error) => {
-      console.error('PPT生成失败:', error);
-      ElMessage.error('PPT生成失败：网络错误，请稍后重试！');
-    });
-};
 
 
 const getChapterList = () => {
@@ -197,19 +132,61 @@ const getChapterList = () => {
     });
 };
 
+const getSuggestion = () => {
+  const formData = new FormData();
+  formData.append('chapter_id', selectedChapter.value.id);
+  axios({
+    method: 'post',
+    url: `${store.ip}/api/teacher/getSuggestion`,
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
+    },
+  })
+    .then((response) => {
+      const responseData = response.data;
+      console.log('响应数据:', responseData);
 
+      if (responseData.ret === 0) {
+        selectedChapter.value.content = responseData.suggestion;
+        selectedChapter.value.datetime = responseData.datetime;
+      } else {
+        selectedChapter.value.content = '';
+        selectedChapter.value.datetime = '';
+        ElMessage({
+          message: '获取教学建议失败：' + responseData.msg,
+          type: 'error',
+        });
+      }
+    })
+    .catch((error) => {
+      console.error('Error posting data:', error);
+      ElMessage({
+        message: '获取教学建议失败：网络错误，请稍后重试！',
+        type: 'error',
+        duration: 5000,
+        grouping: true,
+      });
+    });
+}
 
 const handleChapterClick = (chapter: any) => {
   selectedChapter.value = { ...chapter };
   activeChapter.value = chapter.id;
-  isEditing.value = false;
-  editedContent.value = chapter.content;
 };
 
 
 
+
+const showExercises = () => {
+  localStorage.setItem('selectedChapter', JSON.stringify(selectedChapter.value));
+  store.addTab('习题列表', T_Exercises);
+}
+
+
 onMounted(() => {
-  courseId.value = localStorage.getItem('selectedCourseId');
+  courseId.value = localStorage.getItem('selectedCourseID');
   getChapterList();
 });
 </script>
@@ -332,6 +309,7 @@ onMounted(() => {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  padding-left: 4rem;
 }
 
 

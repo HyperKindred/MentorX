@@ -138,23 +138,13 @@
             </div>
             <div class="course-right-panel">
                 <div class="course-right-head">
-                    <div class="function-button">
-                        <el-button type="primary" :plain="activeTab2 !== 'statistic'" @click="activeTab2 = 'statistic'"
-                            class="toggle-statistic">
-                            课程数据
-                        </el-button>
-                        <el-button type="primary" :plain="activeTab2 !== 'analysis'" @click="activeTab2 = 'analysis'"
-                            class="toggle-analysis">
-                            AI分析
-                        </el-button>
-                    </div>
                     <h3 v-if="selectedCourseInCourse" class="nav-title">
-                        {{ selectedCourseInCourse.name }} - {{ activeTab2 === 'statistic' ? '课程数据' : 'AI分析' }}
+                        {{ selectedCourseInCourse.name }}
                     </h3>
                 </div>
                 <div class="course-right-content">
                     <!-- 课程数据 -->
-                    <div class="statistic" v-show="activeTab2 === 'statistic'">
+                    <div class="statistic">
                         <div v-if="selectedCourseInCourse">
                             <div class="chart-container">
                                 <div class="chart-box">
@@ -199,29 +189,6 @@
                             请从左侧选择课程
                         </div>
                     </div>
-
-                    <!-- AI分析 -->
-                    <div class="analysis" v-show="activeTab2 === 'analysis'">
-                        <div v-if="selectedCourseInCourse">
-                            <div class="generate-button">
-                                <el-button type="primary" @click="generateAnalysis(selectedCourseInCourse.id)"
-                                    class="generate-analysis" :loading="isGenerating" :disabled="isGenerating">
-                                    {{ isGenerating ? '生成中...' : '生成AI分析' }}
-                                </el-button>
-                            </div>
-                            <div class="analysis-content">
-                                <el-scrollbar class="read-only-content">
-                                    <div v-if="selectedCourseInCourse.analysis" v-html="renderedAnalysis"></div>
-                                    <div v-else class="no-analysis">
-                                        {{ isGenerating ? '正在生成分析报告...' : '点击上方按钮生成AI分析报告' }}
-                                    </div>
-                                </el-scrollbar>
-                            </div>
-                        </div>
-                        <div v-else class="no-course-selected">
-                            请从左侧选择课程
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -232,7 +199,7 @@
 import { ref, computed, onMounted, nextTick, watch, onUnmounted } from 'vue';
 import { mainStore } from '../../../store/index.ts';
 import axios from 'axios';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElSelect, ElOption } from 'element-plus';
 import * as echarts from 'echarts';
 import { marked } from 'marked';
 
@@ -246,15 +213,11 @@ const selectedCourseInStudent = ref<any>(null);
 const selectedCourseInCourse = ref<any>(null);
 const activeStudent = ref<number | null>(null);
 const activeCourse = ref<number | null>(null);
-const isGenerating = ref(false);
 const chartInstances = new Map();
 const selectedStudentCourses = computed(() => {
     return selectedStudent.value?.courses || [];
 });
 
-const renderedAnalysis = computed(() => {
-    return marked(selectedCourseInCourse.value?.analysis || '');
-});
 
 // 初始化
 onMounted(() => {
@@ -265,19 +228,19 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  window.removeEventListener('resize', resizeAllCharts);
-  // 添加：移除主题变化监听
-  window.removeEventListener('theme-changed', handleThemeChange);
-  
-  // 销毁所有图表实例
-  chartInstances.forEach(chart => {
-    chart.dispose();
-  });
-  chartInstances.clear();
+    window.removeEventListener('resize', resizeAllCharts);
+    // 添加：移除主题变化监听
+    window.removeEventListener('theme-changed', handleThemeChange);
+
+    // 销毁所有图表实例
+    chartInstances.forEach(chart => {
+        chart.dispose();
+    });
+    chartInstances.clear();
 });
 
 const handleThemeChange = () => {
-  renderAllCharts();
+    renderAllCharts();
 };
 
 // 切换视图时重置状态
@@ -285,9 +248,14 @@ watch(activeTab, (newTab) => {
     if (newTab === 'students') {
         selectedCourseInCourse.value = null;
         activeTab2.value = 'statistic';
+        // 新增：重置课程视图的active状态
+        activeCourse.value = null;
     } else {
         selectedStudent.value = null;
         selectedCourseInStudent.value = null;
+        // 新增：重置学生视图的active状态
+        activeStudent.value = null;
+        activeCourse.value = null;
     }
 
     nextTick(() => {
@@ -308,10 +276,13 @@ watch([students, courses, selectedStudent, selectedCourseInStudent, selectedCour
 // 视图切换方法
 const switchToStudentsView = () => {
     activeTab.value = 'students';
+    activeCourse.value = null;
 };
 
 const switchToCoursesView = () => {
     activeTab.value = 'courses';
+    activeStudent.value = null;
+    activeCourse.value = null;
 };
 
 // 学生视图方法
@@ -346,7 +317,7 @@ const calculateCorrectness = (chapter: any) => {
 };
 
 const getCssVar = (name: string) =>
-  getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
 // 图表相关方法
 const renderAllCharts = () => {
@@ -917,34 +888,7 @@ const getCoursesList = () => {
         ElMessage.error('获取学习情况(按课程)失败：网络错误');
     });
 };
-// AI分析生成（占位实现）
-const generateAnalysis = (courseId: string) => {
-    isGenerating.value = true;
 
-    // 模拟API请求
-    setTimeout(() => {
-        const analysisContent = `## ${selectedCourseInCourse.value.name} AI分析报告
-### 学习情况概览
-- **平均正确率**: 76%
-- **最薄弱章节**: 函数与极限
-- **AI使用频率**: 中等
-
-### 学习建议
-1. 加强对函数与极限章节的练习
-2. 建议每周完成3次章节测试
-3. 使用AI辅助学习解决疑难问题
-
-### 详细分析
-学生在微积分课程中表现良好，但在函数与极限章节存在理解障碍。建议结合图形化解题方法，增强对抽象概念的理解...`;
-
-        if (selectedCourseInCourse.value) {
-            selectedCourseInCourse.value.analysis = analysisContent;
-        }
-
-        isGenerating.value = false;
-        ElMessage.success('AI分析生成成功');
-    }, 2000);
-};
 </script>
 
 <style scoped>
@@ -1127,6 +1071,10 @@ const generateAnalysis = (courseId: string) => {
     padding-top: 0;
 }
 
+.chapter-select {
+    width: 300px;
+    margin-right: 1rem;
+}
 
 /* 课程视图布局 */
 .main-content-course {
@@ -1144,7 +1092,7 @@ const generateAnalysis = (courseId: string) => {
     border-radius: 8px;
     display: flex;
     flex-direction: column;
-    margin-top: 5px;    
+    margin-top: 5px;
 }
 
 .course-left-head {
@@ -1166,7 +1114,7 @@ const generateAnalysis = (courseId: string) => {
     padding: 15px 20px;
     background: transparent;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
 }
 
@@ -1266,7 +1214,13 @@ const generateAnalysis = (courseId: string) => {
 .generate-button {
     display: flex;
     justify-content: center;
-    margin-bottom: 20px;
+}
+
+
+.analysis-head {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
 }
 
 /* 响应式设计 */

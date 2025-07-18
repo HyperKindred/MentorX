@@ -277,6 +277,7 @@ const handleCardClick = (id: number, name: string) => {
   transition: all 0.3s ease;
   color: #080808;
   cursor: pointer;
+  height: 125px;
 }
 
 .course-card:hover {
@@ -326,6 +327,7 @@ const handleCardClick = (id: number, name: string) => {
   font-size: 14px;
   color: #666;
   flex: 1;
+  margin-top: 2rem;
 }
 
 .course-students .el-icon {

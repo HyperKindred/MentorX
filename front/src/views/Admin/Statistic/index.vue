@@ -93,7 +93,9 @@ const S_stats = ref({
 const T_stats = ref({
   courseware: 0,
   exercises: 0,
-  check: 0
+  check: 0,
+  suggestion: 0,  
+  ppt: 0          
 });
 const exercise_num = ref(0);
 const user_num = ref(0);
@@ -130,6 +132,8 @@ const T_pieData = computed(() => [
   { value: T_stats.value.courseware, name: '生成课件版块' },
   { value: T_stats.value.exercises, name: '生成习题版块' },
   { value: T_stats.value.check, name: '批改习题版块' },
+  { value: T_stats.value.suggestion, name: '教学反馈板块' },
+  { value: T_stats.value.ppt, name: 'PPT生成板块' },
 ]);
 
 const genderData = computed(() => [
@@ -217,7 +221,8 @@ const initTChart = () => {
     legend: {
       orient: 'vertical',
       left: 'left',
-      data: ['生成课件版块', '生成习题版块', '批改习题版块']
+      // 更新legend数据
+      data: ['生成课件版块', '生成习题版块', '批改习题版块', '教学反馈板块', 'PPT生成板块']
     },
     series: [
       {
@@ -247,7 +252,8 @@ const initTChart = () => {
         data: T_pieData.value
       }
     ],
-    color: ['#F56C6C', '#67C23A', '#E6A23C']
+    // 更新颜色数组
+    color: ['#F56C6C', '#67C23A', '#E6A23C', '#909399', '#409EFF']
   })
 }
 
@@ -345,6 +351,8 @@ const getSystemState = () => {
                     T_stats.value.courseware = responseData.systemStats.T_courseware;
                     T_stats.value.exercises = responseData.systemStats.T_exercises;
                     T_stats.value.check = responseData.systemStats.T_check;
+                    T_stats.value.suggestion = responseData.systemStats.T_suggestion;
+                    T_stats.value.ppt = responseData.systemStats.T_ppt;
                     exercise_num.value = responseData.systemInfo.exercise_num;
                     user_num.value = responseData.systemInfo.user_num;
                     male_num.value = responseData.systemInfo.male_num;
