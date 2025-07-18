@@ -252,7 +252,7 @@ def ai_generate_suggestion(chapter_id):
     """
     try:
         suggestion = get_answer(full_prompt)
-        sql = "INSERT INTO chapter(suggestion, suggestion_time) VALUES(%s, CURRENT_TIMESTAMP) WHERE id = %s;"
+        sql = "UPDATE chapter SET suggestion = %s, suggestion_time = CURRENT_TIMESTAMP WHERE id = %s;"
         cursor.execute(sql, (suggestion, chapter_id))
         return True, None
     except Exception as e:

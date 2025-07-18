@@ -486,7 +486,7 @@ def img2word():
     success, info = ai_img2word(student_id, exercise_id, imgPath)
     return jsonify({"ret": 0} if success else {"ret": 1, "msg": info})
 
-@app.route('/api/generate_ppt', methods=["POST"])
+@app.route('/api/generatePPT', methods=["POST"])
 def generate_ppt():
     chapter_id = request.form.get("chapter_id")
     success, ppt_path, ppt_filename, msg = ai_generate_ppt(chapter_id)
