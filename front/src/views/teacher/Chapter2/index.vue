@@ -93,6 +93,10 @@ const exportToWord = () => {
   a.click();
 };
 
+/**
+ * 导出PPT功能
+ * 调用后端API生成PPT并自动下载
+ */
 const exportToPPT = () => {
   if (!selectedChapter.value) {
     ElMessage.warning('请先选择章节');
@@ -112,13 +116,41 @@ const exportToPPT = () => {
       Authorization: `Bearer ${localStorage.getItem('token')}`,
     },
     data: formData,
+    responseType: 'blob' // 设置响应类型为blob以处理文件下载
   })
     .then((response) => {
-      const res = response.data;
-      if (res.ret === 0) {
-        ElMessage.success('PPT生成成功，下载即将开始');
+      // 检查响应头中的内容类型
+      const contentType = response.headers['content-type'];
+      
+      if (contentType && contentType.includes('application/json')) {
+        // 如果返回的是JSON，说明可能有错误
+        const reader = new FileReader();
+        reader.onload = function() {
+          try {
+            const result = JSON.parse(reader.result);
+            if (result.ret !== 0) {
+              ElMessage.error('PPT生成失败：' + (result.msg || '未知错误'));
+            }
+          } catch (e) {
+            ElMessage.error('PPT生成失败：响应解析错误');
+          }
+        };
+        reader.readAsText(response.data);
       } else {
-        ElMessage.error('PPT生成失败：' + (res.msg || '未知错误'));
+        // 如果返回的是文件，直接下载
+        const blob = new Blob([response.data], { 
+          type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' 
+        });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${selectedChapter.value.name}.pptx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        ElMessage.success('PPT生成成功，下载完成！');
       }
     })
     .catch((error) => {
