@@ -52,6 +52,14 @@
             >
               章节习题
             </el-button>
+            <el-button 
+              type="default" 
+              :icon="HelpFilled" 
+              class="function-btn"
+              @click="showAnalysis"
+            >
+              教学建议
+            </el-button>
           </div>
           <div class="edit-buttons">
             <el-button type="primary" class='function-btn' @click="toggleEditContent">
@@ -100,8 +108,9 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { marked } from 'marked';
 import { ElMessage } from 'element-plus';
-import { Document, Edit, Delete } from '@element-plus/icons-vue';
+import { Document, Edit, Delete, HelpFilled } from '@element-plus/icons-vue';
 import T_Exercises from '../Exercises/index.vue'
+import T_Analysis from '../Analysis/index.vue'
 const store = mainStore();
 const courseId = ref('');
 const chapters = ref([]);
@@ -385,6 +394,10 @@ const showExercises = () => {
   localStorage.setItem('selectedChapter', JSON.stringify(selectedChapter.value));
 
   store.addTab('习题列表', T_Exercises);
+}
+const showAnalysis = () => {
+  localStorage.setItem('selectedChapter', JSON.stringify(selectedChapter.value));
+  store.addTab('教学建议', T_Analysis);
 }
 
 onMounted(() => {

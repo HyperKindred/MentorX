@@ -22,41 +22,17 @@
           <h3 class="chapterTitle">{{ selectedChapter.name }}</h3>
         </div>
         <div class="function-buttons">
-          <div class="button-group">
-            <el-button 
-              type="primary" 
-              :icon="Document" 
-              class="function-btn"
-              disabled
-            >
-              课件学习
-            </el-button>
-            <el-button 
-              type="default" 
-              :icon="Edit" 
-              class="function-btn"
-              @click="showExercises"
-            >
-              章节习题
-            </el-button>
-            <el-button 
-              type="default" 
-              :icon="HelpFilled" 
-              class="function-btn active"
-              disabled
-            >
-              教学建议
-            </el-button>
-          </div>
           <div class="edit-buttons">
-            <el-button type="primary" @click="generateSuggestion()" class='function-btn'>生成教学建议</el-button>
+            <el-button type="primary" @click="generateSuggestion()" class='function-btn' :loading="isGenerating">{{ isGenerating?'生成中...':'生成教学建议'}}</el-button>
           </div>
         </div>
 
         <div class="chapter-content">
-          <el-scrollbar class="read-only-content">
+          <el-scrollbar class="read-only-content" v-if="analysis">
+            <div class="datetime">{{ datetime }}</div>
             <div v-html="renderedHtml"></div>
           </el-scrollbar>
+          <div v-else class="no-analysis">点击上方按钮生成教学建议</div>
         </div>
       </div>
       <div class="content-area" v-else>
@@ -83,14 +59,11 @@ const Cname = ref('');
 const selectedChapter = ref<any>(null);
 const activeChapter = ref<number | null>(null);
 const isGenerating = ref(false);
-interface Chapter {
-  id: number;
-  name: string;
-  content: string;
-}
-
+const datetime = ref('');
+const analysis = ref('');
+const chapter = ref<Record<string, any>>({});
 const renderedHtml = computed(() => {
-  return marked(selectedChapter.value.content || '');
+  return marked(analysis.value || '');
 });
 
 
@@ -119,6 +92,15 @@ const getChapterList = () => {
           message: '获取章节列表失败：' + responseData.msg,
           type: 'error',
         });
+      }
+      const savedChapter = JSON.parse(localStorage.getItem('selectedChapter') || '{}');
+      if (savedChapter?.id) {
+        const foundChapter = chapters.value.find(c => c.id === savedChapter.id);
+        if (foundChapter) {
+          selectedChapter.value = foundChapter;
+          activeChapter.value = savedChapter.id;
+          getSuggestion(); // 在这里调用getSuggestion
+        }
       }
     })
     .catch((error) => {
@@ -149,11 +131,11 @@ const getSuggestion = () => {
       console.log('响应数据:', responseData);
 
       if (responseData.ret === 0) {
-        selectedChapter.value.content = responseData.suggestion;
-        selectedChapter.value.datetime = responseData.datetime;
+        analysis.value = responseData.suggestion;
+        datetime.value = responseData.datetime;
       } else {
-        selectedChapter.value.content = '';
-        selectedChapter.value.datetime = '';
+        analysis.value = '';
+        datetime.value = '';
         ElMessage({
           message: '获取教学建议失败：' + responseData.msg,
           type: 'error',
@@ -171,18 +153,54 @@ const getSuggestion = () => {
     });
 }
 
+const generateSuggestion = () => {
+  isGenerating.value = true;
+  const formData = new FormData();
+  formData.append('chapter_id', selectedChapter.value.id);
+  axios({
+    method: 'post',
+    url: `${store.ip}/api/teacher/generateSuggestion`,
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
+    },
+  })
+    .then((response) => {
+      const responseData = response.data;
+      console.log('响应数据:', responseData);
+
+      if (responseData.ret === 0) {
+        ElMessage.success('生成教学建议成功！');
+        getSuggestion();
+      } else {
+        ElMessage({
+          message: '生成教学建议失败：' + responseData.msg,
+          type: 'error',
+        });
+      }
+    })
+    .catch((error) => {
+      console.error('Error posting data:', error);
+      ElMessage({
+        message: '生成教学建议失败：网络错误，请稍后重试！',
+        type: 'error',
+        duration: 5000,
+        grouping: true,
+      });
+    });
+    isGenerating.value = false;
+}
+
 const handleChapterClick = (chapter: any) => {
-  selectedChapter.value = { ...chapter };
-  activeChapter.value = chapter.id;
+  const foundChapter = chapters.value.find(c => c.id === chapter.id);
+  if (foundChapter) {
+    selectedChapter.value = foundChapter;
+    activeChapter.value = chapter.id;
+    getSuggestion();
+  }
 };
 
-
-
-
-const showExercises = () => {
-  localStorage.setItem('selectedChapter', JSON.stringify(selectedChapter.value));
-  store.addTab('习题列表', T_Exercises);
-}
 
 
 onMounted(() => {
@@ -309,7 +327,6 @@ onMounted(() => {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  padding-left: 4rem;
 }
 
 
@@ -345,7 +362,7 @@ onMounted(() => {
 /* 功能按钮组样式 */
 .function-buttons {
   display: flex;
-  justify-content: space-between;
+  justify-content: end;
   align-items: center;
   padding: 20px 24px;
   padding-bottom: 0;
@@ -398,6 +415,7 @@ onMounted(() => {
   border: 1.5px solid var(--textColor2);
   background-color: var(--backgroundColor);
   color: var(--textColor2);
+  width: 125px;
 }
 
 .function-btn:hover:not(:disabled) {
@@ -428,12 +446,28 @@ onMounted(() => {
   color: var(--textColor);
 }
 
+.datetime {
+  color: var(--textColor2);
+  text-align: end;
+  padding: 5px;
+}
+
 .edit-content :deep(.el-textarea__inner){
   max-height: 70vh;
   background: var(--backgroundColor3);
   color: var(--textColor);
   padding: 2rem;
   border-radius: 6px;
+}
+
+.no-analysis {
+    padding: 20px;
+    text-align: center;
+    color: var(--textColor2);
+    font-style: italic;
+    background-color: transparent;
+    border-radius: 8px;
+    margin-top: 3rem;
 }
 
 /* 响应式调整 */
